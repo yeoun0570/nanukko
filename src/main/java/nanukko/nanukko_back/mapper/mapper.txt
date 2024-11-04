@@ -1,0 +1,1 @@
+여기가 MyBatis 에서 쓸 mapper
