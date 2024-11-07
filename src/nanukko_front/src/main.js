@@ -1,6 +1,19 @@
-import './assets/main.css'
+import { createApp } from "vue";
+import App from "./App.vue";
+import routers from "./routers/index";
+import { createPinia } from "pinia";
+import { globalCookiesConfig } from "vue3-cookies";
 
-import { createApp } from 'vue'
-import App from './App.vue'
+import "./assets/main.css";
 
-createApp(App).mount('#app')
+globalCookiesConfig({
+	expireTimes: "30d",
+	path: "/",
+	domain: "",
+	secure: true,
+	sameSite: "None",
+});
+
+const pinia = createPinia();
+
+createApp(App).use(routers).use(pinia).mount("#app");
