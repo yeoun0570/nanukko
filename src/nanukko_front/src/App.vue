@@ -1,9 +1,10 @@
 <script setup>
-  import ConnectionTest from './components/ConnectionTest.vue';
 </script>
 
 <template>
-<ConnectionTest></ConnectionTest>
+  <div>
+    <h1> 여기는 App.vue </h1>
+  </div>
 </template>
 
 <style scoped>
