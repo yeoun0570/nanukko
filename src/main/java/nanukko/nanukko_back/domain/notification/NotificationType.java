@@ -1,4 +1,4 @@
-package nanukko.nanukko_back.domain.Notification;
+package nanukko.nanukko_back.domain.notification;
 
 public enum NotificationType {
     CHAT,

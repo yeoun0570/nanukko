@@ -1,4 +1,4 @@
-package nanukko.nanukko_back.domain.Notification;
+package nanukko.nanukko_back.domain.notification;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
