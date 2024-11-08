@@ -3,9 +3,7 @@ package nanukko.nanukko_back.domain.category;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
-import nanukko.nanukko_back.domain.product.Product;
 
-import java.util.List;
 
 @Getter
 @AllArgsConstructor

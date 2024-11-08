@@ -3,12 +3,8 @@ package nanukko.nanukko_back.domain.user;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
-import nanukko.nanukko_back.domain.chat.ChatRoom;
-import nanukko.nanukko_back.domain.report.Report;
-import nanukko.nanukko_back.domain.product.Product;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Getter
 @NoArgsConstructor

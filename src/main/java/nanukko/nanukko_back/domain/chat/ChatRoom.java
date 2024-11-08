@@ -5,7 +5,6 @@ import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import nanukko.nanukko_back.domain.product.Product;
 import nanukko.nanukko_back.domain.user.User;
-import org.hibernate.mapping.Join;
 
 import java.time.LocalDateTime;
 import java.util.List;
