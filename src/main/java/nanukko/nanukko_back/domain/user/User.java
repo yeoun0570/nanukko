@@ -74,4 +74,17 @@ public class User {
 
     @NotNull
     private int balance; //계좌자금(결제 테스트용)
+
+    //자금 추가
+    public void addBalance(int amount) {
+        this.balance += amount;
+    }
+
+    //자금 차감
+    public void subtractBalance(int amount) {
+        if(this.balance < amount) {
+            throw new IllegalArgumentException("잔액이 부족합니다.");
+        }
+        this.balance -= amount;
+    }
 }
