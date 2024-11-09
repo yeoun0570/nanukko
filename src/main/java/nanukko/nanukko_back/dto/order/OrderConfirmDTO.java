@@ -1,6 +1,5 @@
 package nanukko.nanukko_back.dto.order;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 
 @Data

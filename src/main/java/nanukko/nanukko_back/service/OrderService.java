@@ -40,9 +40,8 @@ public class OrderService {
     //토스 API와 통신할 HTTP 헤더 설정
     private HttpHeaders getHeaders() {
         HttpHeaders headers = new HttpHeaders();
-        String auth = secretKey;
         //토스에선 Base64로 시크릿키를 인코딩 시켜줘야 한다.
-        String encodedAuth = Base64.getEncoder().encodeToString(auth.getBytes());
+        String encodedAuth = Base64.getEncoder().encodeToString(secretKey.getBytes());
         //헤더 설정은 인가한다는 Authorization를 키로, Basic 에 인코딩된 시크릿키를 값으로 보내면 됨(JSON형태)
         headers.set("Authorization", "Basic " + encodedAuth);
         headers.setContentType(MediaType.APPLICATION_JSON);
