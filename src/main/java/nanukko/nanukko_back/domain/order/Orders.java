@@ -9,7 +9,6 @@ import nanukko.nanukko_back.domain.user.User;
 import java.time.LocalDateTime;
 
 @Getter
-@Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString
@@ -33,9 +32,18 @@ public class Orders {
 
     @Column(name = "payment_key")
     private String paymentKey; //토스페이먼츠에서 제공하는 결제 고유키
+
+    @NotNull
+    @Column(name = "product_amount")
+    private int productAmount; //상품 금액
+
+    @NotNull
+    @Column(name = "charge_amount")
+    private int chargeAmount; // 수수료 금액
+
     @NotNull
     @Column(name = "total_amount")
-    private int totalAmount; //총 금액
+    private int totalAmount; //총 금액 (상품 금액 + 수수료 금액)
 
 //    private String orderName; //상품명인데 FK로 가져와야 될듯?
 
@@ -54,4 +62,18 @@ public class Orders {
     private LocalDateTime escrowReleasedAt; //구매 확정 시점 -> 판매자에게 돈이 들어가는 시점
     @Column(name = "escrow_dead_line")
     private LocalDateTime escrowDeadline;   // 에스크로 자동 확정 기한
+    
+    //주문 상태 업데이트를 위한 메서드
+    public void updateReleased(PaymentStatus status, LocalDateTime escrowReleasedAt) {
+        this.status = status;
+        this.escrowReleasedAt = escrowReleasedAt;
+    }
+
+    //주문 취소 메서드 추가
+    public void cancel() {
+        if(this.status != PaymentStatus.ESCROW_HOLDING) {
+            throw new IllegalArgumentException("에스크로 상태에서만 취소가 가능합니다.");
+        }
+        this.status = PaymentStatus.CANCELED;
+    }
 }
