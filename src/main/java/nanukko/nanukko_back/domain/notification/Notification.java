@@ -25,6 +25,7 @@ public class Notification {
     @NotNull
     private User user; //알림 받는 사용자 아이디
 
+    @Enumerated(EnumType.STRING)
     @NotNull
     private NotificationType type; //알림 타입
 
