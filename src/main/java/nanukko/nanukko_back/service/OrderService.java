@@ -54,23 +54,6 @@ public class OrderService {
         Orders order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다."));
 
-//        //토스에서 특정 결제에 대한 상세정보가 저장된 URL
-//        String url = "https://api.tosspayments.com/v1/payments/" + order.getPaymentKey();
-//
-//        //RestTemplate을 이용하여 결제 승인 URL에 GET 방식으로 요청을 보내 OrderResponseDTO로 응답받기
-//        try {
-//            ResponseEntity<OrderResponseDTO> response = restTemplate.restTemplate().exchange(
-//                    url, //요청할 URL
-//                    HttpMethod.GET, //HTTP 메서드 방식
-//                    new HttpEntity<>(getHeaders()), // 요청 보낼 헤더
-//                    OrderResponseDTO.class
-//            );
-//            return response.getBody();
-//        } catch (Exception e) {
-//            log.error("Payment details fetch failed", e);
-//            throw new RuntimeException("결제 정보 조회에 실패했습니다.");
-//        }
-
         OrderResponseDTO dto = modelMapper.map(order, OrderResponseDTO.class);
         dto.setProductName(order.getProduct().getProductName());
         dto.setBuyerId(order.getBuyer().getUserId());
