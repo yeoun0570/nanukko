@@ -69,4 +69,9 @@ public class Product {
     @Column(name = "thumbnail_image")
     private String thumbnailImage; //썸네일 이미지
 
+    //결제 상태 변경
+    public void updateStatus(ProductStatus status) {
+        this.status = status;
+    }
+
 }
