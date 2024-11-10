@@ -25,6 +25,7 @@ public class OrderController {
         OrderPageDTO dto = orderService.getOrder(productId, "buyer1"); //테스트를 위해 일단 사용자명을 임시로 정의
 
         return ResponseEntity.ok(dto);
+        // return ResponseEntity.ok(orderService.getOrderPage(productId, userDetails.getUsername())); //시큐리티로 사용자 가져와서 반환하기
     }
 
     //결제 상세정보 조회
