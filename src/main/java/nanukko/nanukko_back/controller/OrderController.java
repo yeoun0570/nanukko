@@ -3,6 +3,7 @@ package nanukko.nanukko_back.controller;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import nanukko.nanukko_back.dto.order.OrderConfirmDTO;
+import nanukko.nanukko_back.dto.order.OrderPageDTO;
 import nanukko.nanukko_back.dto.order.OrderResponseDTO;
 import nanukko.nanukko_back.dto.order.OrderSuccessDTO;
 import nanukko.nanukko_back.service.OrderService;
@@ -15,6 +16,16 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/payments")
 public class OrderController {
     private final OrderService orderService;
+
+    @GetMapping("/page/{productId}")
+    public ResponseEntity<OrderPageDTO> getOrderPage(
+            @PathVariable Long productId
+            //@AuthenticationPrincipal UserDetails userDetails  // 현재 로그인한 사용자(시큐리티)
+    ) {
+        OrderPageDTO dto = orderService.getOrder(productId, "buyer1"); //테스트를 위해 일단 사용자명을 임시로 정의
+
+        return ResponseEntity.ok(dto);
+    }
 
     //결제 상세정보 조회
     @GetMapping("/{orderId}/detail")

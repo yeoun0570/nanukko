@@ -9,6 +9,7 @@ import nanukko.nanukko_back.domain.product.Product;
 import nanukko.nanukko_back.domain.product.ProductStatus;
 import nanukko.nanukko_back.domain.user.User;
 import nanukko.nanukko_back.dto.order.OrderConfirmDTO;
+import nanukko.nanukko_back.dto.order.OrderPageDTO;
 import nanukko.nanukko_back.dto.order.OrderResponseDTO;
 import nanukko.nanukko_back.repository.OrderRepository;
 import nanukko.nanukko_back.repository.ProductRepository;
@@ -36,6 +37,34 @@ public class OrderService {
     //RestTemplate : REST API를 호출하고 응답할 때까지 기다리는 동기 방식
     private final RestTemplateConfig restTemplate;
     private final String secretKey = "test_sk_DnyRpQWGrN5Xzapz6XA0VKwv1M9E:";
+
+    //결제창 페이지에 출력할 데이터 정의
+    public OrderPageDTO getOrder(Long productId, String userId) {
+        User buyer = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
+
+        //수수료 계산
+        int productPrice = product.getPrice();
+        int chargeAmount = (int) (productPrice * 0.035);
+        int totalAmount = productPrice + chargeAmount;
+
+        return OrderPageDTO.builder()
+                .thumbnailImage(product.getThumbnailImage())
+                .productName(product.getProductName())
+                .price(product.getPrice())
+                .chargeAmount(chargeAmount)
+                .totalAmount(totalAmount)
+                .nickname(buyer.getNickname())
+                .addrMain(buyer.getAddress().getAddrMain())
+                .addrDetail(buyer.getAddress().getAddrDetail())
+                .addrZipcode(buyer.getAddress().getAddrZipcode())
+                .mobile(buyer.getMobile())
+                .build();
+    }
+
+
 
     //토스 API와 통신할 HTTP 헤더 설정
     private HttpHeaders getHeaders() {
