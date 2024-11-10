@@ -2,8 +2,10 @@ package nanukko.nanukko_back.domain.user;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
+import lombok.Getter;
 
 @Embeddable
+@Getter
 public class Consent {
 
     @Column(name = "cookie_consent")

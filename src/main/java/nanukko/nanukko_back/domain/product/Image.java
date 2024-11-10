@@ -3,8 +3,10 @@ package nanukko.nanukko_back.domain.product;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import jakarta.validation.constraints.NotNull;
+import lombok.Getter;
 
 @Embeddable
+@Getter
 public class Image {
 
     @Column(name = "image1")
