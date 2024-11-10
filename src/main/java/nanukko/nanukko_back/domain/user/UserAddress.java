@@ -3,10 +3,16 @@ package nanukko.nanukko_back.domain.user;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Embeddable
 @Getter
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 public class UserAddress {
 
     @Column(name = "addr_main")
