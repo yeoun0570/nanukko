@@ -32,4 +32,10 @@ public class Kid {
     @Column(name = "k_gender")
     @NotNull
     private boolean kidGender;
+
+    //자녀 정보를 수정하기 위한 메서드
+    public void updateInfo(LocalDateTime kidBirth, boolean kidGender) {
+        this.kidBirth = kidBirth;
+        this.kidGender = kidGender;
+    }
 }
