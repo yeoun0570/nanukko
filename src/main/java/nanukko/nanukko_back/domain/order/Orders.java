@@ -63,7 +63,7 @@ public class Orders {
     private LocalDateTime paidAt;           //결제 완료 시점 -> 구매자가 돈이 빠져나가는 시점
     @Column(name = "escrow_released_at")
     private LocalDateTime escrowReleasedAt; //구매 확정 시점 -> 판매자에게 돈이 들어가는 시점
-    @Column(name = "escrow_dead_line")
+    @Column(name = "escrow_deadline")
     private LocalDateTime escrowDeadline;   // 에스크로 자동 확정 기한
 
     //주문 상태 업데이트를 위한 메서드
