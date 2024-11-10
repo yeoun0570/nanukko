@@ -2,6 +2,7 @@ package nanukko.nanukko_back.dto.user;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.*;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -17,6 +18,7 @@ public class UserInfoDTO {
     private String nickname;
     private String password;
     @JsonFormat(pattern = "yyyy년 MM월 dd일")
+    @DateTimeFormat(pattern = "yyyy-MM-dd")
     private LocalDateTime userBirth;
     private String mobile;
     private String email;

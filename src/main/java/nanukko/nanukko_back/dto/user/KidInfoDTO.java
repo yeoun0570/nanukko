@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDateTime;
 
@@ -15,6 +16,7 @@ import java.time.LocalDateTime;
 public class KidInfoDTO {
     private Long kidId;
     @JsonFormat(pattern = "yyyy년 MM월 dd일")
+    @DateTimeFormat(pattern = "yyyy-MM-dd")
     private LocalDateTime kidBirth;
     private boolean kidGender;
 }
