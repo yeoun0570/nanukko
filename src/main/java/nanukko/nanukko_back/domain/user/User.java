@@ -21,6 +21,8 @@ public class User {
     @Enumerated(EnumType.STRING)
     @NotNull
     private Role role; //사용자 권한
+    
+    private String nickname; //사용자 이름
 
     @Column(name = "social_login")
     @NotNull
