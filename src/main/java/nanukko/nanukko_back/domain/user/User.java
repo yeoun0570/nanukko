@@ -89,4 +89,18 @@ public class User {
         }
         this.balance -= amount;
     }
+
+    //사용자 정보를 수정하기 위한 메서드
+    public void updateUserInfo(
+            String mobile,
+            String email,
+            UserAddress address,
+            String profile
+    ) {
+        this.mobile = mobile;
+        this.email = email;
+        this.address = address;
+        this.profile = profile;
+        this.updatedAt = LocalDateTime.now();
+    }
 }
