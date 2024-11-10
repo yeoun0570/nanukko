@@ -52,6 +52,9 @@ public class Orders {
     @NotNull
     private PaymentStatus status; // 현재 결제 상태
 
+//    @Column(name = "order_message")
+//    private String orderMessage; //거래 요청 사항
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;        // 결제 생성 시점
     @Column(name = "expiry_date_time")
