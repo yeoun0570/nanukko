@@ -15,7 +15,6 @@ import nanukko.nanukko_back.domain.user.User;
 public class Wishlist {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @NotNull
     @Column(name = "wish_id")
     private Long wishId; //관심상품 ID
 

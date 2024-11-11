@@ -6,7 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import nanukko.nanukko_back.domain.category.MiddleCategory;
+import nanukko.nanukko_back.domain.product.category.MiddleCategory;
 import nanukko.nanukko_back.domain.user.User;
 
 import java.time.LocalDateTime;
@@ -19,7 +19,6 @@ import java.time.LocalDateTime;
 public class Product {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @NotNull
     @Column(name = "product_id")
     private Long productId;
 
@@ -69,7 +68,7 @@ public class Product {
     @Column(name = "thumbnail_image")
     private String thumbnailImage; //썸네일 이미지
 
-    //결제 상태 변경
+    //상품 상태 변경
     public void updateStatus(ProductStatus status) {
         this.status = status;
     }

@@ -18,7 +18,6 @@ import java.util.List;
 public class ChatRoom {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @NotNull
     @Column(name = "chat_room_id")
     private Long chatRoomId; //채팅방 ID
 

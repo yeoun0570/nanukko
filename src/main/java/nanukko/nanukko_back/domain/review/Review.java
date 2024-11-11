@@ -16,7 +16,6 @@ import java.time.LocalDateTime;
 public class Review {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @NotNull
     @Column(name = "review_id")
     private Long reviewId; //후기 ID
 
