@@ -3,8 +3,9 @@ package nanukko.nanukko_back.domain.user;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
+import org.springframework.format.annotation.DateTimeFormat;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 @Getter
 @AllArgsConstructor
@@ -23,18 +24,19 @@ public class Kid {
     @Id
     @NotNull
     @Column(name = "kid_id")
-    private Long kidId; //Kid의 고유 PK, auto_increment 불가능
+    private String kidId; //Kid의 고유 PK, auto_increment 불가능
 
     @Column(name = "k_b_date")
     @NotNull
-    private LocalDateTime kidBirth; //자녀 생년월일
+    @DateTimeFormat(pattern = "yyyy-MM-dd")
+    private LocalDate kidBirth; //자녀 생년월일
 
     @Column(name = "k_gender")
     @NotNull
     private boolean kidGender;
 
     //자녀 정보를 수정하기 위한 메서드
-    public void updateInfo(LocalDateTime kidBirth, boolean kidGender) {
+    public void updateInfo(LocalDate kidBirth, boolean kidGender) {
         this.kidBirth = kidBirth;
         this.kidGender = kidGender;
     }

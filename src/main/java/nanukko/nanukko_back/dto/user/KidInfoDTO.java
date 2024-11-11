@@ -7,16 +7,16 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
 public class KidInfoDTO {
-    private Long kidId;
-    @JsonFormat(pattern = "yyyy년 MM월 dd일")
+    private String kidId;
+    @JsonFormat(pattern = "yyyy-MM-dd")
     @DateTimeFormat(pattern = "yyyy-MM-dd")
-    private LocalDateTime kidBirth;
+    private LocalDate kidBirth;
     private boolean kidGender;
 }
