@@ -11,5 +11,5 @@ import java.io.Serializable;
 @NoArgsConstructor
 public class KidId implements Serializable {
     private String user; //User의 id
-    private Long kidId; //Kid의 id
+    private String kidId; //Kid의 id
 }
