@@ -3,7 +3,9 @@ package nanukko.nanukko_back.domain.user;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
+import org.springframework.format.annotation.DateTimeFormat;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Getter
@@ -50,7 +52,8 @@ public class User {
 
     @Column(name = "b_date")
     @NotNull
-    private LocalDateTime userBirth; //생년월일
+    @DateTimeFormat(pattern = "yyyy-MM-dd")
+    private LocalDate userBirth; //생년월일
 
     @NotNull
     private String email; //이메일
@@ -92,11 +95,13 @@ public class User {
 
     //사용자 정보를 수정하기 위한 메서드
     public void updateUserInfo(
+            String nickname,
             String mobile,
             String email,
             UserAddress address,
             String profile
     ) {
+        this.nickname = nickname;
         this.mobile = mobile;
         this.email = email;
         this.address = address;
