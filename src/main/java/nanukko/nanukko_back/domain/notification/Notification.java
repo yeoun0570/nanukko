@@ -16,7 +16,6 @@ import java.time.LocalDateTime;
 public class Notification {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @NotNull
     @Column(name = "notice_id")
     private Long noticeId; //알림 PK
 
