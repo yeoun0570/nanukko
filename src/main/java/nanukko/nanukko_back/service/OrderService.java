@@ -112,7 +112,13 @@ public class OrderService {
             //수수료 계산
             int productAmount = product.getPrice();
             int chargeAmount = (int) (productAmount * chargeRate);
-            int totalAmount = productAmount + chargeAmount;
+            int totalAmount = 0;
+
+            if(!product.isFreeShipping()) {
+                totalAmount = productAmount + chargeAmount;
+            } else {
+                totalAmount = productAmount + chargeAmount + product.getShippingFree();
+            }
 
             //구매자의 잔액 확인
             if (buyer.getBalance() < totalAmount) {
