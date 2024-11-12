@@ -40,6 +40,9 @@ public class Orders {
     @NotNull
     @Column(name = "charge_amount")
     private int chargeAmount; // 수수료 금액
+    
+    @Column(name = "shipping_free")
+    private int shippingFree; // 배송비
 
     @NotNull
     @Column(name = "total_amount")
