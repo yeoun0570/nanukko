@@ -21,6 +21,7 @@ public class OrderPageDTO {
     private String addrDetail;
     private String addrZipcode;
     private String mobile;
+    private int shippingFree; //배송비
     //추가(요청사항) 현재는 보류
 //    private String orderMessage;
 }
