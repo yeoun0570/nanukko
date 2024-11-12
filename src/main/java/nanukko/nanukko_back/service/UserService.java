@@ -6,7 +6,9 @@ import lombok.extern.log4j.Log4j2;
 import nanukko.nanukko_back.domain.order.Orders;
 import nanukko.nanukko_back.domain.order.PaymentStatus;
 import nanukko.nanukko_back.domain.product.Product;
+import nanukko.nanukko_back.domain.product.ProductDescription;
 import nanukko.nanukko_back.domain.product.ProductStatus;
+import nanukko.nanukko_back.domain.product.category.MiddleCategory;
 import nanukko.nanukko_back.domain.user.Kid;
 import nanukko.nanukko_back.domain.user.User;
 import nanukko.nanukko_back.domain.user.UserAddress;
@@ -19,6 +21,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -31,6 +35,8 @@ public class UserService {
     private final KidRepository kidRepository;
     private final OrderRepository orderRepository;
     private final WishlistRepository wishlistRepository;
+    private final MiddleCategoryRepository middleCategoryRepository;
+    private final ProductDescriptionRepository descriptionRepository;
 
     //사용자의 내 정보 조회
     public UserInfoDTO getUserInfo(String userId) {
@@ -49,6 +55,7 @@ public class UserService {
 
         return UserInfoDTO.builder()
                 .userId(user.getUserId())
+                .nickname(user.getNickname())
                 .password(user.getPassword())
                 .userBirth(user.getUserBirth())
                 .mobile(user.getMobile())
@@ -63,30 +70,14 @@ public class UserService {
                 .build();
     }
 
-    // 자녀 정보 업데이트를 위한 별도 메서드
-    private void updateKidsInfo(User user, List<KidInfoDTO> kidsDTO) {
-        // 기존 자녀 정보 조회
+    // 새로운 kidId 생성 메서드
+    private String generateKidId(User user) {
+        //사용자의 자녀 목록 찾기
         List<Kid> existingKids = kidRepository.findByUserOrderByKidId(user);
-
-        for (KidInfoDTO kidDTO : kidsDTO) {
-            if (kidDTO.getKidId() != null) {
-                // 기존 자녀 정보 업데이트
-                Kid kid = existingKids.stream()
-                        .filter(k -> k.getKidId().equals(kidDTO.getKidId()))
-                        .findFirst()
-                        .orElseThrow(() -> new IllegalArgumentException("자녀 정보를 찾을 수 없습니다."));
-
-                kid.updateInfo(kidDTO.getKidBirth(), kidDTO.isKidGender());
-            } else {
-                // 새로운 자녀 정보 추가
-                Kid newKid = Kid.builder()
-                        .user(user)
-                        .kidBirth(kidDTO.getKidBirth())
-                        .kidGender(kidDTO.isKidGender())
-                        .build();
-                kidRepository.save(newKid);
-            }
-        }
+        //nextNum 선언
+        int nextNum = existingKids.size() + 1;
+        //KidId로 사용할 String 값 생성
+        return String.format("%s_KID_%d", user.getUserId(), nextNum);
     }
 
     //사용자의 내 정보 수정
@@ -98,6 +89,7 @@ public class UserService {
 
         //기존 엔티티를 DTO로 받은 값으로 업데이트
         user.updateUserInfo(
+                userInfoDTO.getNickname(),
                 userInfoDTO.getMobile(),
                 userInfoDTO.getEmail(),
                 UserAddress.builder()
@@ -111,8 +103,28 @@ public class UserService {
 
         //자녀 정보가 있다면 업데이트
         //DTO를 엔티티로 변환
-        if(userInfoDTO.getKids() != null && !userInfoDTO.getKids().isEmpty()) {
-            updateKidsInfo(user, userInfoDTO.getKids());
+        if (userInfoDTO.getKids() != null) {
+            List<Kid> updatedKids = new ArrayList<>();
+
+            for (KidInfoDTO kidDTO : userInfoDTO.getKids()) {
+                Kid kid;
+                if (kidDTO.getKidId() == null) {
+                    // 새로운 자녀의 ID 생성
+                    String newKidId = generateKidId(user);
+                    kid = Kid.builder()
+                            .user(user)
+                            .kidId(newKidId)
+                            .kidBirth(kidDTO.getKidBirth())
+                            .kidGender(kidDTO.isKidGender())
+                            .build();
+                } else {
+                    // 기존 자녀 정보 업데이트
+                    kid = kidRepository.findByUserAndKidId(user, kidDTO.getKidId())
+                            .orElseThrow(() -> new IllegalArgumentException("자녀 정보를 찾을 수 없습니다."));
+                    kid.updateInfo(kidDTO.getKidBirth(), kidDTO.isKidGender());
+                }
+                updatedKids.add(kidRepository.save(kid));
+            }
         }
 
         return modelMapper.map(user, UserInfoDTO.class);
@@ -135,7 +147,62 @@ public class UserService {
         return new PageResponseDTO<>(dtoPage);
     }
 
-    //사용자의 상품 상태 변경
+    //사용자의 상품 등록(판매하기) 이것도 상품에서 해야되나?
+    public UserSetProductDTO registerProduct(String userId, UserSetProductDTO productDTO) {
+        //판매자 조회 -> 추후에 시큐리티 적용하고 없앨듯
+        User seller = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        //카테고리 조회
+        MiddleCategory middleCategory = middleCategoryRepository.findById(productDTO.getMiddleId())
+                .orElseThrow(() -> new IllegalArgumentException("카테고리를 찾을 수 없습니다."));
+
+        //엔티티 생성(받은 내용 DTO에서 VO로 변환)
+        Product product = Product.builder()
+                .seller(seller)
+                .middleCategory(middleCategory)
+                .productName(productDTO.getProductName())
+                .price(productDTO.getPrice())
+                .createdAt(LocalDateTime.now())
+                .isDeleted(false) //삭제여부는 false
+                .status(ProductStatus.SELLING) //초기 상태는 판매중
+                .viewCount(0) //초기 조회수
+                .images(productDTO.getImages())
+                .thumbnailImage(productDTO.getThumbnailImage())
+                .build();
+
+        //위의 변경사항 저장
+        Product savedProduct = productRepository.save(product);
+
+        //상품 설명 엔티티 생성(받은 내용 DTO에서 VO로 변환)
+        ProductDescription description = ProductDescription.builder()
+                .product(savedProduct)
+                .content(productDTO.getContent())
+                .condition(productDTO.getCondition())
+                .build();
+
+        //위의 내용 저장
+        ProductDescription savedDescription = descriptionRepository.save(description);
+
+        //VO로 저장된 내용들 다시 DTO로 반환
+        return UserSetProductDTO.builder()
+                .productId(savedProduct.getProductId())
+                .userGender(savedProduct.getSeller().isGender())
+                .productName(savedProduct.getProductName())
+                .images(savedProduct.getImages())
+                .thumbnailImage(savedProduct.getThumbnailImage())
+                .price(savedProduct.getPrice())
+                .majorId(savedProduct.getMiddleCategory().getMajor().getMajorId())
+                .majorName(savedProduct.getMiddleCategory().getMajor().getMajorName())
+                .middleId(savedProduct.getMiddleCategory().getMiddleId())
+                .middleName(savedProduct.getMiddleCategory().getMiddleName())
+                .descriptionId(savedDescription.getDescriptionId())
+                .content(savedDescription.getContent())
+                .condition(savedDescription.getCondition())
+                .build();
+    }
+
+    //사용자의 상품 변경
 
     //사용자의 구매 상품(구매중, 구매완료) 조회
     public PageResponseDTO<UserOrderDTO> getOrderProducts(String userId, PaymentStatus status, Pageable pageable) {
@@ -176,4 +243,10 @@ public class UserService {
     //탈퇴하기
 
     //후기 작성은 상품에서 해야되나?
+
+    //후기 조회
+
+    //문의 조회
+
+
 }
