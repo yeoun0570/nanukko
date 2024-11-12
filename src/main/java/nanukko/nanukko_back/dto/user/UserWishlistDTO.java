@@ -11,6 +11,7 @@ import nanukko.nanukko_back.domain.product.ProductStatus;
 @NoArgsConstructor
 @Builder
 public class UserWishlistDTO {
+    private Long productId;
     private String thumbnailImage;
     private String productName;
     private int price;
