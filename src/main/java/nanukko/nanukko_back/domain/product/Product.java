@@ -75,6 +75,22 @@ public class Product {
     @NotNull
     private Condition condition; //사용감
 
+    @Column(name = "is_person")
+    @NotNull
+    private boolean isPerson; //직거래 여부 -> true면 직거래, false면 배송거래
+
+    @Column(name = "is_deputy")
+    private boolean isDeputy; //대리인 여부 -> true면 대리인 사용, false면 사용X
+
+    @Column(name = "is_companion")
+    private boolean isCompanion; //동행인 여부 -> true면 동행인 동행, false면 동행X
+
+    @Column(name = "free_shipping")
+    @NotNull
+    private boolean freeShipping; //배송비 포함 여부 -> true면 판매상품 가격에 배송비 포함, false면 포함X
+
+
+
     //상품 상태 변경
     public void updateStatus(ProductStatus status) {
         this.status = status;
