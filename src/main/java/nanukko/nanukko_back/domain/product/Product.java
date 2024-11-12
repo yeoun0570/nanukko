@@ -95,10 +95,54 @@ public class Product {
     private int shippingFree = 0; //배송비
 
 
-
     //상품 상태 변경
     public void updateStatus(ProductStatus status) {
         this.status = status;
+    }
+
+    // 카테고리 수정 메서드
+    public void updateCategory(MiddleCategory middleCategory) {
+        this.middleCategory = middleCategory;
+    }
+
+    //상품 수정
+    public void updateProduct(
+            String productName,
+            int price,
+            ProductStatus status,
+            String content,
+            Condition condition,
+            Image images,
+            String thumbnailImage,
+            boolean isPerson,
+            boolean isDeputy,
+            boolean isCompanion,
+            boolean freeShipping,
+            LocalDateTime updatedAt
+    ) {
+        this.productName = productName;
+        this.price = price;
+        this.status = status;
+        this.content = content;
+        this.condition = condition;
+        this.images = images;
+        this.thumbnailImage = thumbnailImage;
+        this.isPerson = isPerson;
+        this.isDeputy = isDeputy;
+        this.isCompanion = isCompanion;
+        this.freeShipping = freeShipping;
+        this.updatedAt = updatedAt;
+    }
+
+    //상품 삭제
+    public void removeProduct(boolean isDeleted) {
+        this.isDeleted = isDeleted;
+    }
+
+
+    //배송비 수정
+    public void updateShippingFree(int shippingFree) {
+        this.shippingFree = shippingFree;
     }
 
 }
