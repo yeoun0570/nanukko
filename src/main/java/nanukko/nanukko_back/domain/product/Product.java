@@ -71,8 +71,9 @@ public class Product {
     @NotNull
     private String content; //상품 설명
 
-    @Embedded
+    @Enumerated(EnumType.STRING)
     @NotNull
+    @Column(name = "product_condition")
     private Condition condition; //사용감
 
     @Column(name = "is_person")
@@ -90,7 +91,8 @@ public class Product {
     private boolean freeShipping; //배송비 포함 여부 -> true면 판매상품 가격에 배송비 포함, false면 포함X
 
     @Column(name = "shipping_free")
-    private int shippingFree; //배송비
+    @NotNull
+    private int shippingFree = 0; //배송비
 
 
 
