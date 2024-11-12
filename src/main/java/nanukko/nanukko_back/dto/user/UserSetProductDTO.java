@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import nanukko.nanukko_back.domain.product.Condition;
 import nanukko.nanukko_back.domain.product.Image;
+import nanukko.nanukko_back.domain.product.ProductStatus;
 
 @Data
 @AllArgsConstructor
@@ -13,7 +14,6 @@ import nanukko.nanukko_back.domain.product.Image;
 @Builder
 //상품 등록(판매하기), 상품 수정에 사용할 DTO
 public class UserSetProductDTO {
-    private boolean userGender;
     private Long productId;
     private String productName;
     private Image images;
@@ -23,15 +23,14 @@ public class UserSetProductDTO {
     private String majorName;
     private Long middleId; //중분류 카테고리 ID
     private String middleName;
-    private Long descriptionId; //상품 설명 ID
-    private String color; // 상품 색
+    private ProductStatus status;
     private String content; //상품 설명
     private Condition condition; //사용감
     private boolean isPerson; //직거래 여부 -> true면 직거래, false면 배송거래
     private boolean isDeputy; //대리인 여부 -> true면 대리인 사용, false면 사용X
     private boolean isCompanion; //동행인 여부 -> true면 동행인 동행, false면 동행X
     private boolean freeShipping; //배송비 포함 여부 -> true면 판매상품 가격에 배송비 포함, false면 포함X
-    private boolean shippingFree; //배송비
+    private int shippingFree; //배송비
 
 
 
