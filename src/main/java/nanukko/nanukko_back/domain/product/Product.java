@@ -89,6 +89,9 @@ public class Product {
     @NotNull
     private boolean freeShipping; //배송비 포함 여부 -> true면 판매상품 가격에 배송비 포함, false면 포함X
 
+    @Column(name = "shipping_free")
+    private int shippingFree; //배송비
+
 
 
     //상품 상태 변경
