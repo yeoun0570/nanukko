@@ -1,7 +1,5 @@
 package nanukko.nanukko_back.dto.user;
 
-import jakarta.persistence.Column;
-import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
