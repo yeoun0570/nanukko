@@ -68,6 +68,13 @@ public class Product {
     @Column(name = "thumbnail_image")
     private String thumbnailImage; //썸네일 이미지
 
+    @NotNull
+    private String content; //상품 설명
+
+    @Embedded
+    @NotNull
+    private Condition condition; //사용감
+
     //상품 상태 변경
     public void updateStatus(ProductStatus status) {
         this.status = status;
