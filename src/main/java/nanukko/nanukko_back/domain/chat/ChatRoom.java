@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import nanukko.nanukko_back.domain.product.Product;
 import nanukko.nanukko_back.domain.user.User;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -13,12 +14,12 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-@ToString
+@ToString(exclude = {"chatMessages", "product", "buyer"})//순환 참조를 없애는 설정
 @Entity
+@EntityListeners(AuditingEntityListener.class)
 public class ChatRoom {
-    @Id
+    @Id  // @Id 만으로도 not null 제약조건 포함
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @NotNull
     @Column(name = "chat_room_id")
     private Long chatRoomId; //채팅방 ID
 
@@ -47,4 +48,20 @@ public class ChatRoom {
     @Column(name = "is_buyer_leaved")
     @NotNull
     private boolean isBuyerLeaved; //나가기 여부,null 허용, true면 판매자 나감, false면 구매자 나감
+
+    @Builder
+    public ChatRoom(Product product, User buyer) {
+        this.product = product;
+        this.buyer = buyer;
+        this.isSellerLeaved = false;
+        this.isBuyerLeaved = false;
+    }
+
+    // 정적 팩토리 메서드 추가
+    public static ChatRoom createChatRoom(Product product, User buyer) {
+        return ChatRoom.builder()
+                .product(product)
+                .buyer(buyer)
+                .build();
+    }
 }

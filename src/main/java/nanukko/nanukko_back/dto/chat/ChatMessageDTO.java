@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Builder
 @ToString
-public class ChatMessage {
+public class ChatMessageDTO {
 
     private Long chatMessageId; //채팅 메시지 ID
 

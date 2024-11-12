@@ -5,8 +5,8 @@ const stompClient = new StompJs.Client({
       // 필요한 경우 헤더 추가
    },
    // SockJS 사용 설정 추가
-   webSocketFactory: () => new SockJS('http://localhost:8080/ws-stomp'),
-   reconnectDelay: 5000,
+   webSocketFactory: () => new SockJS('http://localhost:8080/ws-stomp'),//SockJS를 사용하여 WebSocket 연결 생성 (브라우저 호환성 향상)
+   reconnectDelay: 5000,//연결 끊김 시 5초 후 재연결 시도
    debug: function (str) {
       console.log(str);
    },

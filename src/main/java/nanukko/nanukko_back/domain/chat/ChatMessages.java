@@ -40,7 +40,7 @@ public class ChatMessages {
 
     @NotNull
     @Column(name = "is_read")
-    private boolean isRead; //읽음 여부 -> true = 읽음, false = 안읽음
+    private boolean isRead=false; //읽음 여부 -> true = 읽음, false = 안읽음(기본)
 
     private String image; //이미지
 
