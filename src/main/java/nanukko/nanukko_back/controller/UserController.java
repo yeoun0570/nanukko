@@ -5,10 +5,8 @@ import lombok.extern.log4j.Log4j2;
 import nanukko.nanukko_back.domain.order.PaymentStatus;
 import nanukko.nanukko_back.domain.product.ProductStatus;
 import nanukko.nanukko_back.dto.page.PageResponseDTO;
-import nanukko.nanukko_back.dto.user.UserInfoDTO;
-import nanukko.nanukko_back.dto.user.UserOrderDTO;
-import nanukko.nanukko_back.dto.user.UserProductDTO;
-import nanukko.nanukko_back.dto.user.UserWishlistDTO;
+import nanukko.nanukko_back.dto.user.*;
+import nanukko.nanukko_back.repository.WishlistRepository;
 import nanukko.nanukko_back.service.UserService;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -63,6 +61,29 @@ public class UserController {
         return ResponseEntity.ok(products);
     }
 
+    //사용자가 판매중인 상품 수정
+    @PostMapping("/sale-products/modify")
+    public ResponseEntity<UserSetProductDTO> modifyProduct(
+            //@AuthenticationPrincipal UserDetails userDetails  // 현재 로그인한 사용자(시큐리티)
+            @RequestParam String userId,
+            @RequestParam Long productId,
+            @RequestBody UserSetProductDTO productDTO
+    ) {
+        UserSetProductDTO response = userService.modifyProduct(userId, productId, productDTO);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/sale-products/remove")
+    public ResponseEntity<UserRemoveDTO> removeProduct(
+            //@AuthenticationPrincipal UserDetails userDetails  // 현재 로그인한 사용자(시큐리티)
+            @RequestParam String userId,
+            @RequestParam Long productId
+    ) {
+        UserRemoveDTO response = userService.removeProduct(userId, productId);
+        return ResponseEntity.ok(response);
+    }
+
+
     //사용자가 구매중, 구매완료 상품 조회
     @GetMapping("/buy-products")
     public ResponseEntity<PageResponseDTO<UserOrderDTO>> getOrderProducts(
@@ -92,5 +113,15 @@ public class UserController {
         return ResponseEntity.ok(wishlists);
     }
 
+    //찜 목록에서 제거
+    @PostMapping("/wishlist/remove")
+    public ResponseEntity<Void> removeWishlist(
+            //@AuthenticationPrincipal UserDetails userDetails  // 현재 로그인한 사용자(시큐리티)
+            @RequestParam String userId,
+            @RequestParam Long productId
+    ) {
+        userService.removeWishlist(userId, productId);
+        return ResponseEntity.ok().build();
+    }
 
 }
