@@ -185,6 +185,10 @@ public class UserService {
                 .middleName(product.getMiddleCategory().getMiddleName())
                 .content(product.getContent())
                 .condition(product.getCondition())
+                .isPerson(product.isPerson())
+                .isDeputy(product.isDeputy())
+                .isCompanion(product.isCompanion())
+                .freeShipping(product.isFreeShipping())
                 .build();
     }
 
