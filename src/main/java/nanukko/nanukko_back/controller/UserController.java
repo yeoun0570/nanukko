@@ -39,10 +39,11 @@ public class UserController {
             @RequestBody UserInfoDTO userInfoDTO
     ) {
         try {
+            log.info("Received data: {}", userInfoDTO);  // 로깅 추가
             UserInfoDTO modifiedUser = userService.modifyUserInfo(userInfoDTO);
             return ResponseEntity.ok(modifiedUser);
         } catch (Exception e) {
-            log.error("사용자 정보 수정 실패", e);
+            log.error("사용자 정보 수정 실패", e);  // 에러 로깅
             return ResponseEntity.badRequest().build();
         }
     }
