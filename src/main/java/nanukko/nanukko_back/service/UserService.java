@@ -6,7 +6,6 @@ import lombok.extern.log4j.Log4j2;
 import nanukko.nanukko_back.domain.order.Orders;
 import nanukko.nanukko_back.domain.order.PaymentStatus;
 import nanukko.nanukko_back.domain.product.Product;
-import nanukko.nanukko_back.domain.product.ProductDescription;
 import nanukko.nanukko_back.domain.product.ProductStatus;
 import nanukko.nanukko_back.domain.product.category.MiddleCategory;
 import nanukko.nanukko_back.domain.user.Kid;
@@ -36,7 +35,6 @@ public class UserService {
     private final OrderRepository orderRepository;
     private final WishlistRepository wishlistRepository;
     private final MiddleCategoryRepository middleCategoryRepository;
-    private final ProductDescriptionRepository descriptionRepository;
 
     //사용자의 내 정보 조회
     public UserInfoDTO getUserInfo(String userId) {
@@ -169,40 +167,29 @@ public class UserService {
                 .viewCount(0) //초기 조회수
                 .images(productDTO.getImages())
                 .thumbnailImage(productDTO.getThumbnailImage())
-                .build();
-
-        //위의 변경사항 저장
-        Product savedProduct = productRepository.save(product);
-
-        //상품 설명 엔티티 생성(받은 내용 DTO에서 VO로 변환)
-        ProductDescription description = ProductDescription.builder()
-                .product(savedProduct)
-                .content(productDTO.getContent())
                 .condition(productDTO.getCondition())
+                .content(productDTO.getContent())
                 .build();
-
-        //위의 내용 저장
-        ProductDescription savedDescription = descriptionRepository.save(description);
 
         //VO로 저장된 내용들 다시 DTO로 반환
         return UserSetProductDTO.builder()
-                .productId(savedProduct.getProductId())
-                .userGender(savedProduct.getSeller().isGender())
-                .productName(savedProduct.getProductName())
-                .images(savedProduct.getImages())
-                .thumbnailImage(savedProduct.getThumbnailImage())
-                .price(savedProduct.getPrice())
-                .majorId(savedProduct.getMiddleCategory().getMajor().getMajorId())
-                .majorName(savedProduct.getMiddleCategory().getMajor().getMajorName())
-                .middleId(savedProduct.getMiddleCategory().getMiddleId())
-                .middleName(savedProduct.getMiddleCategory().getMiddleName())
-                .descriptionId(savedDescription.getDescriptionId())
-                .content(savedDescription.getContent())
-                .condition(savedDescription.getCondition())
+                .productId(product.getProductId())
+                .userGender(product.getSeller().isGender())
+                .productName(product.getProductName())
+                .images(product.getImages())
+                .thumbnailImage(product.getThumbnailImage())
+                .price(product.getPrice())
+                .majorId(product.getMiddleCategory().getMajor().getMajorId())
+                .majorName(product.getMiddleCategory().getMajor().getMajorName())
+                .middleId(product.getMiddleCategory().getMiddleId())
+                .middleName(product.getMiddleCategory().getMiddleName())
+                .content(product.getContent())
+                .condition(product.getCondition())
                 .build();
     }
 
-    //사용자의 상품 변경
+    //사용자의 상품 수정
+
 
     //사용자의 구매 상품(구매중, 구매완료) 조회
     public PageResponseDTO<UserOrderDTO> getOrderProducts(String userId, PaymentStatus status, Pageable pageable) {
