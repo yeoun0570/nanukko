@@ -8,11 +8,14 @@ import nanukko.nanukko_back.domain.order.PaymentStatus;
 import nanukko.nanukko_back.domain.product.Product;
 import nanukko.nanukko_back.domain.product.ProductStatus;
 import nanukko.nanukko_back.domain.product.category.MiddleCategory;
+import nanukko.nanukko_back.domain.review.Review;
 import nanukko.nanukko_back.domain.user.Kid;
 import nanukko.nanukko_back.domain.user.User;
 import nanukko.nanukko_back.domain.user.UserAddress;
 import nanukko.nanukko_back.domain.wishlist.Wishlist;
 import nanukko.nanukko_back.dto.page.PageResponseDTO;
+import nanukko.nanukko_back.dto.review.ReviewInMyStoreDTO;
+import nanukko.nanukko_back.dto.review.ReviewRegisterDTO;
 import nanukko.nanukko_back.dto.user.*;
 import nanukko.nanukko_back.repository.*;
 import org.modelmapper.ModelMapper;
@@ -35,8 +38,10 @@ public class UserService {
     private final OrderRepository orderRepository;
     private final WishlistRepository wishlistRepository;
     private final MiddleCategoryRepository middleCategoryRepository;
+    private final ReviewRepository reviewRepository;
 
     //사용자의 내 정보 조회
+    @Transactional
     public UserInfoDTO getUserInfo(String userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
@@ -62,20 +67,10 @@ public class UserService {
                 .addrMain(user.getAddress().getAddrMain())
                 .addrDetail(user.getAddress().getAddrDetail())
                 .addrZipcode(user.getAddress().getAddrZipcode())
-                .score(user.getScore())
+                .reviewRate(user.getReviewRate())
                 .profile(user.getProfile())
                 .kids(kidInfoDTOS)  // 모든 자녀 정보 포함
                 .build();
-    }
-
-    // 새로운 kidId 생성 메서드
-    private String generateKidId(User user) {
-        //사용자의 자녀 목록 찾기
-        List<Kid> existingKids = kidRepository.findByUserOrderByKidId(user);
-        //nextNum 선언
-        int nextNum = existingKids.size() + 1;
-        //KidId로 사용할 String 값 생성
-        return String.format("%s_KID_%d", user.getUserId(), nextNum);
     }
 
     //사용자의 내 정보 수정
@@ -128,7 +123,18 @@ public class UserService {
         return modelMapper.map(user, UserInfoDTO.class);
     }
 
+    // 새로운 kidId 생성 메서드
+    private String generateKidId(User user) {
+        //사용자의 자녀 목록 찾기
+        List<Kid> existingKids = kidRepository.findByUserOrderByKidId(user);
+        //nextNum 선언
+        int nextNum = existingKids.size() + 1;
+        //KidId로 사용할 String 값 생성
+        return String.format("%s_KID_%d", user.getUserId(), nextNum);
+    }
+
     //사용자의 판매 상품(판매중, 판매완료) 조회
+    @Transactional
     public PageResponseDTO<UserProductDTO> getSellProducts(String userId, ProductStatus status, Pageable pageable) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
@@ -136,6 +142,7 @@ public class UserService {
         Page<Product> products = productRepository.findBySellerAndStatusOrderByCreatedAtDesc(user, status, pageable);
 
         Page<UserProductDTO> dtoPage = products.map(product -> UserProductDTO.builder()
+                .productId(product.getProductId())
                 .thumbnailImage(product.getThumbnailImage())
                 .productName(product.getProductName())
                 .price(product.getPrice())
@@ -146,6 +153,7 @@ public class UserService {
     }
 
     //사용자의 상품 등록(판매하기) 이것도 상품에서 해야되나?
+    @Transactional
     public UserSetProductDTO registerProduct(String userId, UserSetProductDTO productDTO) {
         //판매자 조회 -> 추후에 시큐리티 적용하고 없앨듯
         User seller = userRepository.findById(userId)
@@ -172,9 +180,59 @@ public class UserService {
                 .build();
 
         //VO로 저장된 내용들 다시 DTO로 반환
+        return convertToUserSetProductDTO(product);
+    }
+
+    //사용자의 판매 상품 수정
+    @Transactional
+    public UserSetProductDTO modifyProduct(String userId, Long productId, UserSetProductDTO productDTO) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
+
+
+        //상품의 판매자와 요청한 사용자가 같은지 확인
+        if (!product.getSeller().getUserId().equals(userId)) {
+            throw new IllegalArgumentException("상품 수정 권한이 없습니다.");
+        }
+
+        //카테고리 조회
+        if (productDTO.getMiddleId() != null) {
+            MiddleCategory middleCategory = middleCategoryRepository.findById(productDTO.getMiddleId())
+                    .orElseThrow(() -> new IllegalArgumentException("카테고리를 찾을 수 없습니다."));
+            product.updateCategory(middleCategory);
+        }
+
+        //상품 정보 수정
+        product.updateProduct(
+                productDTO.getProductName(),
+                productDTO.getPrice(),
+                productDTO.getStatus(),
+                productDTO.getContent(),
+                productDTO.getCondition(),
+                productDTO.getImages(),
+                productDTO.getThumbnailImage(),
+                productDTO.isPerson(),
+                productDTO.isDeputy(),
+                productDTO.isCompanion(),
+                productDTO.isFreeShipping(),
+                LocalDateTime.now()
+        );
+
+        //수정한 상품이 배송비 별도이면 배송비도 수정
+        if (productDTO.isFreeShipping()) {
+            product.updateShippingFree(productDTO.getShippingFree());
+        }
+
+        return convertToUserSetProductDTO(product);
+    }
+
+    //상품 등록, 상품 수정에 사용할 VO->DTO 변환기
+    private UserSetProductDTO convertToUserSetProductDTO(Product product) {
         return UserSetProductDTO.builder()
                 .productId(product.getProductId())
-                .userGender(product.getSeller().isGender())
                 .productName(product.getProductName())
                 .images(product.getImages())
                 .thumbnailImage(product.getThumbnailImage())
@@ -183,19 +241,36 @@ public class UserService {
                 .majorName(product.getMiddleCategory().getMajor().getMajorName())
                 .middleId(product.getMiddleCategory().getMiddleId())
                 .middleName(product.getMiddleCategory().getMiddleName())
+                .status(product.getStatus())
                 .content(product.getContent())
                 .condition(product.getCondition())
                 .isPerson(product.isPerson())
                 .isDeputy(product.isDeputy())
                 .isCompanion(product.isCompanion())
                 .freeShipping(product.isFreeShipping())
+                .shippingFree(product.getShippingFree())
                 .build();
     }
 
-    //사용자의 상품 수정
+    //사용자의 판매 상품 삭제
+    @Transactional
+    public UserRemoveDTO removeProduct(String userId, Long productId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
+
+
+        product.removeProduct(true);
+
+        return UserRemoveDTO.builder()
+                .isDeleted(product.isDeleted())
+                .build();
+    }
 
     //사용자의 구매 상품(구매중, 구매완료) 조회
+    @Transactional
     public PageResponseDTO<UserOrderDTO> getOrderProducts(String userId, PaymentStatus status, Pageable pageable) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
@@ -213,6 +288,7 @@ public class UserService {
     }
 
     //찜 목록 조회
+    @Transactional
     public PageResponseDTO<UserWishlistDTO> getWishlists(String userId, Pageable pageable) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
@@ -220,6 +296,7 @@ public class UserService {
         Page<Wishlist> wishlists = wishlistRepository.findByUser(user, pageable);
 
         Page<UserWishlistDTO> dtoPage = wishlists.map(wishlist -> UserWishlistDTO.builder()
+                .productId(wishlist.getProduct().getProductId())
                 .thumbnailImage(wishlist.getProduct().getThumbnailImage())
                 .price(wishlist.getProduct().getPrice())
                 .productName(wishlist.getProduct().getProductName())
@@ -230,12 +307,79 @@ public class UserService {
     }
 
     //찜 목록에서 제거
+    @Transactional
+    public void removeWishlist(String userId, Long productId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
+
+        wishlistRepository.deleteWishlistByUserAndProduct(user, product);
+    }
 
     //탈퇴하기
 
-    //후기 작성은 상품에서 해야되나?
+    //후기 작성
+    @Transactional
+    public ReviewRegisterDTO writeReview(ReviewRegisterDTO reviewDTO) {
+        User user = userRepository.findById(reviewDTO.getAuthorId())
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        Product product = productRepository.findById(reviewDTO.getProductId())
+                .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
+
+        //후기 DTO에서 VO로 변환해서 저장
+        Review review = Review.builder()
+                .user(user)
+                .product(product)
+                .rate(reviewDTO.getRate())
+                .createdAt(LocalDateTime.now())
+                .review(reviewDTO.getReview())
+                .build();
+        reviewRepository.save(review);
+
+        //후기 작성하고 판매자의 상점 평점 평균 계산하기(사용자의 총 점수 / 사용자의 총 리뷰 수)
+        User seller = product.getSeller();
+        double averageScore = reviewRepository.averageRateByProductSeller(seller);
+        seller.updateReviewRate(averageScore);
+        userRepository.save(seller); //Transactional 때문에 안써도 되나?
+
+
+        return ReviewRegisterDTO.builder()
+                .reviewId(review.getReviewId())
+//                .authorId(review.getAuthorId().getUserId())
+//                .productId(review.getProduct().getProductId())
+                .rate(review.getRate())
+                .review(review.getReview())
+                .build();
+    }
 
     //후기 조회
+    public PageResponseDTO<ReviewInMyStoreDTO> getReview(String userId, Pageable pageable) {
+        User seller = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        //판매자가 받은 후기 조회
+        Page<Review> reviews = reviewRepository.findByProductSellerOrderByCreatedAtDesc(seller, pageable);
+
+        // DTO로 변환
+        Page<ReviewInMyStoreDTO> reviewPage = reviews.map(review -> ReviewInMyStoreDTO.builder()
+                .reviewId(review.getReviewId())
+                .productId(review.getProduct().getProductId())
+                .authorId(review.getUser().getUserId())  // 후기 작성자 ID
+                .authorNickName(review.getUser().getNickname()) // 후기 작성자 이름
+                .rate(review.getRate())
+                .productName(review.getProduct().getProductName())
+                .profile(review.getUser().getProfile()) // 후기 작성자 프로필 사진
+                .review(review.getReview())
+                .reviewRate(seller.getReviewRate())  // 판매자의 전체 평점
+                .build());
+
+        return new PageResponseDTO<>(reviewPage);
+    }
+
+    //후기 삭제
 
     //문의 조회
 
