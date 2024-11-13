@@ -128,6 +128,7 @@ public class Product {
             boolean isCompanion,
             boolean companionGender,
             boolean freeShipping,
+            int shippingFree,
             LocalDateTime updatedAt
     ) {
         this.productName = productName;
@@ -143,6 +144,7 @@ public class Product {
         this.isCompanion = isCompanion;
         this.companionGender = companionGender;
         this.freeShipping = freeShipping;
+        this.shippingFree = shippingFree;
         this.updatedAt = updatedAt;
     }
 
