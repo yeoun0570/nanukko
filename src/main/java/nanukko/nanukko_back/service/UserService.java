@@ -186,7 +186,7 @@ public class UserService {
     //사용자의 판매 상품 수정
     @Transactional
     public UserSetProductDTO modifyProduct(String userId, Long productId, UserSetProductDTO productDTO) {
-        User user = userRepository.findById(userId)
+        userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
         Product product = productRepository.findById(productId)
@@ -216,7 +216,9 @@ public class UserService {
                 productDTO.getThumbnailImage(),
                 productDTO.isPerson(),
                 productDTO.isDeputy(),
+                productDTO.isDeputyGender(),
                 productDTO.isCompanion(),
+                productDTO.isCompanionGender(),
                 productDTO.isFreeShipping(),
                 LocalDateTime.now()
         );
@@ -246,7 +248,9 @@ public class UserService {
                 .condition(product.getCondition())
                 .isPerson(product.isPerson())
                 .isDeputy(product.isDeputy())
+                .deputyGender(product.isDeputyGender())
                 .isCompanion(product.isCompanion())
+                .companionGender(product.isCompanionGender())
                 .freeShipping(product.isFreeShipping())
                 .shippingFree(product.getShippingFree())
                 .build();
@@ -255,7 +259,7 @@ public class UserService {
     //사용자의 판매 상품 삭제
     @Transactional
     public UserRemoveProductDTO removeProduct(String userId, Long productId) {
-        User user = userRepository.findById(userId)
+        userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
         Product product = productRepository.findById(productId)
@@ -405,6 +409,4 @@ public class UserService {
     }
 
     //문의 조회 --> 챗봇 진행되고 할 예정
-
-
 }
