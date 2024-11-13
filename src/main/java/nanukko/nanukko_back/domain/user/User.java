@@ -73,9 +73,6 @@ public class User {
     private double reviewRate; //신뢰도 점수
 
     @NotNull
-    private String status; //사용자 상태
-
-    @NotNull
     @Column(name = "is_canceled")
     private boolean isCanceled; //삭제여부 -> true = 삭제, false = 삭제X
 
