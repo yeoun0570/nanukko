@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import nanukko.nanukko_back.domain.product.category.MiddleCategory;
 import nanukko.nanukko_back.domain.user.User;
+import org.hibernate.annotations.ColumnDefault;
 
 import java.time.LocalDateTime;
 
@@ -92,7 +93,8 @@ public class Product {
 
     @Column(name = "shipping_free")
     @NotNull
-    private int shippingFree = 0; //배송비
+    @ColumnDefault("0")
+    private int shippingFree; //배송비
 
 
     //상품 상태 변경
