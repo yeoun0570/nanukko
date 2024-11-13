@@ -12,5 +12,4 @@ import lombok.NoArgsConstructor;
 public class UserRemoveProductDTO {
     private Long productId;
     private boolean isDeleted;
-
 }
