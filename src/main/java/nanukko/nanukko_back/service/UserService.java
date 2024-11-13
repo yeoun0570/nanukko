@@ -254,7 +254,7 @@ public class UserService {
 
     //사용자의 판매 상품 삭제
     @Transactional
-    public UserRemoveDTO removeProduct(String userId, Long productId) {
+    public UserRemoveProductDTO removeProduct(String userId, Long productId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
@@ -264,7 +264,7 @@ public class UserService {
 
         product.removeProduct(true);
 
-        return UserRemoveDTO.builder()
+        return UserRemoveProductDTO.builder()
                 .isDeleted(product.isDeleted())
                 .build();
     }
@@ -317,8 +317,6 @@ public class UserService {
 
         wishlistRepository.deleteWishlistByUserAndProduct(user, product);
     }
-
-    //탈퇴하기
 
     //후기 작성
     @Transactional
@@ -379,9 +377,34 @@ public class UserService {
         return new PageResponseDTO<>(reviewPage);
     }
 
-    //후기 삭제
+    //탈퇴하기
+    @Transactional
+    public UserRemoveDTO removeUser(String userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
-    //문의 조회
+        // 이미 탈퇴한 회원인지 확인
+        if (user.isCanceled()) {
+            throw new IllegalStateException("이미 탈퇴한 회원입니다.");
+        }
+
+        // 진행중인 거래(에스크로 보관 중) 확인
+        boolean hasActiveBuyingOrders = orderRepository.existsByBuyerAndStatus(user, PaymentStatus.ESCROW_HOLDING);
+        boolean hasActiveSellingOrders = orderRepository.existsByProductSellerAndStatus(user, PaymentStatus.ESCROW_HOLDING);
+        if (hasActiveBuyingOrders || hasActiveSellingOrders) {
+            throw new IllegalStateException("진행중인 거래가 있어 탈퇴할 수 없습니다. 에스크로 보관 중인 거래를 먼저 완료해주세요.");
+        }
+
+        user.cancelUser();
+        userRepository.save(user);
+
+        return UserRemoveDTO.builder()
+                .userId(user.getUserId())
+                .canceled(user.isCanceled())
+                .build();
+    }
+
+    //문의 조회 --> 챗봇 진행되고 할 예정
 
 
 }
