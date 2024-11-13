@@ -109,7 +109,11 @@ public class ChatService {
         //1. 채팅방 entity 받아오기
         ChatRoom chatRoom = chatRoomRepository.findById(chatRoomId).get();
 
-        //2. 메시지 entity 생성
+
+        // 2. 이전 최신 메시지의 isLatest를 false로 변경
+        chatMessageRepository.updateisLatestByFalseAndChatRoom_ChatRoomId(chatRoomId);
+
+        //3. 메시지 entity 생성
         ChatMessages message = ChatMessages.builder()
                 .chatRoom(chatRoom)
                 .sender(userRepository.findById(messageDTO.getSender())
@@ -121,13 +125,19 @@ public class ChatService {
                 .image(messageDTO.getImage())
                 .build();
 
-        // 3. 이전 최신 메시지의 isLatest를 false로 변경 (선택적)
-        chatMessageRepository.updateChatMessagesLatest(chatRoomId);
-
         // 4. 새 메시지 저장
         ChatMessages savedMessage = chatMessageRepository.save(message);
 
-        return null;
+        ChatMessageDTO chatMessageDTO = ChatMessageDTO.builder()
+                .chatRoom(chatRoomId)
+                .sender(message.getSender().toString())
+                .chatMessage(message.getChatMessage())
+                .createdAt(message.getCreatedAt())
+                .isRead(false)//새 메시지는 안 읽은 상태
+                .isLatest(true)//새 메시지는 최신 메시지
+                .image(message.getImage())
+                .build();
+        return chatMessageDTO;
     }
 
 }

@@ -8,7 +8,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 
-
 public interface ChatMessageRepository extends JpaRepository<ChatMessages, Long> {
 
     Page<ChatMessages> findByChatRoom_ChatRoomIdOrderByCreatedAt(Long chatRoomId, Pageable pageable);
@@ -27,5 +26,7 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessages, Long>
             "WHERE m2.chatRoom.chatRoomId = :chatRoomId)")
     int updateChatMessagesLatest(Long chatRoomId); // 성공하면 1 리턴
 
-
+    @Modifying
+    int updateisLatestByFalseAndChatRoom_ChatRoomId(Long chatroomId);
 }
+

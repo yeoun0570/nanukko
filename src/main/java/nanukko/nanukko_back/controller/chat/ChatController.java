@@ -34,8 +34,8 @@ public class ChatController {
     public ChatMessageDTO sendMessage(@DestinationVariable Long chatRoomId, ChatMessageDTO msg) throws InterruptedException {
         Thread.sleep(500);
         log.info("채팅 메시지 전송: roomId={}, message={}", chatRoomId, msg.getChatMessage());
-        chatService.sendMessage(chatRoomId, msg);//메시지 전송 + DB 저장
-        return msg;
+
+        return chatService.sendMessage(chatRoomId, msg);////메시지 전송 + DB 저장
     }
 
     /*채팅방 입장*/
