@@ -120,4 +120,10 @@ public class User {
     public void updateReviewRate(double reviewRate) {
         this.reviewRate = reviewRate;
     }
+    
+    //탈퇴를 위한 메서드
+    public void cancelUser(){
+        this.isCanceled = true;
+        this.updatedAt = LocalDateTime.now();
+    }
 }

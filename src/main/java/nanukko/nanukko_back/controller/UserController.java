@@ -1,6 +1,5 @@
 package nanukko.nanukko_back.controller;
 
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import nanukko.nanukko_back.domain.order.PaymentStatus;
@@ -75,12 +74,12 @@ public class UserController {
     }
 
     @PostMapping("/sale-products/remove")
-    public ResponseEntity<UserRemoveDTO> removeProduct(
+    public ResponseEntity<UserRemoveProductDTO> removeProduct(
             //@AuthenticationPrincipal UserDetails userDetails  // 현재 로그인한 사용자(시큐리티)
             @RequestParam String userId,
             @RequestParam Long productId
     ) {
-        UserRemoveDTO response = userService.removeProduct(userId, productId);
+        UserRemoveProductDTO response = userService.removeProduct(userId, productId);
         return ResponseEntity.ok(response);
     }
 
@@ -137,5 +136,15 @@ public class UserController {
 
         PageResponseDTO<ReviewInMyStoreDTO> reviews = userService.getReview(userId, pageable);
         return ResponseEntity.ok(reviews);
+    }
+    
+    //탈퇴하기
+    @PostMapping("/remove")
+    public ResponseEntity<UserRemoveDTO> removeUser(
+            //@AuthenticationPrincipal UserDetails userDetails  // 현재 로그인한 사용자(시큐리티)
+            @RequestParam String userId
+    ) {
+        UserRemoveDTO response = userService.removeUser(userId);
+        return ResponseEntity.ok(response);
     }
 }
