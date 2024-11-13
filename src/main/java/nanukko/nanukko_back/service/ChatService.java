@@ -103,7 +103,8 @@ public class ChatService {
     }
 
     /*채팅 메시지 입력 후 전송 눌렀을 때 DB 저장 + 메시지 전송*/
-    public ChatMessageDTO saveMessage(Long chatRoomId, ChatMessageDTO messageDTO){
+    @Transactional
+    public ChatMessageDTO sendMessage(Long chatRoomId, ChatMessageDTO messageDTO){
 
         //1. 채팅방 entity 받아오기
         ChatRoom chatRoom = chatRoomRepository.findById(chatRoomId).get();
@@ -121,7 +122,7 @@ public class ChatService {
                 .build();
 
         // 3. 이전 최신 메시지의 isLatest를 false로 변경 (선택적)
-        //chatMessageRepository.updatePreviousLatestMessage(chatRoomId);
+        chatMessageRepository.updateChatMessagesLatest(chatRoomId);
 
         // 4. 새 메시지 저장
         ChatMessages savedMessage = chatMessageRepository.save(message);
