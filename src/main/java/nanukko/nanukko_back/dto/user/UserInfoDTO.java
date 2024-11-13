@@ -26,7 +26,7 @@ public class UserInfoDTO {
     private String addrMain;
     private String addrDetail;
     private String addrZipcode;
-    private int score;
+    private double reviewRate;
     private String profile;
     private List<KidInfoDTO> kids;
 }
