@@ -28,7 +28,9 @@ public class UserSetProductDTO {
     private Condition condition; //사용감
     private boolean isPerson; //직거래 여부 -> true면 직거래, false면 배송거래
     private boolean isDeputy; //대리인 여부 -> true면 대리인 사용, false면 사용X
+    private boolean deputyGender;
     private boolean isCompanion; //동행인 여부 -> true면 동행인 동행, false면 동행X
+    private boolean companionGender;
     private boolean freeShipping; //배송비 포함 여부 -> true면 판매상품 가격에 배송비 포함, false면 포함X
     private int shippingFree; //배송비
 
