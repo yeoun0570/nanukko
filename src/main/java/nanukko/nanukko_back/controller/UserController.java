@@ -1,12 +1,13 @@
 package nanukko.nanukko_back.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import nanukko.nanukko_back.domain.order.PaymentStatus;
 import nanukko.nanukko_back.domain.product.ProductStatus;
 import nanukko.nanukko_back.dto.page.PageResponseDTO;
+import nanukko.nanukko_back.dto.review.ReviewInMyStoreDTO;
 import nanukko.nanukko_back.dto.user.*;
-import nanukko.nanukko_back.repository.WishlistRepository;
 import nanukko.nanukko_back.service.UserService;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -124,4 +125,17 @@ public class UserController {
         return ResponseEntity.ok().build();
     }
 
+    //후기 조회
+    @GetMapping("/reviews")
+    public ResponseEntity<PageResponseDTO<ReviewInMyStoreDTO>> getReview (
+            //@AuthenticationPrincipal UserDetails userDetails  // 현재 로그인한 사용자(시큐리티)
+            @RequestParam String userId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "1") int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size);
+
+        PageResponseDTO<ReviewInMyStoreDTO> reviews = userService.getReview(userId, pageable);
+        return ResponseEntity.ok(reviews);
+    }
 }
