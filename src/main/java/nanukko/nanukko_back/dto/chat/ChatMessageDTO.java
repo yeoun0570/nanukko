@@ -1,6 +1,8 @@
 package nanukko.nanukko_back.dto.chat;
 
 import lombok.*;
+import nanukko.nanukko_back.domain.chat.ChatMessages;
+import nanukko.nanukko_back.domain.chat.MessageType;
 
 import java.time.LocalDateTime;
 
@@ -26,6 +28,20 @@ public class ChatMessageDTO {
     private String image; //이미지
 
     private boolean isLatest; //최신메시지
+
+    private MessageType type;//일반 메시지인지 여부
+
+    // 엔티티를 DTO로 변환하는 정적 팩토리 메서드
+    public static ChatMessageDTO from(ChatMessages entity) {
+        return ChatMessageDTO.builder()
+                .chatMessageId(entity.getChatMessageId())
+                .sender(entity.getSender().getUserId())  // 또는 getSender().getId()
+                .chatMessage(entity.getChatMessage())
+                .createdAt(entity.getCreatedAt())
+                .isRead(entity.isRead())
+                .type(entity.getType())
+                .build();
+    }
 
 
 }

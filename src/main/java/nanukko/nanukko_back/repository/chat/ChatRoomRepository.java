@@ -5,6 +5,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -40,5 +41,26 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
             @Param("userId") String userId
     );
 
-    Optional<ChatRoom> findByBuyer_UserIdAndProduct_ProductId(String buyerUserId, Long productId);
+    // 판매자/구매자별 채팅방 목록 조회 (나가지 않은 채팅방만)
+    @EntityGraph(attributePaths = {"product", "product.seller", "buyer"})
+    Page<ChatRoom> findByBuyer_UserIdAndBuyerLeftAtIsNullOrProduct_Seller_UserIdAndSellerLeftAtIsNullOrderByUpdatedAtDesc(
+            String buyerId,
+            String sellerId,
+            Pageable pageable
+    );
+
+    // 특정 상품에 대한 채팅방 조회
+    @EntityGraph(attributePaths = {"product", "product.seller", "buyer"})
+    Optional<ChatRoom> findByBuyer_UserIdAndProduct_ProductId(
+            String buyerUserId,
+            Long productId
+    );
+
+    //특정 상품에 대해 판매자가 나간 채팅방 찾기
+    @EntityGraph(attributePaths = {"product", "product.seller", "buyer"})
+    Optional<ChatRoom> findByProduct_ProductIdAndProduct_Seller_UserIdAndSellerLeftAtIsNotNull(
+            Long productId,
+            String sellerId
+    );
+
 }

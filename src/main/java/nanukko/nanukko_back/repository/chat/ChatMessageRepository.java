@@ -26,7 +26,10 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessages, Long>
             "WHERE m2.chatRoom.chatRoomId = :chatRoomId)")
     int updateChatMessagesLatest(Long chatRoomId); // 성공하면 1 리턴
 
+    /*이전 최신 메시지 다시 최신이 아니게 바꿈*/
     @Modifying
-    int updateisLatestByFalseAndChatRoom_ChatRoomId(Long chatroomId);
+    int updateIsLatestByFalseAndChatRoom_ChatRoomId(Long chatroomId);
+
+    
 }
 

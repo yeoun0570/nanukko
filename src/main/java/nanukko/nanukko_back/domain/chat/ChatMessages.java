@@ -47,4 +47,8 @@ public class ChatMessages {
     @NotNull
     @Column(name = "is_latest")
     private boolean isLatest; //최신메시지
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "message_type")
+    private MessageType type = MessageType.CHAT; // 기본값은 일반 채팅
 }

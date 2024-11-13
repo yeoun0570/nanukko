@@ -13,9 +13,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.HtmlUtils;
+
+import java.nio.file.AccessDeniedException;
 
 /*메시지 가공이나 처리를 해 줄 핸들러*/
 
@@ -42,10 +45,10 @@ public class ChatController {
     // 채팅방의 이전 메시지 내역 조회 + 안 읽은 메시지 읽음 처리 (채팅방 첫 입장 시 호출)
     // 채팅방 입장 시 메시지 조회 및 읽음 처리
     @MessageMapping("/chat/enter/{chatRoomId}")
-    @SendTo("/topic/{chatRoomId}/messages")
-    public PageResponseDTO<ChatMessageDTO> getChatMessages(//@AuthenticationPrincipal UserDetails userDetails  // 현재 로그인한 사용자(시큐리티)
+    @SendTo("/topic/chat.{chatRoomId}")
+    public PageResponseDTO<ChatMessageDTO> enterAndGetChatMessages(//@AuthenticationPrincipal UserDetails userDetails  // 현재 로그인한 사용자(시큐리티)
                                                                            @RequestParam String userId,
-            @PathVariable Long chatRoomId,
+                                                                   @DestinationVariable Long chatRoomId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "50") int size) {
 
@@ -73,9 +76,30 @@ public class ChatController {
                                                       @RequestParam String userId
 
     ){
-        ChatRoomDTO chatRoomDTO = chatService.createChatRoom(userId, productId);
+        ChatRoomDTO chatRoomDTO = chatService.getOrCreateChatRoom(userId, productId);
         return ResponseEntity.ok(chatRoomDTO);
     }
+
+
+    /**
+     * 채팅방 나가기
+     */
+    @MessageMapping("/chat/leave")
+    @SendTo("/topic/chat.{roomId}")
+    public ChatMessageDTO leaveRoom(@DestinationVariable Long chatRoomId,
+                                    String userId) throws AccessDeniedException {
+        return chatService.leaveChatRoom(chatRoomId, userId);
+    }
+
+    /*채팅방 삭제*/
+//    @DeleteMapping("/api/chat/rooms/{roomId}")
+//    public ResponseEntity<Void> deleteRoom(
+//            @PathVariable Long roomId,
+//            //@AuthenticationPrincipal UserDetails userDetails
+//            String userId) {
+//        chatService.deleteChatRoom(roomId, userId);
+//        return ResponseEntity.ok().build();
+//    }
 
 
 
