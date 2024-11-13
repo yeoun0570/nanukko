@@ -1,8 +1,11 @@
 package nanukko.nanukko_back.domain.user;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
+import org.hibernate.annotations.ColumnDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDate;
@@ -63,7 +66,11 @@ public class User {
     private UserAddress address; // 주소 모음
 
     @NotNull
-    private int score; //신뢰도 점수
+    @Column(name = "review_rate")
+    @ColumnDefault("50")
+    @Min(0)
+    @Max(100)
+    private double reviewRate; //신뢰도 점수
 
     @NotNull
     private String status; //사용자 상태
@@ -107,5 +114,10 @@ public class User {
         this.address = address;
         this.profile = profile;
         this.updatedAt = LocalDateTime.now();
+    }
+
+    //상점 평점 평균 구하기
+    public void updateReviewRate(double reviewRate) {
+        this.reviewRate = reviewRate;
     }
 }
