@@ -84,8 +84,14 @@ public class Product {
     @Column(name = "is_deputy")
     private boolean isDeputy; //대리인 여부 -> true면 대리인 사용, false면 사용X
 
+    @Column(name = "deputy_gender")
+    private boolean deputyGender; //대리인 성별 -> true면 남자, false면 여자
+
     @Column(name = "is_companion")
     private boolean isCompanion; //동행인 여부 -> true면 동행인 동행, false면 동행X
+
+    @Column(name = "companion_gender")
+    private boolean companionGender; //동행인 성별 -> true면 남자, false면 여자
 
     @Column(name = "free_shipping")
     @NotNull
@@ -118,7 +124,9 @@ public class Product {
             String thumbnailImage,
             boolean isPerson,
             boolean isDeputy,
+            boolean deputyGender,
             boolean isCompanion,
+            boolean companionGender,
             boolean freeShipping,
             LocalDateTime updatedAt
     ) {
@@ -131,7 +139,9 @@ public class Product {
         this.thumbnailImage = thumbnailImage;
         this.isPerson = isPerson;
         this.isDeputy = isDeputy;
+        this.deputyGender = deputyGender;
         this.isCompanion = isCompanion;
+        this.companionGender = companionGender;
         this.freeShipping = freeShipping;
         this.updatedAt = updatedAt;
     }
