@@ -9,7 +9,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
+//유저 삭제를 위한 DTO
 public class UserRemoveDTO {
-    private Long productId;
-    private boolean isDeleted;
+    private String userId;
+    private boolean canceled;
 }
