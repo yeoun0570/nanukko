@@ -5,7 +5,6 @@ import lombok.extern.log4j.Log4j2;
 import nanukko.nanukko_back.dto.order.OrderConfirmDTO;
 import nanukko.nanukko_back.dto.order.OrderPageDTO;
 import nanukko.nanukko_back.dto.order.OrderResponseDTO;
-import nanukko.nanukko_back.dto.order.OrderSuccessDTO;
 import nanukko.nanukko_back.service.OrderService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
