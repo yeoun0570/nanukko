@@ -13,4 +13,5 @@ public class OrderConfirmDTO {
     private String orderId;
     private int amount;
     private Long productId;
+    private String buyerId;
 }
