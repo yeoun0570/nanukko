@@ -45,7 +45,7 @@ public class OrderController {
 //            @RequestBody OrderSuccessDTO request
 //    ) {
 //        OrderResponseDTO response = orderService.processPayment(
-//                request.getPaymentKey(), request.getBuyerId(), request.getProductId());
+//                request.getOrderId(), request.getBuyerId(), request.getProductId());
 //        return ResponseEntity.ok(response);
 //    }
 
