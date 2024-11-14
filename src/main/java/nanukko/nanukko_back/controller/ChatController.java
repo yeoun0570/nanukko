@@ -1,4 +1,4 @@
-package nanukko.nanukko_back.controller.chat;
+package nanukko.nanukko_back.controller;
 
 
 import lombok.RequiredArgsConstructor;
