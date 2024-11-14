@@ -39,11 +39,29 @@ public class ChatMessages {
 
     @NotNull
     @Column(name = "is_read")
-    private boolean isRead; //읽음 여부 -> true = 읽음, false = 안읽음
+    private boolean isRead=false; //읽음 여부 -> true = 읽음, false = 안읽음(기본)
 
     private String image; //이미지
 
     @NotNull
     @Column(name = "is_latest")
     private boolean isLatest; //최신메시지
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "message_type")
+    private MessageType type = MessageType.CHAT; // 기본값은 일반 채팅
+
+    //메시지 읽음 처리
+    public void UnreadToRead(String userId){
+        if(!this.getSender().getUserId().equals(userId)){//상대방이 나한테 보낸 메시지라면?
+            this.isRead = true;
+        }
+    }
+
+    //최신 메시지를 다시 false로 되돌리기
+    public void changeNotLatest(){
+        if(!this.isLatest){//true라면
+            this.isLatest = false;
+        }
+    }
 }
