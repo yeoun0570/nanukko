@@ -175,8 +175,11 @@ public class OrderService {
         //결제만 하면 결제 상태가 IN_PROGRESS 로 변경되고, 결제 승인하면 DONE 으로 변경됨
         //즉, IN_PROGRESS 과정에서 바로 DONE 으로 만들어주는 메서드
 
-        log.info("결제 승인 시작 - paymentKey: {}, productId: {}, buyerId: {}",
-                request.getPaymentKey(), request.getProductId(), request.getBuyerId());
+        // 상품 조회하여 판매자 정보 가져오기
+        Product product = productRepository.findById(request.getProductId())
+                .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
+
+        String sellerId = product.getSeller().getUserId();  // 판매자 ID 가져오기
 
 
         try {
@@ -209,7 +212,7 @@ public class OrderService {
             if (response.getBody() != null && response.getBody().getStatus() == PaymentStatus.DONE) {
                 return processPayment(
                         request.getPaymentKey(),
-                        request.getBuyerId(),
+                        sellerId,
                         request.getProductId()
                 );
             } else {

@@ -40,15 +40,15 @@ public class OrderController {
         return ResponseEntity.ok(orderService.confirmPayment(request));
     }
 
-    //결제 성공 및 결제 자금 보관(에스크로 홀딩)
-    @PostMapping("/success")
-    public ResponseEntity<OrderResponseDTO> processSuccessPayment(
-            @RequestBody OrderSuccessDTO request
-    ) {
-        OrderResponseDTO response = orderService.processPayment(
-                request.getPaymentKey(), request.getBuyerId(), request.getProductId());
-        return ResponseEntity.ok(response);
-    }
+//    //결제 성공 및 결제 자금 보관(에스크로 홀딩)
+//    @PostMapping("/success")
+//    public ResponseEntity<OrderResponseDTO> processSuccessPayment(
+//            @RequestBody OrderSuccessDTO request
+//    ) {
+//        OrderResponseDTO response = orderService.processPayment(
+//                request.getPaymentKey(), request.getBuyerId(), request.getProductId());
+//        return ResponseEntity.ok(response);
+//    }
 
     //구매확정
     @PostMapping("/{orderId}/confirm")
