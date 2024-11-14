@@ -19,14 +19,6 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
 //
 //    Page<ChatRoom> findByBuyer_UserIdOrProduct_Seller_UserId(String userId, String sameUserId, Pageable pageable);
 
-    // 나가지 않은 채팅방만 수정 일자 기준 asc 조회
-    @EntityGraph(attributePaths = {"product", "product.seller", "buyer"})
-    // 연관 엔티티들을 한 번에 조회
-    Page<ChatRoom> findByBuyer_UserIdAndIsBuyerLeavedFalseOrProduct_Seller_UserIdAndIsSellerLeavedFalseOrderByUpdatedAt(
-            String buyerId,
-            String sellerId,
-            Pageable pageable
-    );
 
 
     // 단일 ChatRoom 타입으로 반환
@@ -41,7 +33,7 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
             @Param("userId") String userId
     );
 
-    // 판매자/구매자별 채팅방 목록 조회 (나가지 않은 채팅방만)
+    // 로그인한 사람이 판매자이든 구매자이든 나간 채팅방 제외하고 채팅방 목록 조회
     @EntityGraph(attributePaths = {"product", "product.seller", "buyer"})
     Page<ChatRoom> findByBuyer_UserIdAndBuyerLeftAtIsNullOrProduct_Seller_UserIdAndSellerLeftAtIsNullOrderByUpdatedAtDesc(
             String buyerId,

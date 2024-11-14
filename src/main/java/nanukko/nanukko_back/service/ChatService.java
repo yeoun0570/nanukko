@@ -84,9 +84,17 @@ public class ChatService {
     /*채팅 메시지 목록 조회 + 읽음 처리*/
     public PageResponseDTO<ChatMessageDTO> getChatMessagesAndMarkAsRead(Long chatRoomId,String userId, Pageable pageable) {
 
-        //읽지 않은 메시지 읽음 처리 (수신자의 메시지만)
-        chatMessageRepository.updateIsReadByTrueAndChatRoom_ChatRoomIdAndSender_UserIdNotAndIsReadFalse(chatRoomId, userId);
+        ChatRoom chatRoom = chatRoomRepository.findById(chatRoomId).get();
+        List<ChatMessages> chatMessages = chatRoom.getChatMessages();
+        //읽음 처리
+        chatMessages.stream()
+                .filter(msg -> !msg.isRead())// isRead가 false인 메시지만 필터링
+                .forEach(msg -> msg.UnreadToRead(userId));// unreadToRead() 메소드 호출
 
+        // 변경사항 DB에 반영
+        chatMessageRepository.saveAll(chatMessages);
+
+        //읽지 않은 메시지 읽음 처리 (수신자의 메시지만)
         Page<ChatMessages> chatMsgPage = chatMessageRepository.
                 findByChatRoom_ChatRoomIdOrderByCreatedAt(chatRoomId, pageable);
 
@@ -106,7 +114,6 @@ public class ChatService {
     }
 
     /*채팅 메시지 입력 후 전송 눌렀을 때 DB 저장 + 메시지 전송*/
-
     public ChatMessageDTO sendMessage(Long chatRoomId, ChatMessageDTO messageDTO){
 
         //1. 채팅방 entity 받아오기
