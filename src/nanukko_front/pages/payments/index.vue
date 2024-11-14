@@ -6,7 +6,10 @@ import DeliverySection from "~/components/payments/DeliverySection.vue";
 import PaymentAmountSection from "~/components/payments/PaymentAmountSection.vue";
 import PaymentButton from "~/components/payments/PaymentButton.vue";
 
-const router = useRouter();
+//추후에 상세페이지에서 라우팅 받으면 받아야 될 값
+const route = useRoute();
+// const { productId } = route.query;
+
 const orderData = ref(null);
 const loading = ref(false);
 const error = ref(null);
