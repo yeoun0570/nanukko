@@ -77,7 +77,9 @@ public class ChatService {
         ChatRoom newChatRoom = ChatRoom.createChatRoom(product,buyer);
         ChatRoom savedChatRoom = chatRoomRepository.save(newChatRoom);//영속성 컨텍스트에 저장(save() 호출로 실제 DB에 저장 + 저장할 때 id값 생성됨)
 
-        return modelMapper.map(savedChatRoom, ChatRoomDTO.class);
+        ;
+
+        return ChatRoomDTO.from(savedChatRoom);
 
     }//createChatRoom
 
@@ -119,9 +121,15 @@ public class ChatService {
         //1. 채팅방 entity 받아오기
         ChatRoom chatRoom = chatRoomRepository.findById(chatRoomId).get();
 
-
         // 2. 이전 최신 메시지의 isLatest를 false로 변경
-        chatMessageRepository.updateIsLatestByFalseAndChatRoom_ChatRoomId(chatRoomId);
+        List<ChatMessages> chatMessages = chatRoom.getChatMessages();
+        //읽음 처리
+        chatMessages.stream()
+                .filter(msg -> msg.isLatest())//isLatest가 true인 메시지만 필터링
+                .forEach(msg -> msg.changeNotLatest());//isLatest 값 false로 변경
+
+        // 변경사항 DB에 반영
+        chatMessageRepository.saveAll(chatMessages);
 
         //3. 메시지 entity 생성
         ChatMessages message = ChatMessages.builder()
@@ -141,11 +149,11 @@ public class ChatService {
         ChatMessageDTO chatMessageDTO = ChatMessageDTO.builder()
                 .chatRoom(chatRoomId)
                 .sender(message.getSender().toString())
-                .chatMessage(message.getChatMessage())
-                .createdAt(message.getCreatedAt())
+                .chatMessage(savedMessage.getChatMessage())
+                .createdAt(savedMessage.getCreatedAt())
                 .isRead(false)//새 메시지는 안 읽은 상태
                 .isLatest(true)//새 메시지는 최신 메시지
-                .image(message.getImage())
+                .image(savedMessage.getImage())
                 .build();
         return chatMessageDTO;
     }
@@ -217,7 +225,27 @@ public class ChatService {
                 chatRoomRepository.save(chatRoom);
             }
 
-            return ChatRoomDTO.from(chatRoom);
+            ChatRoomDTO chatRoomDTO = ChatRoomDTO.builder()
+                    .chatRoomId(chatRoom.getChatRoomId())
+                    // 상품 정보
+                    .productId(chatRoom.getProduct().getProductId())
+                    .productName(chatRoom.getProduct().getProductName())  // 상품 이름 추가
+                    // 구매자 정보
+                    .buyerId(chatRoom.getBuyer().getUserId())
+                    .buyerName(chatRoom.getBuyer().getNickname())
+                    // 판매자 정보
+                    .sellerId(chatRoom.getProduct().getSeller().getUserId())
+                    .sellerName(chatRoom.getProduct().getSeller().getNickname())
+                    // 재입장인 경우에는 채팅 메시지는 null 처리
+                    .chatMessages(null)
+                    // 시간 정보
+                    .createdAt(chatRoom.getCreatedAt())
+                    .updatedAt(chatRoom.getUpdatedAt())
+                    .sellerLeftAt(chatRoom.getSellerLeftAt())
+                    .buyerLeftAt(chatRoom.getBuyerLeftAt())
+                    .build();
+
+            return chatRoomDTO;
         }
 
         // 4. 새 채팅방 생성 (구매자만 가능)
@@ -228,27 +256,7 @@ public class ChatService {
         User buyer = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
 
-        ChatRoom newChatRoom = createNewChatRoom(productId, userId);
-
-        ChatRoom savedChatRoom = chatRoomRepository.save(newChatRoom);
-        return ChatRoomDTO.from(savedChatRoom);
+        return createChatRoom(userId, productId);//새 채팅방 반환
     }
-
-    private ChatRoom createNewChatRoom(Long productId, String buyerId) {
-        Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new EntityNotFoundException("상품을 찾을 수 없습니다."));
-        User buyer = userRepository.findById(buyerId)
-                .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
-
-        return chatRoomRepository.save(
-                ChatRoom.builder()
-                        .product(product)
-                        .buyer(buyer)
-                        .build()
-        );
-    }
-
-
-
 
 }

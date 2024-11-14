@@ -90,13 +90,6 @@ public class ChatRoom {
         return false;
     }
 
-    @Builder
-    public ChatRoom(Product product, User buyer) {
-        this.product = product;
-        this.buyer = buyer;
-//        this.isSellerLeaved = false;
-//        this.isBuyerLeaved = false;
-    }
 
     // 정적 팩토리 메서드 추가
     public static ChatRoom createChatRoom(Product product, User buyer) {

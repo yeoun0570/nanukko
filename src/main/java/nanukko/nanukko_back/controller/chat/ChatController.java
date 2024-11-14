@@ -80,7 +80,6 @@ public class ChatController {
         return ResponseEntity.ok(chatRoomDTO);
     }
 
-
     /**
      * 채팅방 나가기
      */
