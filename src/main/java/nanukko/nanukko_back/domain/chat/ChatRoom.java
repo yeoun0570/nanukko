@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import nanukko.nanukko_back.domain.product.Product;
 import nanukko.nanukko_back.domain.user.User;
+import nanukko.nanukko_back.dto.chat.ChatRoomDTO;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
@@ -96,6 +97,20 @@ public class ChatRoom {
         return ChatRoom.builder()
                 .product(product)
                 .buyer(buyer)
+                .build();
+    }
+
+    // Entity -> DTO 변환 메서드
+    public static ChatRoomDTO from(ChatRoom chatRoom) {
+        return ChatRoomDTO.builder()
+                .chatRoomId(chatRoom.getChatRoomId())
+                .productId(chatRoom.getProduct().getProductId())
+                .productName(chatRoom.getProduct().getProductName())
+                .buyerId(chatRoom.getBuyer().getUserId())
+                .sellerId(chatRoom.getProduct().getSeller().getUserId())
+                .sellerName(chatRoom.getProduct().getSeller().getUserId()) // 또는 다른 표시명 필드가 있다면 그것을 사용
+                .createdAt(chatRoom.getCreatedAt())
+                .updatedAt(chatRoom.getUpdatedAt())
                 .build();
     }
 }

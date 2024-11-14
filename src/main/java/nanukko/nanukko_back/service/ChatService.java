@@ -49,9 +49,7 @@ public class ChatService {
                         (userId, userId, pageable);
 
         // 2단계: Entity를 DTO로 직접 변환
-        Page<ChatRoomDTO> dtoPage = chatRoomPage.map(
-                chatRoom -> modelMapper.map(chatRoom, ChatRoomDTO.class)
-        );
+        Page<ChatRoomDTO> dtoPage = chatRoomPage.map(ChatRoomDTO::from);
 
         // 3단계: Page<ChatRoomDTO>를 PageResponseDTO로 포장
         return new PageResponseDTO<>(dtoPage);
