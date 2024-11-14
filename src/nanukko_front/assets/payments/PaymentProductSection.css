@@ -1,0 +1,45 @@
+.payment-container {
+  margin-bottom: 20px;
+}
+
+.payment-container h2 {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 12px;
+}
+
+.product-section {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.product-info {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.thumbnail {
+  width: 48px;
+  height: 48px;
+  border-radius: 4px;
+  object-fit: cover;
+}
+
+.product-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.price {
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.product-name {
+  font-size: 14px;
+  color: #666;
+}
