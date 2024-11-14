@@ -4,37 +4,25 @@ import axios from "axios";
 const route = useRoute();
 const loading = ref(true);
 const error = ref(null);
+const buyerId = 'buyer1';
 
 onMounted(async () => {
   try {
-    // URL 쿼리 파라미터에서 결제 정보 가져오기
     const { orderId, paymentKey, amount, productId } = route.query;
-    console.log("Received payment data:", {
-      orderId,
-      paymentKey,
-      amount,
-      productId,
-    }); // 데이터 확인용
-
-        //백엔드의 OrderConfirmDTO 형식과 동일하게 데이터 구성해서 전송
-        const confirmData = {
-      paymentKey,
-      orderId,
-      amount: parseInt(amount),
-      productId: parseInt(productId),
-    };
-
-    // 결제 승인 요청
-    await axios.post("http://localhost:8080/api/payments/confirm", {
-      confirmData
-    });
-
-    if (confirmResponse.data && confirmResponse.data.status === "DONE") {
-      // 에스크로 전환은 백엔드에서 자동으로 처리됨
-      loading.value = false;
-    } else {
-      throw new Error("결제 승인이 실패했습니다.");
+    
+    if (!localStorage.getItem(`payment_${orderId}`)) {
+      await axios.post("http://localhost:8080/api/payments/confirm", {
+        paymentKey,
+        orderId,
+        amount: parseInt(amount),
+        productId: parseInt(productId),
+        buyerId: buyerId
+      });
+      
+      localStorage.setItem(`payment_${orderId}`, 'true');
     }
+    
+    loading.value = false;
   } catch (err) {
     console.error("결제 처리 중 오류:", err);
     error.value = "결제 처리 중 오류가 발생했습니다.";

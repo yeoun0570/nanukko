@@ -12,7 +12,7 @@ const loading = ref(false);
 const error = ref(null);
 const tossPayments = ref(null);
 const orderId = ref(null);
-const productId = 4;
+const productId = 1;
 
 provide("orderData", orderData);
 
@@ -53,17 +53,15 @@ const startPayment = async () => {
     //데이터 확인용 로그
     console.log("Payment Info:", paymentInfo);
 
-    // successUrl에 모든 필요한 정보를 포함
+    // successUrl에 필요한 정보만 포함
     const successUrl = new URL(`${window.location.origin}/payments/success`);
-    successUrl.searchParams.append("productId", productId); // 이 부분이 중요
 
-    //토스 페이먼츠 결제창 호출
     await tossPayments.value.requestPayment("카드", {
       amount: orderData.value.totalAmount,
       orderId: orderId.value,
       orderName: orderData.value.productName,
       customerName: orderData.value.nickname,
-      successUrl: successUrl.toString(),
+      successUrl: `${successUrl}?productId=${productId}`, // productId만 추가
       failUrl: `${window.location.origin}/payments/fail`,
     });
   } catch (error) {
