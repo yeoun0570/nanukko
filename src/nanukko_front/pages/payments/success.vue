@@ -4,24 +4,24 @@ import axios from "axios";
 const route = useRoute();
 const loading = ref(true);
 const error = ref(null);
-const buyerId = 'buyer1';
+const buyerId = "buyer1";
 
 onMounted(async () => {
   try {
     const { orderId, paymentKey, amount, productId } = route.query;
-    
+
     if (!localStorage.getItem(`payment_${orderId}`)) {
       await axios.post("http://localhost:8080/api/payments/confirm", {
         paymentKey,
         orderId,
         amount: parseInt(amount),
         productId: parseInt(productId),
-        buyerId: buyerId
+        buyerId: buyerId,
       });
-      
-      localStorage.setItem(`payment_${orderId}`, 'true');
+
+      localStorage.setItem(`payment_${orderId}`, "true");
     }
-    
+
     loading.value = false;
   } catch (err) {
     console.error("결제 처리 중 오류:", err);
@@ -42,7 +42,7 @@ onMounted(async () => {
 
     <div v-else class="success">
       <h1>결제가 완료되었습니다.</h1>
-      <h2>마이페이지 > 구매내역 에서 확인하세요</h2>
+      <p>마이페이지 > 구매내역 에서 확인하세요</p>
       <NuxtLink to="/" class="home-button">홈으로</NuxtLink>
     </div>
   </div>
