@@ -1,0 +1,59 @@
+.product-section {
+  background: white;
+  border-radius: 8px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.title {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+.product-info {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+}
+
+.info-icon {
+  color: #999;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.delivery-type {
+  color: #666;
+}
+
+.free {
+  color: #666;
+}
+
+.highlight {
+  color: #4a6ee0;
+}
+
+.total {
+  margin-top: 8px;
+  padding-top: 16px;
+  border-top: 1px solid #eee;
+  font-weight: bold;
+}
+
+.total-amount {
+  color: #f00;
+  font-size: 16px;
+}
+
+.amount {
+  font-weight: 500;
+}
