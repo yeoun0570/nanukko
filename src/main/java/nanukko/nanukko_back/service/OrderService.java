@@ -66,7 +66,6 @@ public class OrderService {
     }
 
 
-
     //토스 API와 통신할 HTTP 헤더 설정
     private HttpHeaders getHeaders() {
         HttpHeaders headers = new HttpHeaders();
@@ -80,7 +79,6 @@ public class OrderService {
 
     //결제 정보 상세 조회
     public OrderResponseDTO getPaymentDetail(String orderId) {
-
         Orders order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다."));
 
@@ -93,28 +91,30 @@ public class OrderService {
 
     @Transactional
     //결제 처리 메서드 -> 결제 정보 저장하고 에스크로로 홀딩 처리
-    public OrderResponseDTO processPayment(String paymentKey, String buyerId, Long productId) {
+    public OrderResponseDTO processPayment(OrderConfirmDTO confirmDTO) {
         try {
             double chargeRate = 0.035; //3.5% 수수료율
 
-            log.info("전달받은 값 - paymentKey: {}, buyerId: {}, productId: {}", paymentKey, buyerId, productId);
+            log.info("전달받은 값 - orderId: {}, buyerId: {}, productId: {}",
+                    confirmDTO.getOrderId(), confirmDTO.getBuyerId(), confirmDTO.getProductId());
 
             //구매자 조회
-            User buyer = userRepository.findById(buyerId)
+            User buyer = userRepository.findById(confirmDTO.getBuyerId())
                     .orElseThrow(() -> new IllegalArgumentException("구매자를 찾을 수 없습니다."));
 
             //상품 조회
-            Product product = productRepository.findById(productId)
+            Product product = productRepository.findById(confirmDTO.getProductId())
                     .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
 
-            log.info("결제 처리 시작 - paymentKey: {}, buyerId: {}, productId: {}",
-                    paymentKey, buyerId, productId);
+            log.info("결제 처리 시작 - orderId: {}, buyerId: {}, productId: {}",
+                    confirmDTO.getOrderId(), confirmDTO.getBuyerId(), confirmDTO.getProductId());
 
             //수수료 + 배송비 계산
             int productAmount = product.getPrice();
             int chargeAmount = (int) (productAmount * chargeRate);
             int shippingFree = product.getShippingFree();
             int totalAmount = productAmount + chargeAmount + shippingFree;
+
 
             //구매자의 잔액 확인
             if (buyer.getBalance() < totalAmount) {
@@ -124,21 +124,14 @@ public class OrderService {
             buyer.subtractBalance(totalAmount);
             userRepository.save(buyer);
             log.info("구매자 잔액 차감 - buyerId: {}, 차감액: {}, 남은 잔액: {}",
-                    buyerId, totalAmount, buyer.getBalance());
-
-
-            OrderResponseDTO tossResponse = getPaymentDetail(paymentKey);
-
-            log.info("토스페이먼츠 응답 - status: {}, orderId: {}, amount: {}",
-                    tossResponse.getStatus(), tossResponse.getOrderId(), totalAmount);
-
+                    confirmDTO.getBuyerId(), totalAmount, buyer.getBalance());
             //새로운 주문(결제) 엔티티 생성
             //받은 결제에 대해 그것을 에스크로 홀딩 시키고 VO에 저장
             Orders order = Orders.builder()
-                    .orderId(tossResponse.getOrderId())
+                    .orderId(confirmDTO.getOrderId())
                     .buyer(buyer)
                     .product(product)
-                    .paymentKey(paymentKey)
+                    .paymentKey(confirmDTO.getPaymentKey())
                     .productAmount(productAmount)
                     .chargeAmount(chargeAmount)
                     .shippingFree(shippingFree)
@@ -146,7 +139,6 @@ public class OrderService {
                     .status(PaymentStatus.ESCROW_HOLDING)
                     .createdAt(LocalDateTime.now())
                     .paidAt(LocalDateTime.now())
-                    .escrowDeadline(LocalDateTime.now().plusDays(14)) //에스크로 되고 14일 이후에 자동 구매 확정
                     .build();
             Orders savedOrder = orderRepository.save(order);
 
@@ -160,7 +152,7 @@ public class OrderService {
             return modelMapper.map(savedOrder, OrderResponseDTO.class);
         } catch (Exception e) {
             log.error("결제 처리 중 오류 발생 - productId: {}, error: {}",
-                    productId, e.getMessage());
+                    confirmDTO.getPaymentKey(), e.getMessage());
             // 트랜잭션 어노테이션으로 인해 자동 롤백됨
             throw new RuntimeException("결제 처리 실패", e);
         }
@@ -175,11 +167,8 @@ public class OrderService {
         //결제만 하면 결제 상태가 IN_PROGRESS 로 변경되고, 결제 승인하면 DONE 으로 변경됨
         //즉, IN_PROGRESS 과정에서 바로 DONE 으로 만들어주는 메서드
 
-        // 상품 조회하여 판매자 정보 가져오기
-        Product product = productRepository.findById(request.getProductId())
-                .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
-
-        String sellerId = product.getSeller().getUserId();  // 판매자 ID 가져오기
+        log.info("결제 승인 시작 - paymentKey: {}, productId: {}, buyerId: {}",
+                request.getPaymentKey(), request.getProductId(), request.getBuyerId());
 
 
         try {
@@ -210,11 +199,7 @@ public class OrderService {
             //결제 승인이 완료되면 에스크로 처리진행
             //위에 결제승인 API로 응답받은 body 가 null 값이 아니고 결제상태가 DONE 이면 진행
             if (response.getBody() != null && response.getBody().getStatus() == PaymentStatus.DONE) {
-                return processPayment(
-                        request.getPaymentKey(),
-                        sellerId,
-                        request.getProductId()
-                );
+                return processPayment(request);
             } else {
                 throw new RuntimeException("결제 승인 실패");
             }
@@ -323,9 +308,6 @@ public class OrderService {
 
         return modelMapper.map(order, OrderResponseDTO.class);
     }
-
-
-
 
 
     // 매일 자정에 실행되는 스케줄러
