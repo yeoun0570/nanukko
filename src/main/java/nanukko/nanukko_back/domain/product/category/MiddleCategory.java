@@ -1,4 +1,4 @@
-package nanukko.nanukko_back.domain.category;
+package nanukko.nanukko_back.domain.product.category;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;

@@ -1,8 +1,5 @@
 package nanukko.nanukko_back.domain.product;
 
-import jakarta.persistence.Embeddable;
-
-@Embeddable
 public enum Condition {
     NEW, //새거
     LIKE_NEW, //거의 새거

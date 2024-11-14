@@ -16,7 +16,6 @@ import java.time.LocalDateTime;
 public class Blacklist {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @NotNull
     @Column(name = "black_id")
     private Long blackId; //블랙리스트 ID
 

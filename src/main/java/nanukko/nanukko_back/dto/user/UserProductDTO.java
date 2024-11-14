@@ -10,8 +10,9 @@ import nanukko.nanukko_back.domain.product.ProductStatus;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-//사용자의 판매 상품 조회하기 위한 DTO
+//마이페이지에서 사용자의 판매 상품 조회하기 위한 DTO
 public class UserProductDTO {
+    private Long productId;
     private String thumbnailImage;
     private String productName;
     private int price;

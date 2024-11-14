@@ -1,9 +1,14 @@
 package nanukko.nanukko_back.domain.user;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
+import org.hibernate.annotations.ColumnDefault;
+import org.springframework.format.annotation.DateTimeFormat;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Getter
@@ -50,7 +55,8 @@ public class User {
 
     @Column(name = "b_date")
     @NotNull
-    private LocalDateTime userBirth; //생년월일
+    @DateTimeFormat(pattern = "yyyy-MM-dd")
+    private LocalDate userBirth; //생년월일
 
     @NotNull
     private String email; //이메일
@@ -60,10 +66,11 @@ public class User {
     private UserAddress address; // 주소 모음
 
     @NotNull
-    private int score; //신뢰도 점수
-
-    @NotNull
-    private String status; //사용자 상태
+    @Column(name = "review_rate")
+    @ColumnDefault("50")
+    @Min(0)
+    @Max(100)
+    private double reviewRate; //신뢰도 점수
 
     @NotNull
     @Column(name = "is_canceled")
@@ -92,15 +99,28 @@ public class User {
 
     //사용자 정보를 수정하기 위한 메서드
     public void updateUserInfo(
+            String nickname,
             String mobile,
             String email,
             UserAddress address,
             String profile
     ) {
+        this.nickname = nickname;
         this.mobile = mobile;
         this.email = email;
         this.address = address;
         this.profile = profile;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    //상점 평점 평균 구하기
+    public void updateReviewRate(double reviewRate) {
+        this.reviewRate = reviewRate;
+    }
+    
+    //탈퇴를 위한 메서드
+    public void cancelUser(){
+        this.isCanceled = true;
         this.updatedAt = LocalDateTime.now();
     }
 }

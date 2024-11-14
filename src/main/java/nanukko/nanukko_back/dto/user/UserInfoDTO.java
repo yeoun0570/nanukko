@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.*;
 import org.springframework.format.annotation.DateTimeFormat;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.List;
 
 @Data
@@ -17,16 +17,16 @@ public class UserInfoDTO {
     private String userId;
     private String nickname;
     private String password;
-    @JsonFormat(pattern = "yyyy년 MM월 dd일")
+    @JsonFormat(pattern = "yyyy-MM-dd")
     @DateTimeFormat(pattern = "yyyy-MM-dd")
-    private LocalDateTime userBirth;
+    private LocalDate userBirth;
     private String mobile;
     private String email;
     private boolean gender;
     private String addrMain;
     private String addrDetail;
     private String addrZipcode;
-    private int score;
+    private double reviewRate;
     private String profile;
     private List<KidInfoDTO> kids;
 }

@@ -61,6 +61,7 @@ public class OrderService {
                 .addrDetail(buyer.getAddress().getAddrDetail())
                 .addrZipcode(buyer.getAddress().getAddrZipcode())
                 .mobile(buyer.getMobile())
+                .shippingFree(product.getShippingFree())
                 .build();
     }
 
@@ -109,10 +110,11 @@ public class OrderService {
             log.info("결제 처리 시작 - paymentKey: {}, buyerId: {}, productId: {}",
                     paymentKey, buyerId, productId);
 
-            //수수료 계산
+            //수수료 + 배송비 계산
             int productAmount = product.getPrice();
             int chargeAmount = (int) (productAmount * chargeRate);
-            int totalAmount = productAmount + chargeAmount;
+            int shippingFree = product.getShippingFree();
+            int totalAmount = productAmount + chargeAmount + shippingFree;
 
             //구매자의 잔액 확인
             if (buyer.getBalance() < totalAmount) {
@@ -139,6 +141,7 @@ public class OrderService {
                     .paymentKey(paymentKey)
                     .productAmount(productAmount)
                     .chargeAmount(chargeAmount)
+                    .shippingFree(shippingFree)
                     .totalAmount(totalAmount)
                     .status(PaymentStatus.ESCROW_HOLDING)
                     .createdAt(LocalDateTime.now())
@@ -232,7 +235,7 @@ public class OrderService {
 
         //판매자 계좌에 금액 추가
         User seller = order.getProduct().getSeller();
-        seller.addBalance(order.getProductAmount());
+        seller.addBalance(order.getProductAmount() + order.getShippingFree());
         userRepository.save(seller);
         log.info("판매자 잔액 증가 - sellerId: {}, 증가액: {}, 최종 잔액: {}",
                 seller.getUserId(), order.getTotalAmount(), seller.getBalance());

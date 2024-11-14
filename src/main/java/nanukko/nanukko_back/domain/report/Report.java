@@ -17,7 +17,6 @@ import java.time.LocalDateTime;
 public class Report {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @NotNull
     @Column(name = "report_id")
     private Long reportId; //신고 ID
 

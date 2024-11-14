@@ -1,4 +1,4 @@
-package nanukko.nanukko_back.domain.category;
+package nanukko.nanukko_back.domain.product.category;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
@@ -15,11 +15,7 @@ import java.util.List;
 public class MajorCategory {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @NotNull
     private Long majorId; // 대분류 카테고리 ID
-
-    @OneToMany(mappedBy = "major", fetch = FetchType.LAZY)
-    private List<MiddleCategory> middleCategories; //중분류 카테고리 ID (FK)
 
     @NotNull
     @Column(name = "major_name")
