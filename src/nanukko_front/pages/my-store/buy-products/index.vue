@@ -1,6 +1,6 @@
 <script setup>
 import axios from 'axios';
-import Pageination from '~/components/Pageination.vue';
+import Pagination from '~/components/Pagination.vue';
 import OrdersGrid from '~/components/my-store/buy-products/OrdersGrid.vue';
 import StatusFilter from '~/components/my-store/buy-products/StatusFilter.vue';
 
@@ -58,7 +58,7 @@ onMounted(() => {
       @orders-updated="loadUserOrders"
     />
 
-    <Pageination
+    <Pagination
       v-if="totalPages > 1"
       :currentPage="currentPage"
       :totalPages="totalPages"

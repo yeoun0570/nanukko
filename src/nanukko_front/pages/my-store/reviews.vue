@@ -2,7 +2,7 @@
 import axios from "axios";
 import ReviewList from "~/components/my-store/reviews/ReviewList.vue";
 import StoreScore from "~/components/my-store/reviews/StoreScore.vue";
-import Pageination from "~/components/Pageination.vue";
+import Pagination from "~/components/Pagination.vue";
 
 const reviewInfo = ref([]);
 const userId = "seller1";
@@ -48,7 +48,7 @@ onMounted(() => {
     <div v-if="reviewInfo.length > 0">
       <StoreScore :reviewRate="reviewRate" />
       <ReviewList :reviews="reviewInfo" />
-      <Pageination
+      <Pagination
         v-if="totalPages > 1"
         :currentPage="currentPage"
         :totalPages="totalPages"

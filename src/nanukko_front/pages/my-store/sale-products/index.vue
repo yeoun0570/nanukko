@@ -2,7 +2,7 @@
 import axios from "axios";
 import ProductsGrid from "~/components/my-store/sale-products/ProductsGrid.vue";
 import StatusFilter from "~/components/my-store/sale-products/StatusFilter.vue";
-import Pageination from "~/components/Pageination.vue";
+import Pageination from "~/components/Pagination.vue";
 
 const userProducts = ref([]);
 const userId = "seller1"; //추후에 로그인 한 유저로 변경
