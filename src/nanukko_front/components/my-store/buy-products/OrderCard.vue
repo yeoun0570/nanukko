@@ -6,6 +6,10 @@ const props = defineProps({
     type: Object,
     required: true,
   },
+  userId: {
+    type: String,
+    required: true,
+  },
 });
 
 const emit = defineEmits(["order-updated"]);
@@ -69,7 +73,16 @@ const cancelOrder = async () => {
 };
 
 const goToWriteReview = async () => {
-  await navigateTo("/"); //추후에 후기작성 경로로 수정
+  console.log("Order data:", props.order); // 데이터 확인
+  await navigateTo({
+    path: "/my-store/buy-products/write-review",
+    query: {
+      orderId: props.order.orderId,
+      userId: props.userId,
+      productName: props.order.productName,
+      thumbnailImage: props.order.thumbnailImage,
+    },
+  });
 };
 </script>
 
