@@ -1,10 +1,10 @@
 <script setup>
 import axios from "axios";
-import AddressInfo from "~/components/my-store/AddressInfo.vue";
-import BasicInfo from "~/components/my-store/BasicInfo.vue";
-import KidsInfo from "~/components/my-store/KidsInfo.vue";
-import LoginInfo from "~/components/my-store/LoginInfo.vue";
-import ProfileImage from "~/components/my-store/ProfileImage.vue";
+import AddressInfo from "~/components/my-store/userInfo/AddressInfo.vue";
+import BasicInfo from "~/components/my-store/userInfo/BasicInfo.vue";
+import KidsInfo from "~/components/my-store/userInfo/KidsInfo.vue";
+import LoginInfo from "~/components/my-store/userInfo/LoginInfo.vue";
+import ProfileImage from "~/components/my-store/userInfo/ProfileImage.vue";
 
 const userInfo = ref({});
 const loading = ref(true);
