@@ -139,7 +139,7 @@ public class UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
-        Page<Product> products = productRepository.findBySellerAndStatusOrderByCreatedAtDesc(user, status, pageable);
+        Page<Product> products = productRepository.findBySellerAndStatusAndIsDeletedFalseOrderByCreatedAtDesc(user, status, pageable);
 
         Page<UserProductDTO> dtoPage = products.map(product -> UserProductDTO.builder()
                 .productId(product.getProductId())
@@ -267,7 +267,11 @@ public class UserService {
                 .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
 
 
-        product.removeProduct(true);
+        if(product.getStatus() != ProductStatus.RESERVED) {
+            product.removeProduct(true);
+        } else {
+            throw new IllegalArgumentException("예약중인 상품은 삭제할 수 없습니다.");
+        }
 
         return UserRemoveProductDTO.builder()
                 .isDeleted(product.isDeleted())
