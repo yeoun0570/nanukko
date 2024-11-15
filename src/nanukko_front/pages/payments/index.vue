@@ -101,6 +101,6 @@ const startPayment = async () => {
   </div>
 </template>
 
-<style scoped>
-@import url("../../assets/payments/paymentTest.css");
+<style>
+@import url("../../assets/payments/payment.css");
 </style>

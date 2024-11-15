@@ -10,8 +10,8 @@ defineProps({
 <template>
   <div class="payment-container">
     <h2>상품 정보</h2>
-    <div class="product-section">
-      <div class="product-info">
+    <div class="product-info-section">
+      <div class="product-info-content">
         <img
           :src="productData.thumbnailImage"
           alt="상품 이미지"
@@ -25,7 +25,3 @@ defineProps({
     </div>
   </div>
 </template>
-
-<style scoped>
-@import url('../../assets/payments/PaymentProductSection.css');
-</style>
