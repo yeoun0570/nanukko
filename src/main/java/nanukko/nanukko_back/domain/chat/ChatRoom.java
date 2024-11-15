@@ -24,12 +24,12 @@ public class ChatRoom {
     @Column(name = "chat_room_id")
     private Long chatRoomId; //채팅방 ID
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id")
     @NotNull
     private Product product; // 상품 ID (FK)
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     @NotNull
     private User buyer; // 구매자 ID (FK)
@@ -44,10 +44,10 @@ public class ChatRoom {
     private LocalDateTime updatedAt; //수정 날짜
 
     @Column(name = "seller_left_at")
-    private LocalDateTime sellerLeftAt=null;
+    private LocalDateTime sellerLeftAt=null;//판매자 나간 시점
 
     @Column(name = "buyer_left_at")
-    private LocalDateTime buyerLeftAt=null;
+    private LocalDateTime buyerLeftAt=null;//구매자 나간 시점
 
     // 판매자/구매자 여부 확인
     public boolean isSeller(String userId) {
@@ -72,14 +72,6 @@ public class ChatRoom {
         }
     }
 
-    // 재입장 처리 (나가기 시간 null로 설정)
-    public void clearLeftAt(String userId) {
-        if (isSeller(userId)) {
-            this.sellerLeftAt = null;
-        } else if (isBuyer(userId)) {
-            this.buyerLeftAt = null;
-        }
-    }
 
     // 이미 나간 상태인지 확인
     public boolean isAlreadyLeft(String userId) {

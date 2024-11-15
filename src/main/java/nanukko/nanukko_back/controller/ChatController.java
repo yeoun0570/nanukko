@@ -69,14 +69,17 @@ public class ChatController {
         return ResponseEntity.ok(chatRooms);// ResponseEntity.ok(): HTTP 200 응답과 함께 데이터 반환
     }
 
-    /*새 채팅방 생성*/
-    @PostMapping("newChat")
+    /*채팅방 생성*/
+    @PostMapping("getChat")
     public ResponseEntity<ChatRoomDTO> createChatRoom(//@AuthenticationPrincipal UserDetails userDetails  // 현재 로그인한 사용자(시큐리티)
                                                       @RequestParam Long productId,
-                                                      @RequestParam String userId
+                                                      @RequestParam String userId,
+                                                      @RequestParam(defaultValue = "0") int page,
+                                                      @RequestParam(defaultValue = "50") int size
 
     ){
-        ChatRoomDTO chatRoomDTO = chatService.getOrCreateChatRoom(userId, productId);
+        Pageable pageable = PageRequest.of(page, size);
+        ChatRoomDTO chatRoomDTO = chatService.createOrReturnToChatRoom(userId, productId, pageable);
         return ResponseEntity.ok(chatRoomDTO);
     }
 
@@ -85,9 +88,15 @@ public class ChatController {
      */
     @MessageMapping("/chat/leave")
     @SendTo("/topic/chat.{roomId}")
-    public ChatMessageDTO leaveRoom(@DestinationVariable Long chatRoomId,
-                                    String userId) throws AccessDeniedException {
-        return chatService.leaveChatRoom(chatRoomId, userId);
+    public ResponseEntity<PageResponseDTO<ChatRoomDTO>> leaveRoom(@DestinationVariable Long chatRoomId,
+                                                                  @RequestParam String userId,
+                                                                  @RequestParam(defaultValue = "0")int page, // 페이지 번호(기본값 0)
+                                                                  @RequestParam(defaultValue = "30")int size // 한 페이지당 데이터 수(기본값 30)
+    ) throws AccessDeniedException {
+        chatService.leaveChatRoom(chatRoomId, userId);//채팅방 나감 처리 후
+        Pageable pageable = PageRequest.of(page, size);
+        PageResponseDTO<ChatRoomDTO> chatRooms = chatService.getChatRooms(userId, pageable);// 나간 상태의 채팅방 목록 반환
+        return ResponseEntity.ok(chatRooms);
     }
 
     /*채팅방 삭제*/

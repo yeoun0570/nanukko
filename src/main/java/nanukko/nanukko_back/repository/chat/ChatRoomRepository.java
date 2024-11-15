@@ -14,13 +14,6 @@ import java.util.Optional;
 
 public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
     //채팅방 목록 조회
-//    @Query("SELECT c FROM ChatRoom c WHERE c.buyer = :userId OR c.product.seller = :userId")
-//    Page<ChatRoom> findChatRoomsByUserId(@Param("userId") String userId, Pageable pageable);
-//
-//    Page<ChatRoom> findByBuyer_UserIdOrProduct_Seller_UserId(String userId, String sameUserId, Pageable pageable);
-
-
-
     // 단일 ChatRoom 타입으로 반환
     @EntityGraph(attributePaths = {"product", "product.seller", "buyer"})
     @Query("SELECT c FROM ChatRoom c " +
