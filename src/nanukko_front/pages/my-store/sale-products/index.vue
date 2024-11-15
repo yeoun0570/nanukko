@@ -29,14 +29,14 @@ const loadUserProducts = async (page = 0) => {
     userProducts.value = response.data.content; //백의 PageResponseDTO의 실제 데이터를 가리키는 content
     totalPages.value = response.data.totalPages; //백의 PageResponseDTO의 전체 페이지수 = totalPages
     currentPage.value = response.data.currentPage; //백의 PageResponseDTO의 현재 페이지 = currentPage
-    console.log('데이터 로드됨: ', userProducts.value);
+    console.log("데이터 로드됨: ", userProducts.value);
   } catch (error) {
     console.error("로딩중 에러: ", error);
   }
 };
 
 const handleStatusChange = async (newStatus) => {
-  console.log('상태 변경: ', newStatus);
+  console.log("상태 변경: ", newStatus);
   currentStatus.value = newStatus;
   currentPage.value = 0; //상태 변경시 첫 페이지로 리셋
   await loadUserProducts();
@@ -53,9 +53,10 @@ onMounted(() => {
 </script>
 
 <template>
-  <div>
+  <div class="product-modify-page">
     <h1>내 판매 상품</h1>
-    
+    <hr color="black" />
+    <br />
 
     <StatusFilter
       :currentStatus="currentStatus"
