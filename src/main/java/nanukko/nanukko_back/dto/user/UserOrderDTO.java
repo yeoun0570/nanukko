@@ -12,6 +12,7 @@ import nanukko.nanukko_back.domain.order.PaymentStatus;
 @Builder
 //사용자의 구매 상품을 조회하기 위한 DTO
 public class UserOrderDTO {
+    private String orderId;
     private String thumbnailImage;
     private String productName;
     private int price;
