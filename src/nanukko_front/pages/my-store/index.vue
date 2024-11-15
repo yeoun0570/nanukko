@@ -9,7 +9,7 @@ import ProfileImage from "~/components/my-store/ProfileImage.vue";
 const userInfo = ref({});
 const loading = ref(true);
 const error = ref(null);
-const userId = "buyer1"; //테스트를 위한 사용자 아이디 임의로 설정
+const userId = "buyer2"; //테스트를 위한 사용자 아이디 임의로 설정
 const isEditing = ref(false); //수정 모드
 
 const toggleEdit = () => {
@@ -88,7 +88,7 @@ onMounted(() => {
     <hr color="black" />
     <br />
     <div class="info-container">
-      <ProfileImage :profile="userInfo.profile"></ProfileImage>
+      <ProfileImage v-model:profile="userInfo.profile"></ProfileImage>
       <div class="section-header">
         <p class="section-title">우리 부모님은요</p>
         <button v-if="!isEditing" @click="toggleEdit" class="edit-button">
@@ -123,7 +123,7 @@ onMounted(() => {
     </div>
     <br />
 
-    <NuxtLink v-if="!isEditing" to="/my-store/remove" class="remove-user"
+    <NuxtLink v-if="!isEditing" :to="`/my-store/remove?userId=${userId}`" class="remove-user"
       >탈퇴하기</NuxtLink
     >
   </div>
