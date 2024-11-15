@@ -284,9 +284,10 @@ public class UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
-        Page<Orders> orders = orderRepository.findByBuyerAndStatusOrderByCreatedAtDesc(user, status, pageable);
+        Page<Orders> orders = orderRepository.findByBuyerAndStatusAndProductIsDeletedFalseOrderByCreatedAtDesc(user, status, pageable);
 
         Page<UserOrderDTO> dtoPage = orders.map(order -> UserOrderDTO.builder()
+                .orderId(order.getOrderId())
                 .thumbnailImage(order.getProduct().getThumbnailImage())
                 .productName(order.getProduct().getProductName())
                 .price(order.getProductAmount())
