@@ -17,7 +17,7 @@ console.log('UserId:', userId);
 // 상품 정보 수정
 const updateProduct = async () => {
   try {
-    const response = await axios.post(
+    await axios.post(
       "http://localhost:8080/api/my-store/sale-products/modify",
       productInfo.value,
       {

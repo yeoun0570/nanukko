@@ -33,7 +33,7 @@ const removeProduct = async () => {
   console.log("userId: ", props.userId);
   console.log("productId: ", props.product.productId);
   try {
-    const response = await axios.post(
+    await axios.post(
       "http://localhost:8080/api/my-store/sale-products/remove",
       null,
       {

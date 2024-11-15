@@ -1,5 +1,5 @@
 <script setup>
-import { provide, ref, onMounted } from "vue";
+import { ref, onMounted } from "vue";
 import axios from "axios";
 import PaymentProductSection from "~/components/payments/PaymentProductSection.vue";
 import DeliverySection from "~/components/payments/DeliverySection.vue";
