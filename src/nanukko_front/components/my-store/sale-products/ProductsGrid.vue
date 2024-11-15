@@ -1,5 +1,5 @@
 <script setup>
-import ProductCard from './ProductCard.vue';
+import ProductCard from "./ProductCard.vue";
 
 defineProps({
   products: {
@@ -20,7 +20,7 @@ const handleProductUpdate = () => {
 </script>
 
 <template>
-  <div v-if="products.length > 0" class="products-grid">
+  <div v-if="products.length > 0" class="products-list">
     <ProductCard
       v-for="product in products"
       :key="product.productId"
@@ -29,5 +29,5 @@ const handleProductUpdate = () => {
       @product-updated="handleProductUpdate"
     />
   </div>
-  <div v-else>등록된 상품이 없습니다.</div>
+  <div v-else class="no-products">등록된 상품이 없습니다.</div>
 </template>
