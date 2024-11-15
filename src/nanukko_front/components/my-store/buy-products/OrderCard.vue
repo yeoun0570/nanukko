@@ -1,5 +1,5 @@
 <script setup>
-import axios from 'axios';
+import axios from "axios";
 
 const props = defineProps({
   order: {
@@ -67,6 +67,10 @@ const cancelOrder = async () => {
       error.response?.data?.message || "결제 취소 중 오류가 발생했습니다.";
   }
 };
+
+const goToWriteReview = async () => {
+  await navigateTo("/"); //추후에 후기작성 경로로 수정
+};
 </script>
 
 <template>
@@ -104,6 +108,13 @@ const cancelOrder = async () => {
           class="cancel-btn"
         >
           결제 취소
+        </button>
+        <button
+          v-if="order.status === 'ESCROW_RELEASED'"
+          @click="goToWriteReview"
+          class="goReview-btn"
+        >
+          후기 쓰기
         </button>
       </div>
     </div>
