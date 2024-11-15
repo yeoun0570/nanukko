@@ -58,6 +58,7 @@ public class UserService {
 
         return UserInfoDTO.builder()
                 .userId(user.getUserId())
+                .password(user.getPassword())
                 .nickname(user.getNickname())
                 .password(user.getPassword())
                 .userBirth(user.getUserBirth())
