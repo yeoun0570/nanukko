@@ -141,7 +141,7 @@ hr {
 
 /* 왼쪽 장식 바 */
 .section-title::before {
-  content: '';
+  content: "";
   position: absolute;
   left: 0;
   top: 50%;
@@ -278,6 +278,25 @@ hr {
   padding-bottom: 0;
 }
 
+.add-kid-btn {
+  width: 100%;
+  padding: 1rem;
+  background: #e9ecef;
+  border: 2px dashed #adb5bd;
+  border-radius: 12px;
+  color: #495057;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 1rem;
+}
+
+.add-kid-btn:hover {
+  background: #f8f9fa;
+  border-color: #868e96;
+  color: #212529;
+}
+
 /* LoginInfo 섹션 */
 .login-info {
   background: #f8f9fa;
@@ -324,7 +343,6 @@ hr {
 .profile-image img:hover {
   transform: scale(1.05);
 }
-
 
 /* 반응형 디자인 */
 @media (max-width: 768px) {

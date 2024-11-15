@@ -12,8 +12,21 @@ const error = ref(null);
 const userId = "buyer2"; //테스트를 위한 사용자 아이디 임의로 설정
 const isEditing = ref(false); //수정 모드
 
+// 원본 데이터 저장용 ref 추가
+const originalUserInfo = ref(null);
+
 const toggleEdit = () => {
+  if (!isEditing.value) {
+    // 수정 모드 진입 시 현재 데이터 복사
+    originalUserInfo.value = JSON.parse(JSON.stringify(userInfo.value));
+  }
   isEditing.value = !isEditing.value;
+};
+
+// 취소 버튼 클릭 시 원본 데이터로 복구
+const cancelEdit = () => {
+  userInfo.value = JSON.parse(JSON.stringify(originalUserInfo.value));
+  isEditing.value = false;
 };
 
 const updateUserInfo = async () => {
@@ -23,6 +36,7 @@ const updateUserInfo = async () => {
 
     const updateData = {
       userId: userId,
+      password: userInfo.value.password,
       nickname: userInfo.value.nickname,
       mobile: userInfo.value.mobile,
       email: userInfo.value.email,
@@ -37,6 +51,8 @@ const updateUserInfo = async () => {
         kidGender: kid.kidGender,
       })),
     };
+
+    console.log(updateData);
 
     await axios.post(
       `http://localhost:8080/api/my-store/modify`,
@@ -68,6 +84,7 @@ const loadUserInfo = async () => {
     );
     console.log("받아온 데이터:", response.data); // 데이터 확인
     userInfo.value = response.data;
+    originalUserInfo.value = JSON.parse(JSON.stringify(response.data));
   } catch (err) {
     error.value = "사용자 정보를 불러오는데 실패했습니다.";
     console.error("Error loading user info:", err);
@@ -95,7 +112,7 @@ onMounted(() => {
           수정
         </button>
       </div>
-      <LoginInfo :userId="userId" :password="password"></LoginInfo>
+      <LoginInfo :userId="userId" :password="userInfo.password"></LoginInfo>
       <BasicInfo
         v-model:nickname="userInfo.nickname"
         v-model:email="userInfo.email"
@@ -119,7 +136,7 @@ onMounted(() => {
       <button @click="updateUserInfo" :disabled="loading" class="save-button">
         {{ loading ? "저장 중..." : "저장" }}
       </button>
-      <button @click="toggleEdit" class="cancel-button">취소</button>
+      <button @click="cancelEdit" class="cancel-button">취소</button>
     </div>
     <br />
 

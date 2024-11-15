@@ -14,6 +14,15 @@ const updateKid = (index, field, value) => {
   updatedKids[index] = { ...updatedKids[index], [field]: value };
   emit("update:kids", updatedKids);
 };
+
+const addKid = () => {
+  const updatedKids = [...props.kids];
+  updatedKids.push({
+    kidBirth: null,
+    kidGender: true,
+  });
+  emit("update:kids", updatedKids);
+};
 </script>
 
 <template>
@@ -47,4 +56,7 @@ const updateKid = (index, field, value) => {
       </div>
     </div>
   </div>
+  <button v-if="isEditing" @click="addKid" class="add-kid-btn">
+    자녀 추가
+  </button>
 </template>
