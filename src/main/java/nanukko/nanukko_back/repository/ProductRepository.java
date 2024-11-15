@@ -10,5 +10,5 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Long> {
     //마이페이지 판매 상품을 페이징처리하여 조회하기 위해 사용될 메서드
-    Page<Product> findBySellerAndStatusOrderByCreatedAtDesc(User seller, ProductStatus status, Pageable pageable);
+    Page<Product> findBySellerAndStatusAndIsDeletedFalseOrderByCreatedAtDesc(User seller, ProductStatus status, Pageable pageable);
 }
