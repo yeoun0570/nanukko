@@ -1,0 +1,128 @@
+/* 메인 컨테이너 */
+.reviews-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.main-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+/* 상점 점수 */
+.store-score {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.store-score h2 {
+  font-size: 1.25rem;
+  color: #666;
+}
+
+.store-score span {
+  color: #2196f3;
+  font-weight: 700;
+  font-size: 1.5rem;
+}
+
+/* 리뷰 리스트 */
+.reviews-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.review-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.review-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.profile-section {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.profile-image {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.author-name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.rating {
+  background: #f8f9fa;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+}
+
+.rate {
+  color: #2196f3;
+  font-weight: 600;
+}
+
+.product-info {
+  margin: 1rem 0;
+  padding: 0.75rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.product-name {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.review-content {
+  color: #333;
+  line-height: 1.5;
+}
+
+.no-reviews {
+  text-align: center;
+  padding: 3rem;
+  color: #666;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .reviews-container {
+    padding: 1rem;
+  }
+
+  .review-card {
+    padding: 1rem;
+  }
+
+  .profile-image {
+    width: 32px;
+    height: 32px;
+  }
+}
