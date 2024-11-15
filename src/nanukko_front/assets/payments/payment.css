@@ -1,0 +1,217 @@
+/* styles/payment/PaymentTest.css */
+.order-page {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* PaymentAmountSection */
+.amount-section {
+  background: white;
+  border-radius: 8px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.title {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+.product-info {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+}
+
+.info-icon {
+  color: #999;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.delivery-type {
+  color: #666;
+}
+
+.free {
+  color: #666;
+}
+
+.highlight {
+  color: #4a6ee0;
+}
+
+.total {
+  margin-top: 8px;
+  padding-top: 16px;
+  border-top: 1px solid #eee;
+  font-weight: bold;
+}
+
+.total-amount {
+  color: #f00;
+  font-size: 16px;
+}
+
+.amount {
+  font-weight: 500;
+}
+
+/* PaymentProductSection */
+.payment-container {
+  margin-bottom: 20px;
+}
+
+.payment-container h2 {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 12px;
+}
+
+.product-info-section {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.product-info-content {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.thumbnail {
+  width: 48px;
+  height: 48px;
+  border-radius: 4px;
+  object-fit: cover;
+}
+
+.product-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.price {
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.product-name {
+  font-size: 14px;
+  color: #666;
+}
+
+/* DelieverySection */
+.delivery-container {
+  margin-bottom: 20px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.header h2 {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.edit-button {
+  color: #666;
+  font-size: 14px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+.delivery-section {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.delivery-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.name-tag {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.name {
+  font-weight: bold;
+  font-size: 15px;
+}
+
+.badge {
+  font-size: 12px;
+  color: #666;
+  padding: 2px 6px;
+  background-color: #f5f5f5;
+  border-radius: 4px;
+}
+
+.address {
+  color: #333;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.phone {
+  color: #666;
+  font-size: 14px;
+}
+
+/* PaymentButton */
+.payment-button {
+  background: #000;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 1rem 2rem;
+  font-size: 1rem;
+  font-weight: 600;
+  width: 100%;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin: 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.payment-button:hover {
+  background: #333;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+.payment-button:active {
+  transform: translateY(0);
+}
+
+.payment-button:disabled {
+  background: #e9ecef;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
