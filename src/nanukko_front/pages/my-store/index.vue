@@ -39,7 +39,7 @@ const updateUserInfo = async () => {
     };
 
     await axios.post(
-      `http://localhost:8080/api/my-store/info/modify`,
+      `http://localhost:8080/api/my-store/modify`,
       updateData
     );
     alert("정보가 성공적으로 수정되었습니다.");

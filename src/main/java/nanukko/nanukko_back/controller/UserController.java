@@ -31,7 +31,7 @@ public class UserController {
     }
 
     //사용자가 자신의 정보 수정
-    @PostMapping("/info/modify")
+    @PostMapping("/modify")
     public ResponseEntity<UserInfoDTO> modifyUserInfo(
             //@AuthenticationPrincipal UserDetails userDetails  // 현재 로그인한 사용자(시큐리티)
             @RequestBody UserInfoDTO userInfoDTO
