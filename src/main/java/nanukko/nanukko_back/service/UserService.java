@@ -268,7 +268,7 @@ public class UserService {
                 .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
 
 
-        if(product.getStatus() != ProductStatus.RESERVED) {
+        if (product.getStatus() != ProductStatus.RESERVED) {
             product.removeProduct(true);
         } else {
             throw new IllegalArgumentException("예약중인 상품은 삭제할 수 없습니다.");
@@ -335,13 +335,13 @@ public class UserService {
         User user = userRepository.findById(reviewDTO.getAuthorId())
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
-        Product product = productRepository.findById(reviewDTO.getProductId())
+        Orders order = orderRepository.findById(reviewDTO.getOrderId())
                 .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
 
         //후기 DTO에서 VO로 변환해서 저장
         Review review = Review.builder()
                 .user(user)
-                .product(product)
+                .product(order.getProduct())
                 .rate(reviewDTO.getRate())
                 .createdAt(LocalDateTime.now())
                 .review(reviewDTO.getReview())
@@ -349,16 +349,14 @@ public class UserService {
         reviewRepository.save(review);
 
         //후기 작성하고 판매자의 상점 평점 평균 계산하기(사용자의 총 점수 / 사용자의 총 리뷰 수)
-        User seller = product.getSeller();
+        User seller = order.getProduct().getSeller();
         double averageScore = reviewRepository.averageRateByProductSeller(seller);
         seller.updateReviewRate(averageScore);
         userRepository.save(seller); //Transactional 때문에 안써도 되나?
 
 
         return ReviewRegisterDTO.builder()
-                .reviewId(review.getReviewId())
-//                .authorId(review.getAuthorId().getUserId())
-//                .productId(review.getProduct().getProductId())
+                .authorId(review.getUser().getUserId())
                 .rate(review.getRate())
                 .review(review.getReview())
                 .build();
