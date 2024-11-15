@@ -7,6 +7,7 @@ import nanukko.nanukko_back.domain.product.ProductStatus;
 import nanukko.nanukko_back.dto.page.PageResponseDTO;
 import nanukko.nanukko_back.dto.review.ReviewInMyStoreDTO;
 import nanukko.nanukko_back.dto.user.*;
+import nanukko.nanukko_back.exception.ErrorResponse;
 import nanukko.nanukko_back.service.UserService;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -140,11 +141,16 @@ public class UserController {
     
     //탈퇴하기
     @PostMapping("/remove")
-    public ResponseEntity<UserRemoveDTO> removeUser(
+    public ResponseEntity<?> removeUser(
             //@AuthenticationPrincipal UserDetails userDetails  // 현재 로그인한 사용자(시큐리티)
             @RequestParam String userId
     ) {
-        UserRemoveDTO response = userService.removeUser(userId);
-        return ResponseEntity.ok(response);
+        try {
+            UserRemoveDTO result = userService.removeUser(userId);
+            return ResponseEntity.ok(result);
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            return ResponseEntity.badRequest()
+                    .body(new ErrorResponse(e.getMessage()));
+        }
     }
 }
