@@ -18,6 +18,11 @@ import java.util.List;
 @ToString(exclude = {"chatMessages", "product", "buyer"})//순환 참조를 없애는 설정
 @Entity
 @EntityListeners(AuditingEntityListener.class)
+@Table(indexes = {//인덱스 추가 설정
+        @Index(name = "idx_chat_room_buyer", columnList = "buyer_id"),
+        @Index(name = "idx_chat_room_product", columnList = "product_id"),
+        @Index(name = "idx_chat_room_updated", columnList = "updated_at")
+})
 public class ChatRoom {
     @Id  // @Id 만으로도 not null 제약조건 포함
     @GeneratedValue(strategy = GenerationType.IDENTITY)

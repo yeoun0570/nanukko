@@ -263,7 +263,7 @@ public class ChatService {
         chatRoom.updateLeftAt(userId);
         chatRoomRepository.save(chatRoom);
 
-        // 시스템 메시지 저장
+        // 시스템 메시지 저장 -> 추후에 쓸지도?
 //        ChatMessages leaveMessage = ChatMessages.builder()
 //                .chatRoom(chatRoom)
 //                .sender(userRepository.findById(userId).orElseThrow()) //사용자가 보내줄 메시지가 아니라서 필요 없을 듯하나,,user not null 처리 고민해보기
@@ -306,15 +306,6 @@ public class ChatService {
         // 3. 기존 채팅방이 있는 경우
         if (existingChatRoom.isPresent()) {
             ChatRoom chatRoom = existingChatRoom.get();
-
-            // 판매자/구매자 각각의 나가기 상태 처리
-//            if (product.getSeller().getUserId().equals(userId) && chatRoom.getSellerLeftAt() != null) {
-//                chatRoom.clearLeftAt(userId);  // 판매자 재입장
-//                chatRoomRepository.save(chatRoom);
-//            } else if (!product.getSeller().getUserId().equals(userId) && chatRoom.getBuyerLeftAt() != null) {
-//                chatRoom.clearLeftAt(userId);  // 구매자 재입장
-//                chatRoomRepository.save(chatRoom);
-//            }
 
             // 재입장인 경우 재입장 시점 이전 메시지는 필터링 해서 제외시키고 목록 들고오기, Page의 getContent() 메서드 사용해서 List로 변환 후 다시 dto list 변경
             List<ChatMessageDTO> messageDTOList = chatMessageRepository
