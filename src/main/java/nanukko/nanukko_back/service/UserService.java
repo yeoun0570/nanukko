@@ -220,6 +220,7 @@ public class UserService {
                 productDTO.isCompanion(),
                 productDTO.isCompanionGender(),
                 productDTO.isFreeShipping(),
+                productDTO.getShippingFree(),
                 LocalDateTime.now()
         );
 
