@@ -1,6 +1,8 @@
 <script setup>
 import axios from "axios";
 
+const router = useRouter();
+
 const props = defineProps({
   product: {
     type: Object,
@@ -15,10 +17,17 @@ const props = defineProps({
 const emit = defineEmits(["product-updated"]);
 
 const goToModify = () => {
-  navigateTo({
-    path: "/my-store/sale-products/modify",
+  console.log('goToModify - productId: ', props.product.productId);
+  console.log('goToModify - userId: ', props.userId);
+  console.log('goToModify - product: ', props.product);
+
+  router.push({
+    path: '/my-store/sale-products/modify?productId',
     query: {
+      userId: props.userId,
       productId: props.product.productId,
+    },
+    state: {
       productInfo: props.product,
     },
   });
