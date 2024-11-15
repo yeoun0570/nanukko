@@ -5,7 +5,6 @@ import BasicInfoFrom from "~/components/my-store/sale-products/modify/BasicInfoF
 import ButtonGroup from "~/components/my-store/sale-products/modify/ButtonGroup.vue";
 import TransactionForm from "~/components/my-store/sale-products/modify/TransactionForm.vue";
 
-const router = useRouter();
 const route = useRoute();
 const { productId, userId } = route.query;
 const productInfo = ref(route.state?.productInfo || {});
@@ -37,7 +36,7 @@ const updateProduct = async () => {
 };
 
 const handleCancel = () => {
-  router.back();
+  navigateTo('/my-store/sale-products');
 };
 
 const updateProductInfo = (field, value) => {
