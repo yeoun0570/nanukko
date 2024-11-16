@@ -2,9 +2,8 @@ package nanukko.nanukko_back.domain.notification;
 
 public enum NotificationType {
     CHAT,
-    WISHLIST,
-    OFFER,
+    PAYMENT,
+    DELIVERY,
     REVIEW,
-    NOTICE,
     WARNING
 }
