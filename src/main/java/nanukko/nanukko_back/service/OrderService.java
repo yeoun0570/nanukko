@@ -3,6 +3,7 @@ package nanukko.nanukko_back.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import nanukko.nanukko_back.config.RestTemplateConfig;
+import nanukko.nanukko_back.config.TossPaymentsConfig;
 import nanukko.nanukko_back.domain.order.Orders;
 import nanukko.nanukko_back.domain.order.PaymentStatus;
 import nanukko.nanukko_back.domain.product.Product;
@@ -36,7 +37,8 @@ public class OrderService {
     private final OrderRepository orderRepository;
     //RestTemplate : REST API를 호출하고 응답할 때까지 기다리는 동기 방식
     private final RestTemplateConfig restTemplate;
-    private final String secretKey = "test_sk_DnyRpQWGrN5Xzapz6XA0VKwv1M9E:";
+    private final NotificationService notificationService;
+    private final TossPaymentsConfig tossPaymentsConfig;
 
     //결제창 페이지에 출력할 데이터 정의
     public OrderPageDTO getOrder(Long productId, String userId) {
@@ -70,7 +72,7 @@ public class OrderService {
     private HttpHeaders getHeaders() {
         HttpHeaders headers = new HttpHeaders();
         //토스에선 Base64로 시크릿키를 인코딩 시켜줘야 한다.
-        String encodedAuth = Base64.getEncoder().encodeToString(secretKey.getBytes());
+        String encodedAuth = Base64.getEncoder().encodeToString(tossPaymentsConfig.getSecretKey().getBytes());
         //헤더 설정은 인가한다는 Authorization를 키로, Basic 에 인코딩된 시크릿키를 값으로 보내면 됨(JSON형태)
         headers.set("Authorization", "Basic " + encodedAuth);
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -148,6 +150,9 @@ public class OrderService {
 
             log.info("상품 상태 변경 완료 - productId: {}, status: {}",
                     product.getProductId(), product.getStatus());
+
+            //결제완료 했을 시 판매자에게 알림 전송
+            notificationService.sendConfirmPaymentToSeller(product.getSeller().getUserId(), product.getProductId());
 
             return modelMapper.map(savedOrder, OrderResponseDTO.class);
         } catch (Exception e) {
@@ -262,7 +267,7 @@ public class OrderService {
         String url = "https://api.tosspayments.com/v1/payments/" + paymentKey + "/release";
 
         HttpHeaders headers = new HttpHeaders();
-        String authHeader = "Basic " + Base64.getEncoder().encodeToString((secretKey + ":").getBytes());
+        String authHeader = "Basic " + Base64.getEncoder().encodeToString((tossPaymentsConfig.getSecretKey()).getBytes());
         headers.set("Authorization", authHeader);
         headers.setContentType(MediaType.APPLICATION_JSON);
 
@@ -295,8 +300,6 @@ public class OrderService {
         if (order.getStatus() != PaymentStatus.ESCROW_HOLDING) {
             throw new IllegalStateException("에스크로 상태에서만 취소가 가능합니다.");
         }
-        
-        //배송이 시작되면 취소 불가능하도록 만드는 작업 추가 필요
 
         //구매자에게 전체 금액 환불
         User buyer = order.getBuyer();
