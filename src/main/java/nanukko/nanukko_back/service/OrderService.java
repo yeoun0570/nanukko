@@ -295,6 +295,8 @@ public class OrderService {
         if (order.getStatus() != PaymentStatus.ESCROW_HOLDING) {
             throw new IllegalStateException("에스크로 상태에서만 취소가 가능합니다.");
         }
+        
+        //배송이 시작되면 취소 불가능하도록 만드는 작업 추가 필요
 
         //구매자에게 전체 금액 환불
         User buyer = order.getBuyer();
