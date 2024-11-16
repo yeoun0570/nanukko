@@ -8,14 +8,14 @@ import PaymentButton from "~/components/payments/PaymentButton.vue";
 
 //추후에 상세페이지에서 라우팅 받으면 받아야 될 값
 const route = useRoute();
-const productId = route.query.productId;
+// const productId = route.query.productId;
 
 const orderData = ref(null);
 const loading = ref(false);
 const error = ref(null);
 const tossPayments = ref(null);
 const orderId = ref(null);
-// const productId = 1;
+const productId = 3;
 
 const loadOrderPage = async () => {
   try {
