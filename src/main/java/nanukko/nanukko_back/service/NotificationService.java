@@ -13,6 +13,7 @@ import nanukko.nanukko_back.repository.UserRepository;
 import nanukko.nanukko_back.repository.notification.EmitterRepository;
 import nanukko.nanukko_back.repository.notification.NotificationRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
@@ -70,6 +71,7 @@ public class NotificationService {
 
     //클라이언트가 알림을 구독하는 기능을 가진 메서드
     //즉, Emitter 만들어서 반환하여 클라이언트와 서버가 연결을 지속할 수 있도록 만드는 메서드
+    @Transactional
     public SseEmitter subscribe(String userId, String lastEventId) {
         // Emitter 아이디 생성
         String emitterId = makeTimeIncludeId(userId);
@@ -87,7 +89,7 @@ public class NotificationService {
         String eventId = makeTimeIncludeId(userId);
         NotificationResponseDTO dummyNotification = NotificationResponseDTO.builder()
                 .content("연결이 성공적으로 완료되었습니다.")
-                .type(NotificationType.PAYMENT)
+                .type(NotificationType.CONNECT)
                 .isRead(false)
                 .createdAt(LocalDateTime.now())
                 .build();
@@ -120,38 +122,49 @@ public class NotificationService {
 
 
     //알림 데이터를 생성하고 그것을 클라이언트한테 전달하는 메서드
-    private void send(User receiver, NotificationType type, String content, String url) {
-        //파라미터로 받은 값들을 저장
-        Notification notification = notificationRepository.save(
-                createNotification(receiver, type, content, url)
-        );
+    @Transactional
+    public void send(User receiver, NotificationType type, String content, String url) {
+        try {
+            log.info("알림 전송 시작 - userId: {}, type: {}", receiver.getUserId(), type);
 
-        //userId를 찾아서 선언하고 그것을 이용하여 eventId 생성
-        String userId = receiver.getUserId();
-        String eventId = userId + "_" + System.currentTimeMillis();
+            //파라미터로 받은 값들을 저장
+            Notification notification = notificationRepository.save(
+                    createNotification(receiver, type, content, url)
+            );
 
-        //찾은 사용자에 대한 Emitter 찾기
-        Map<String, SseEmitter> emitters = emitterRepository.findAllEmitterStartWithByUserId(userId);
-        //찾은 Emitter 에 이벤트 저장하고 그에 맞는 알림 데이터 설정
-        emitters.forEach(
-                (key, emitter) -> {
-                    emitterRepository.saveEventCache(key, notification);
-                    sendNotification(emitter, eventId, key, NotificationResponseDTO.builder()
-                            .notificationId(notification.getNoticeId())
-                            .type(notification.getType())
-                            .url(notification.getUrl())
-                            .isRead(notification.isRead())
-                            .content(notification.getContent())
-                            .createdAt(LocalDateTime.now())
-                            .build());
-                }
-        );
+            //userId를 찾아서 선언하고 그것을 이용하여 eventId 생성
+            String userId = receiver.getUserId();
+            String eventId = userId + "_" + System.currentTimeMillis();
+
+            //찾은 사용자에 대한 Emitter 찾기
+            Map<String, SseEmitter> emitters = emitterRepository.findAllEmitterStartWithByUserId(userId);
+            //찾은 Emitter 에 이벤트 저장하고 그에 맞는 알림 데이터 설정
+            emitters.forEach(
+                    (key, emitter) -> {
+                        emitterRepository.saveEventCache(key, notification);
+                        sendNotification(emitter, eventId, key, NotificationResponseDTO.builder()
+                                .notificationId(notification.getNoticeId())
+                                .type(notification.getType())
+                                .url(notification.getUrl())
+                                .isRead(notification.isRead())
+                                .content(notification.getContent())
+                                .createdAt(notification.getCreatedAt())
+                                .build());
+                    }
+            );
+        } catch (Exception e) {
+            log.error("알림 전송 중 에러 발생: ", e);
+            throw new RuntimeException("알림 전송 실패", e);
+        }
     }
 
     //////////////////////////////////////여기서부턴 알림 보내기위한 메서드 구현
 
     //사용자가 자신이 판매하는 상품이 결제가 되었을 때 배송해달라는 알림
+    @Transactional
     public void sendConfirmPaymentToSeller(String userId, Long productId) {
+        log.info("판매자 결제 확인 알림 전송 시작 - userId: {}, productId: {}", userId, productId);
+
         User receiver = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
@@ -160,8 +173,9 @@ public class NotificationService {
 
 
         String content = "상품이 판매되었습니다. 확인하고 배송을 보내주세요!";
-        String url = frontendURL.getUrl() + "/payments/sale-products?productId=" + product.getProductId();
+        String url = frontendURL.getUrl() + "/my-store/sale-products";
 
         send(receiver, NotificationType.PAYMENT, content, url);
+        log.info("판매자 결제 확인 알림 전송 완료");
     }
 }
