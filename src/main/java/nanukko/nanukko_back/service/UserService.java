@@ -25,7 +25,6 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -40,6 +39,7 @@ public class UserService {
     private final WishlistRepository wishlistRepository;
     private final MiddleCategoryRepository middleCategoryRepository;
     private final ReviewRepository reviewRepository;
+    private final NotificationService notificationService;
 
     //사용자의 내 정보 조회
     @Transactional(readOnly = true)
@@ -380,6 +380,12 @@ public class UserService {
                 .createdAt(LocalDateTime.now())
                 .review(reviewDTO.getReview())
                 .build();
+        
+        //판매자에게 리뷰 작성 알림 전송
+        notificationService.sendConfirmReview(
+                order.getProduct().getSeller().getUserId(), user.getNickname()
+        );
+
         return reviewRepository.save(review);
     }
 
