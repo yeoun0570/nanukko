@@ -5,7 +5,6 @@ import lombok.extern.log4j.Log4j2;
 import nanukko.nanukko_back.config.FrontendURL;
 import nanukko.nanukko_back.domain.notification.Notification;
 import nanukko.nanukko_back.domain.notification.NotificationType;
-import nanukko.nanukko_back.domain.product.Product;
 import nanukko.nanukko_back.domain.user.User;
 import nanukko.nanukko_back.dto.notification.NotificationResponseDTO;
 import nanukko.nanukko_back.repository.ProductRepository;
@@ -18,6 +17,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -71,7 +71,6 @@ public class NotificationService {
 
     //클라이언트가 알림을 구독하는 기능을 가진 메서드
     //즉, Emitter 만들어서 반환하여 클라이언트와 서버가 연결을 지속할 수 있도록 만드는 메서드
-    @Transactional
     public SseEmitter subscribe(String userId, String lastEventId) {
         // Emitter 아이디 생성
         String emitterId = makeTimeIncludeId(userId);
@@ -158,18 +157,49 @@ public class NotificationService {
         }
     }
 
-    //////////////////////////////////////여기서부턴 알림 보내기위한 메서드 구현
+    // 이전 알림 조회
+    @Transactional(readOnly = true)
+    public List<NotificationResponseDTO> getPreviousNotifications(String userId) {
+        List<Notification> notifications = notificationRepository.findByReceiverUserIdOrderByCreatedAtDesc(userId);
+
+        return notifications.stream()
+                .map(notification -> NotificationResponseDTO.builder()
+                        .notificationId(notification.getNoticeId())
+                        .type(notification.getType())
+                        .url(notification.getUrl())
+                        .isRead(notification.isRead())
+                        .content(notification.getContent())
+                        .createdAt(notification.getCreatedAt())
+                        .build())
+                .toList();
+    }
+
+    //////////////////////////////////////여기서부턴 알림 보내기위한 메서드 구현(공통으로 사용할 애들)
+
+    //사용자 검색
+    @Transactional(readOnly = true)
+    protected User findAndValidateUser(String userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+    }
+
+    //상품 검색
+    @Transactional(readOnly = true)
+    protected void findAndValidateProduct(Long productId) {
+        productRepository.findById(productId)
+                .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
+    }
+
+    //////////////////////////////////////여기서부턴 알림 보내기위한 메서드 구현(판매자)
 
     //사용자가 자신이 판매하는 상품이 결제가 되었을 때 배송해달라는 알림
     @Transactional
     public void sendConfirmPaymentToSeller(String userId, Long productId) {
         log.info("판매자 결제 확인 알림 전송 시작 - userId: {}, productId: {}", userId, productId);
 
-        User receiver = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
-
-        Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
+        // DB 조회 및 검증
+        User receiver = findAndValidateUser(userId);
+        findAndValidateProduct(productId);
 
 
         String content = "상품이 판매되었습니다. 확인하고 배송을 보내주세요!";
@@ -178,4 +208,56 @@ public class NotificationService {
         send(receiver, NotificationType.PAYMENT, content, url);
         log.info("판매자 결제 확인 알림 전송 완료");
     }
+
+    // 결제가 취소되었다는 알림
+    @Transactional
+    public void sendCancelPaymentToSeller(String userId, Long productId) {
+        // DB 조회 및 검증
+        User receiver = findAndValidateUser(userId);
+        findAndValidateProduct(productId);
+
+        String content = "결제가 취소되었습니다. 상품을 확인해주세요.";
+        String url = frontendURL.getUrl() + "/my-store/sale-products";
+
+        send(receiver, NotificationType.PAYMENT, content, url);
+        log.info("판매자 결제 취소 알림 전송 완료");
+    }
+
+    // 구매 확정 확인하라는 알림
+    @Transactional
+    public void sendConfirmPurchaseToSeller(String userId, Long productId) {
+        // DB 조회 및 검증
+        User receiver = findAndValidateUser(userId);
+        findAndValidateProduct(productId);
+
+        String content = "구매가 확정되었습니다. 상품을 확인해주세요.";
+        String url = frontendURL.getUrl() + "/my-store/sale-products";
+
+        send(receiver, NotificationType.PAYMENT, content, url);
+        log.info("판매자 구매 확정 알림 전송 완료");
+    }
+
+    // 리뷰 작성 완료 알림
+    @Transactional
+    public void sendConfirmReview(String userId, String buyerName) {
+        // DB 조회 및 검증
+        User receiver = findAndValidateUser(userId);
+
+        String content = buyerName + "님이 리뷰를 작성주었어요! 확인해보세요!";
+        String url = frontendURL.getUrl() + "/my-store/reviews";
+
+        send(receiver, NotificationType.REVIEW, content, url);
+        log.info("판매자 구매 확정 알림 전송 완료");
+    }
+
+    //추가되어야될 알림
+    //배송시작?
+    //배송완료
+    //입금완료..?
+
+    //////////////////////////////////////여기서부턴 알림 보내기위한 메서드 구현(구매자)
+
+    //추가되어야될 알림
+    //배송시작
+    //배송완료(구매확정, 리뷰작성요청)
 }
