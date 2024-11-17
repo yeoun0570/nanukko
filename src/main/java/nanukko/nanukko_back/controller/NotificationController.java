@@ -1,11 +1,14 @@
 package nanukko.nanukko_back.controller;
 
 import lombok.RequiredArgsConstructor;
+import nanukko.nanukko_back.dto.notification.NotificationResponseDTO;
 import nanukko.nanukko_back.service.NotificationService;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -22,5 +25,14 @@ public class NotificationController {
     ) {
         SseEmitter emitter = notificationService.subscribe(userId, lastEventId);
         return ResponseEntity.ok(emitter);
+    }
+
+    // 이전 알림 조회
+    @GetMapping("/previous")
+    public List<NotificationResponseDTO> getPreviousNotifications(
+            //@AuthenticationPrincipal UserDetails userDetails  // 현재 로그인한 사용자(시큐리티)
+            @RequestParam String userId
+    ) {
+        return notificationService.getPreviousNotifications(userId);
     }
 }
