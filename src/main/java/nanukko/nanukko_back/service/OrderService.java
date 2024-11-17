@@ -267,6 +267,10 @@ public class OrderService {
             }
         });
 
+        // 판매자에게 구매확정 알림 전송
+        notificationService.sendConfirmPurchaseToSeller(
+                order.getProduct().getSeller().getUserId(), order.getProduct().getProductId());
+
         return modelMapper.map(order, OrderResponseDTO.class);
     }
 
@@ -351,6 +355,11 @@ public class OrderService {
 
         // 상품 판매 상태로 재변경
         updateProductCancelOrder(order);
+
+        //판매자에게 결제 취소 알림 전송
+        notificationService.sendCancelPaymentToSeller(
+                order.getProduct().getSeller().getUserId(), order.getProduct().getProductId()
+        );
 
         return modelMapper.map(order, OrderResponseDTO.class);
     }
