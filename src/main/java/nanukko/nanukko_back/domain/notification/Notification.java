@@ -25,6 +25,7 @@ public class Notification {
     private User receiver; //알림 받는 사용자 아이디
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "type", length = 20)  // 길이 명시
     @NotNull
     private NotificationType type; //알림 타입
 
