@@ -1,5 +1,4 @@
 <script setup>
-import { ref, onMounted } from "vue";
 import axios from "axios";
 import PaymentProductSection from "~/components/payments/PaymentProductSection.vue";
 import DeliverySection from "~/components/payments/DeliverySection.vue";
@@ -15,7 +14,7 @@ const loading = ref(false);
 const error = ref(null);
 const tossPayments = ref(null);
 const orderId = ref(null);
-const productId = 3;
+const productId = 7;
 
 const loadOrderPage = async () => {
   try {
@@ -23,6 +22,13 @@ const loadOrderPage = async () => {
       `http://localhost:8080/api/payments/page/${productId}`
     );
     orderData.value = response.data;
+    console.log(orderData.value.status);
+    if (response.data.status !== "SELLING") {
+      alert("판매중인 상품이 아닙니다.");
+      // 이전 페이지로 돌아가기
+      navigateTo('/');
+      return;
+    }
   } catch (error) {
     console.log("주문 페이지 로딩 실패: ", error);
   }
@@ -46,7 +52,7 @@ const startPayment = async () => {
 
     const paymentInfo = {
       productId: productId,
-      buyerId: "buyer1",
+      buyerId: "buyer1", // 추후에 로그인한 사용자로 변경
       amount: orderData.value.totalAmount,
       productName: orderData.value.productName,
     };
