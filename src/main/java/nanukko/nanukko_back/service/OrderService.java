@@ -19,6 +19,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.http.*;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -26,6 +27,7 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 @RequiredArgsConstructor
@@ -41,6 +43,7 @@ public class OrderService {
     private final TossPaymentsConfig tossPaymentsConfig;
 
     //결제창 페이지에 출력할 데이터 정의
+    @Transactional(readOnly = true)
     public OrderPageDTO getOrder(Long productId, String userId) {
         User buyer = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
@@ -55,6 +58,7 @@ public class OrderService {
         return OrderPageDTO.builder()
                 .thumbnailImage(product.getThumbnailImage())
                 .productName(product.getProductName())
+                .status(product.getStatus())
                 .price(product.getPrice())
                 .chargeAmount(chargeAmount)
                 .totalAmount(totalAmount)
@@ -80,6 +84,7 @@ public class OrderService {
     }
 
     //결제 정보 상세 조회
+    @Transactional(readOnly = true)
     public OrderResponseDTO getPaymentDetail(String orderId) {
         Orders order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다."));
@@ -91,70 +96,21 @@ public class OrderService {
         return dto;
     }
 
-    @Transactional
+    @Transactional(timeout = 30)
     //결제 처리 메서드 -> 결제 정보 저장하고 에스크로로 홀딩 처리
     public OrderResponseDTO processPayment(OrderConfirmDTO confirmDTO) {
         try {
-            double chargeRate = 0.035; //3.5% 수수료율
+            // 핵심 결제 처리 로직만 별도 트랜잭션으로 분리
+            OrderResponseDTO result = processPaymentCore(confirmDTO);
 
-            log.info("전달받은 값 - orderId: {}, buyerId: {}, productId: {}",
-                    confirmDTO.getOrderId(), confirmDTO.getBuyerId(), confirmDTO.getProductId());
-
-            //구매자 조회
-            User buyer = userRepository.findById(confirmDTO.getBuyerId())
-                    .orElseThrow(() -> new IllegalArgumentException("구매자를 찾을 수 없습니다."));
-
-            //상품 조회
-            Product product = productRepository.findById(confirmDTO.getProductId())
-                    .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
-
-            log.info("결제 처리 시작 - orderId: {}, buyerId: {}, productId: {}",
-                    confirmDTO.getOrderId(), confirmDTO.getBuyerId(), confirmDTO.getProductId());
-
-            //수수료 + 배송비 계산
-            int productAmount = product.getPrice();
-            int chargeAmount = (int) (productAmount * chargeRate);
-            int shippingFree = product.getShippingFree();
-            int totalAmount = productAmount + chargeAmount + shippingFree;
+            // 결제완료 했을 시 판매자에게 알림 전송
+            notificationService.sendConfirmPaymentToSeller(
+                    result.getSellerId(),
+                    result.getProductId()
+            );
 
 
-            //구매자의 잔액 확인
-            if (buyer.getBalance() < totalAmount) {
-                throw new IllegalArgumentException("잔액이 부족합니다.");
-            }
-            //구매자 잔액 차감
-            buyer.subtractBalance(totalAmount);
-            userRepository.save(buyer);
-            log.info("구매자 잔액 차감 - buyerId: {}, 차감액: {}, 남은 잔액: {}",
-                    confirmDTO.getBuyerId(), totalAmount, buyer.getBalance());
-            //새로운 주문(결제) 엔티티 생성
-            //받은 결제에 대해 그것을 에스크로 홀딩 시키고 VO에 저장
-            Orders order = Orders.builder()
-                    .orderId(confirmDTO.getOrderId())
-                    .buyer(buyer)
-                    .product(product)
-                    .paymentKey(confirmDTO.getPaymentKey())
-                    .productAmount(productAmount)
-                    .chargeAmount(chargeAmount)
-                    .shippingFree(shippingFree)
-                    .totalAmount(totalAmount)
-                    .status(PaymentStatus.ESCROW_HOLDING)
-                    .createdAt(LocalDateTime.now())
-                    .paidAt(LocalDateTime.now())
-                    .build();
-            Orders savedOrder = orderRepository.save(order);
-
-            //결제 상태 예약중으로 변경
-            product.updateStatus(ProductStatus.RESERVED);
-            productRepository.save(product);
-
-            log.info("상품 상태 변경 완료 - productId: {}, status: {}",
-                    product.getProductId(), product.getStatus());
-
-            //결제완료 했을 시 판매자에게 알림 전송
-            notificationService.sendConfirmPaymentToSeller(product.getSeller().getUserId(), product.getProductId());
-
-            return modelMapper.map(savedOrder, OrderResponseDTO.class);
+            return result;
         } catch (Exception e) {
             log.error("결제 처리 중 오류 발생 - productId: {}, error: {}",
                     confirmDTO.getPaymentKey(), e.getMessage());
@@ -163,7 +119,76 @@ public class OrderService {
         }
     }
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    protected OrderResponseDTO processPaymentCore(OrderConfirmDTO confirmDTO) {
+        double chargeRate = 0.035; //3.5% 수수료율
+
+        log.info("전달받은 값 - orderId: {}, buyerId: {}, productId: {}",
+                confirmDTO.getOrderId(), confirmDTO.getBuyerId(), confirmDTO.getProductId());
+
+        //구매자 조회
+        User buyer = userRepository.findById(confirmDTO.getBuyerId())
+                .orElseThrow(() -> new IllegalArgumentException("구매자를 찾을 수 없습니다."));
+
+        //상품 조회
+        Product product = productRepository.findById(confirmDTO.getProductId())
+                .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
+
+        log.info("결제 처리 시작 - orderId: {}, buyerId: {}, productId: {}",
+                confirmDTO.getOrderId(), confirmDTO.getBuyerId(), confirmDTO.getProductId());
+
+        //수수료 + 배송비 계산
+        int productAmount = product.getPrice();
+        int chargeAmount = (int) (productAmount * chargeRate);
+        int shippingFree = product.getShippingFree();
+        int totalAmount = productAmount + chargeAmount + shippingFree;
+
+
+        //구매자의 잔액 확인
+        if (buyer.getBalance() < totalAmount) {
+            throw new IllegalArgumentException("잔액이 부족합니다.");
+        }
+        //구매자 잔액 차감
+        buyer.subtractBalance(totalAmount);
+        userRepository.save(buyer);
+        log.info("구매자 잔액 차감 - buyerId: {}, 차감액: {}, 남은 잔액: {}",
+                confirmDTO.getBuyerId(), totalAmount, buyer.getBalance());
+        //새로운 주문(결제) 엔티티 생성
+        //받은 결제에 대해 그것을 에스크로 홀딩 시키고 VO에 저장
+        Orders order = Orders.builder()
+                .orderId(confirmDTO.getOrderId())
+                .buyer(buyer)
+                .product(product)
+                .paymentKey(confirmDTO.getPaymentKey())
+                .productAmount(productAmount)
+                .chargeAmount(chargeAmount)
+                .shippingFree(shippingFree)
+                .totalAmount(totalAmount)
+                .status(PaymentStatus.ESCROW_HOLDING)
+                .createdAt(LocalDateTime.now())
+                .paidAt(LocalDateTime.now())
+                .build();
+        Orders savedOrder = orderRepository.save(order);
+
+        //결제 상태 예약중으로 변경
+        product.updateStatus(ProductStatus.RESERVED);
+        productRepository.save(product);
+        log.info("상품 상태 변경 완료 - productId: {}, status: {}",
+                product.getProductId(), product.getStatus());
+
+        // ModelMapper 사용 전에 명시적으로 값을 설정
+        OrderResponseDTO responseDTO = modelMapper.map(savedOrder, OrderResponseDTO.class);
+        responseDTO.setProductId(product.getProductId());
+        responseDTO.setSellerId(product.getSeller().getUserId());
+
+        // 값이 제대로 설정되었는지 로그로 확인
+        log.info("알림 전송을 위한 정보 - sellerId: {}, productId: {}",
+                responseDTO.getSellerId(), responseDTO.getProductId());
+
+        return responseDTO;
+    }
+
+    @Transactional(timeout = 30)
     //결제 자동 승인 처리 메서드
     public OrderResponseDTO confirmPayment(OrderConfirmDTO request) {
         //결제 승인 처리해주는 메서드
@@ -226,39 +251,57 @@ public class OrderService {
             throw new IllegalArgumentException("에스크로 상태가 아닙니다.");
         }
 
-        //판매자 계좌에 금액 추가
-        User seller = order.getProduct().getSeller();
-        seller.addBalance(order.getProductAmount() + order.getShippingFree());
-        userRepository.save(seller);
-        log.info("판매자 잔액 증가 - sellerId: {}, 증가액: {}, 최종 잔액: {}",
-                seller.getUserId(), order.getTotalAmount(), seller.getBalance());
+        // 판매자 정산 처리
+        processSellerPayment(order);
 
-        //주문 상태 업데이트
-        try {
-
-            //테스트 시크릿 키로는 에스크로 API 호출 불가능하여 스킵. 즉, 실패해도 진행되도록 try-catch 처리
-            //토스 페이먼츠 API를 호출하여 판매자에게 돈을 이체
+        // 상태 업데이트
+        updateOrderAndProductStatus(order);
+        // 에스크로 해제는 비동기로 처리
+        CompletableFuture.runAsync(() -> {
             try {
                 releaseEscrowPayment(order.getPaymentKey());
-                log.info("에스크로 해재 완료 - paymentKey: {}", order.getPaymentKey());
+                log.info("에스크로 해제 완료 - paymentKey: {}", order.getPaymentKey());
             } catch (Exception e) {
-                log.warn("에스크로 해제 API 호출 실패 (테스트 환경인 현재는 무시) - error: {}", e.getMessage());
+                log.warn("에스크로 해제 실패 (무시됨) - paymentKey: {}, error: {}",
+                        order.getPaymentKey(), e.getMessage());
             }
-            order.updateReleased(PaymentStatus.ESCROW_RELEASED, LocalDateTime.now());
-        } catch (Exception e) {
-            log.error("구매 확정 처리 실패 - orderId: {}", orderId, e);
-            throw new RuntimeException("구매 확정 처리에 실패했습니다.", e);
-        }
-
-        //상품 판매완료 상태로 변경
-        Product product = order.getProduct();
-        product.updateStatus(ProductStatus.SOLD_OUT);
-        productRepository.save(product);
-
-        log.info("상품 상태 변경 완료 - productId: {}, status: {}",
-                product.getProductId(), product.getStatus());
+        });
 
         return modelMapper.map(order, OrderResponseDTO.class);
+    }
+
+    //판매자 계좌에 금액 추가 메서드 별도의 트랜잭션으로 관리(커넥션 풀 때문에)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    protected void processSellerPayment(Orders order) {
+        try {
+            User seller = order.getProduct().getSeller();
+            seller.addBalance(order.getProductAmount() + order.getShippingFree());
+            userRepository.save(seller);
+            log.info("판매자 잔액 증가 - sellerId: {}, 증가액: {}, 최종 잔액: {}",
+                    seller.getUserId(), order.getTotalAmount(), seller.getBalance());
+        } catch (Exception e) {
+            log.error("판매자 정산 처리 실패 - orderId: {}, error: {}",
+                    order.getOrderId(), e.getMessage());
+            throw e; // 상위로 예외를 전파하여 전체 트랜잭션 롤백
+        }
+    }
+
+    //주문 상태 업데이트 하는것 별도의 트랜잭션으로 관리(커넥션 풀 때문에)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    protected void updateOrderAndProductStatus(Orders order) {
+        try {
+            // 주문 상태 업데이트
+            order.updateReleased(PaymentStatus.ESCROW_RELEASED, LocalDateTime.now());
+
+            // 상품 상태 업데이트
+            Product product = order.getProduct();
+            product.updateStatus(ProductStatus.SOLD_OUT);
+            productRepository.save(product);
+        } catch (Exception e) {
+            log.error("주문/상품 상태 업데이트 실패 - orderId: {}, error: {}",
+                    order.getOrderId(), e.getMessage());
+            throw e; // 상위로 예외를 전파하여 전체 트랜잭션 롤백
+        }
     }
 
     //구매 확정하여 에스크로 해제
@@ -300,18 +343,43 @@ public class OrderService {
         if (order.getStatus() != PaymentStatus.ESCROW_HOLDING) {
             throw new IllegalStateException("에스크로 상태에서만 취소가 가능합니다.");
         }
+        // 환불 처리
+        processRefund(order);
 
-        //구매자에게 전체 금액 환불
-        User buyer = order.getBuyer();
-        buyer.addBalance(order.getTotalAmount());
-        userRepository.save(buyer);
-
+        // 주문 취소 처리
         order.cancel();
 
-        //수수료 컬럼을 삭제해야되나? 아니면 테이블을 따로 파서 거기서 우리 계좌 자금 임의로 생성하고 차감해야되나?
-
+        // 상품 판매 상태로 재변경
+        updateProductCancelOrder(order);
 
         return modelMapper.map(order, OrderResponseDTO.class);
+    }
+
+    // 금액 환불 별도의 트랜잭션 처리(커넥션풀 최적화)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    protected void processRefund(Orders order) {
+        try {
+            //구매자에게 전체 금액 환불
+            User buyer = order.getBuyer();
+            buyer.addBalance(order.getTotalAmount());
+            userRepository.save(buyer);
+        } catch (Exception e) {
+            log.error("환불 취소 실패 - orderId: {}, error: {}",
+                    order.getOrderId(), e.getMessage());
+            throw e;
+        }
+    }
+
+    // 주문 취소로 인한 상품 상태 판매로 변경 - 별도의 트랜잭션 처리(커넥션풀 최적화)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    protected void updateProductCancelOrder(Orders order) {
+        try {
+            Product product = order.getProduct();
+            product.updateStatus(ProductStatus.SELLING);
+        } catch (Exception e) {
+            log.error("상품 재판매 상태 업데이트 실패 - orderId: {}, error: {}",
+                    order.getOrderId(), e.getMessage());
+        }
     }
 
 
