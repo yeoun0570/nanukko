@@ -31,16 +31,17 @@ const connectSSE = () => {
     try {
       // 수신한 데이터 파싱해서 알림 추가
       const notification = JSON.parse(event.data);
+
+      if(notification.type === 'CONNECT') {
+        console.log("알림 연결 성공!");
+        return;
+      }
+
       addNotification(notification);
     } catch (error) {
       console.error("알림 데이터 처리 중 오류 발생: ", error);
     }
   });
-
-  // 연결 성공 시 실행될 콜백
-  eventSource.value.onopen = () => {
-    console.log("알림 연결 성공!");
-  };
 
   // 에러 발생 시 실행될 콜백
   eventSource.value.onerror = (error) => {
