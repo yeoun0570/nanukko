@@ -1,6 +1,7 @@
 package nanukko.nanukko_back.controller;
 
 import lombok.RequiredArgsConstructor;
+import nanukko.nanukko_back.dto.notification.NotificationIsReadDTO;
 import nanukko.nanukko_back.dto.notification.NotificationResponseDTO;
 import nanukko.nanukko_back.service.NotificationService;
 import org.springframework.http.MediaType;
@@ -34,5 +35,32 @@ public class NotificationController {
             @RequestParam String userId
     ) {
         return notificationService.getPreviousNotifications(userId);
+    }
+
+    // 알림 읽음 처리
+    @PostMapping("/{notificationId}/read")
+    public ResponseEntity<NotificationIsReadDTO> markAsReadNotification(
+            @PathVariable Long notificationId)
+    {
+        NotificationIsReadDTO response = notificationService.markAsRead(notificationId);
+        return ResponseEntity.ok(response);
+    }
+
+    // 알림 모두 읽음 처리
+    @PostMapping("/read-all")
+    public ResponseEntity<List<NotificationIsReadDTO>> markAllAsReadNotifications(
+            @RequestParam String userId
+    ) {
+        List<NotificationIsReadDTO> response = notificationService.markAllAsRead(userId);
+        return ResponseEntity.ok(response);
+    }
+
+    // 알림 삭제
+    @PostMapping("/remove")
+    public ResponseEntity<Void> removeNotice(
+            @RequestParam Long notificationId
+    ) {
+        notificationService.removeNotice(notificationId);
+        return ResponseEntity.ok().build();
     }
 }
