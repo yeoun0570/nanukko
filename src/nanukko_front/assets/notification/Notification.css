@@ -1,7 +1,9 @@
 /* Notification */
 .notification-wrapper {
-  position: relative;
-  display: inline-block;
+  position: fixed; /* 또는 absolute */
+  top: 20px; /* 상단에서의 거리 */
+  right: 20px; /* 오른쪽에서의 거리 */
+  z-index: 1000; /* 다른 요소들 위에 표시되도록 */
 }
 
 /* 토스트 알림 스타일 */
@@ -56,6 +58,15 @@
   padding: 8px;
 }
 
+.fa-bell {
+  font-size: 20px;
+  color: #666; /* 기본 색상 */
+}
+
+.fa-bell.has-notifications {
+  color: #1976d2; /* 알림이 있을 때 색상 */
+}
+
 .notification-badge {
   position: absolute;
   top: 0;
@@ -71,10 +82,12 @@
 
 /* NotificationItem */
 .notification-item {
+  position: relative;
   padding: 12px 16px;
   border-bottom: 1px solid #eee;
   cursor: pointer;
   transition: background-color 0.2s;
+  background-color: #ffffff;
 }
 
 .notification-item:hover {
@@ -82,7 +95,30 @@
 }
 
 .notification-item.unread {
-  background-color: #f0f7ff;
+  background-color: #e3f2fd; /* 더 진한 파란색 배경 */
+  border-left: 4px solid #1976d2; /* 왼쪽에 파란색 바 추가 */
+}
+
+.notification-content-wrapper {
+  padding-right: 50px; /* 삭제 버튼과 간격 확보 */
+}
+
+.notification-content :deep(.delivery-address) {
+  display: block;
+  margin-top: 8px;
+  padding: 8px 12px;
+  background-color: #f0f4f8;  /* 더 부드러운 파란색 계열 배경 */
+  border-left: 3px solid #1976d2;  /* 왼쪽 파란색 막대 */
+  border-radius: 4px;
+  font-size: 13px;
+  color: #444;
+  line-height: 1.4;
+}
+
+/* 읽은 알림 스타일 추가 */
+.notification-item.read {
+  background-color: #f8f9fa; /* 연한 회색 배경 */
+  color: #666; /* 텍스트 색상을 약간 흐리게 */
 }
 
 .notification-type {
@@ -121,13 +157,59 @@
 .notification-header {
   padding: 16px;
   border-bottom: 1px solid #eee;
-  background: #f8f9fa;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .notification-header h3 {
   margin: 0;
   font-size: 16px;
   color: #333;
+}
+
+.mark-all-read-btn {
+  padding: 4px 8px;
+  font-size: 12px;
+  color: #666;
+  background-color: #f0f0f0;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.mark-all-read-btn:hover {
+  background-color: #e0e0e0;
+}
+
+.notification-section {
+  padding: 8px 0;
+}
+
+.section-title {
+  padding: 8px 16px;
+  font-size: 12px;
+  color: #666;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #eee;
+}
+
+.tabs {
+  font-size: 14px;
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.tabs div {
+  padding: 10px 15px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+}
+
+.tabs div.active {
+  border-bottom: 2px solid #007bff;
+  font-weight: bold;
 }
 
 .notifications-container {
