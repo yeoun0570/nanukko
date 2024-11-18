@@ -58,4 +58,10 @@ public class Notification {
 //    관리자가 알림 수정 가능한 부분이 있다면 사용할 부분
 //    @Column(name = "updated_at")
 //    private LocalDateTime updatedAt; //알림 수정 날짜
+
+    // 읽음 처리를 위한 메서드
+    public void updateRead(boolean isRead, LocalDateTime readAt) {
+        this.isRead = isRead;
+        this.readAt = readAt;
+    }
 }
