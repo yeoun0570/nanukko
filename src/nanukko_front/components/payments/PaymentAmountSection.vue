@@ -9,7 +9,7 @@ defineProps({
 
 <template>
   <h2 class="title">결제금액</h2>
-  <div class="product-section">
+  <div class="amount-section">
     <div class="product-info">
       <div class="info-row">
         <span>상품금액</span>
@@ -36,7 +36,3 @@ defineProps({
     </div>
   </div>
 </template>
-
-<style scoped>
-@import url("../../assets/payments/PaymentAmountSection.css");
-</style>

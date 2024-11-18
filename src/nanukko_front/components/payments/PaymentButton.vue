@@ -14,7 +14,3 @@ defineEmits(['startPayment']);
     결제하기
   </button>
 </template>
-
-<style scoped>
-@import url('../../assets/payments/PaymentButton.css');
-</style>

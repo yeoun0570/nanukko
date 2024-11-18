@@ -1,6 +1,7 @@
 package nanukko.nanukko_back.dto.order;
 
 import lombok.*;
+import nanukko.nanukko_back.domain.product.ProductStatus;
 
 @Data
 @AllArgsConstructor
@@ -11,6 +12,7 @@ import lombok.*;
 public class OrderPageDTO {
     //상품정보
     private String thumbnailImage;
+    private ProductStatus status;
     private String productName;
     private int price;
     private double chargeAmount;

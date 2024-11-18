@@ -5,6 +5,7 @@ import lombok.extern.log4j.Log4j2;
 import nanukko.nanukko_back.dto.order.OrderConfirmDTO;
 import nanukko.nanukko_back.dto.order.OrderPageDTO;
 import nanukko.nanukko_back.dto.order.OrderResponseDTO;
+import nanukko.nanukko_back.exception.ErrorResponse;
 import nanukko.nanukko_back.service.OrderService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -39,16 +40,6 @@ public class OrderController {
         return ResponseEntity.ok(orderService.confirmPayment(request));
     }
 
-//    //결제 성공 및 결제 자금 보관(에스크로 홀딩)
-//    @PostMapping("/success")
-//    public ResponseEntity<OrderResponseDTO> processSuccessPayment(
-//            @RequestBody OrderSuccessDTO request
-//    ) {
-//        OrderResponseDTO response = orderService.processPayment(
-//                request.getOrderId(), request.getBuyerId(), request.getProductId());
-//        return ResponseEntity.ok(response);
-//    }
-
     //구매확정
     @PostMapping("/{orderId}/confirm")
     public ResponseEntity<OrderResponseDTO> confirmPurchase(@PathVariable String orderId) {
@@ -58,8 +49,13 @@ public class OrderController {
 
     //에스크로 상태 중에 결제 취소하기
     @PostMapping("/{orderId}/cancel")
-    public ResponseEntity<OrderResponseDTO> cancelOrder(@PathVariable String orderId) {
-        OrderResponseDTO response = orderService.cancelOrder(orderId);
-        return ResponseEntity.ok(response);
+    public ResponseEntity<?> cancelOrder(@PathVariable String orderId) {
+        try {
+            OrderResponseDTO response = orderService.cancelOrder(orderId);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            return ResponseEntity.badRequest()
+                    .body(new ErrorResponse(e.getMessage()));
+        }
     }
 }

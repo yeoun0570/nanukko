@@ -20,7 +20,7 @@ public interface OrderRepository extends JpaRepository<Orders, String> {
     );
 
     //마이페이지 구매 상품을 페이징처리하여 조회하기 위해 사용될 메서드
-    Page<Orders> findByBuyerAndStatusOrderByCreatedAtDesc(User seller, PaymentStatus status, Pageable pageable);
+    Page<Orders> findByBuyerAndStatusAndProductIsDeletedFalseOrderByCreatedAtDesc(User seller, PaymentStatus status, Pageable pageable);
 
     //결제 진행 중인 상태가 있는지 확인
     boolean existsByBuyerAndStatus(User user, PaymentStatus status);

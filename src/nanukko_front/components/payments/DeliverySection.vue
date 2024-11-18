@@ -29,10 +29,3 @@ defineProps({
   </div>
 </template>
 
-<style scoped>
-@import url("../../assets/payments/DeliverySection.css");
-
-h3 {
-    font-weight: bold;
-}
-</style>

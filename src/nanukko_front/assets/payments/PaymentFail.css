@@ -1,0 +1,33 @@
+.payment-fail {
+    max-width: 600px;
+    margin: 48px auto;
+    padding: 24px;
+    text-align: center;
+   }
+   
+   .loading, .error, .fail {
+    padding: 24px;
+    border-radius: 8px;
+    background-color: white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+   }
+   
+   h1 {
+    color: #e53e3e;
+    margin-bottom: 16px;
+   }
+   
+   .back-button {
+    margin-top: 24px;
+    padding: 12px 24px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+   }
+   
+   .back-button:hover {
+    background-color: #45a049;
+   }

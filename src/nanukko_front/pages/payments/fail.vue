@@ -5,18 +5,22 @@ const loading = ref(true);
 const error = ref(null);
 
 onMounted(() => {
-  const { code, message, productId } = route.query;
+  const { code, message } = route.query;
   if (code || message) {
     error.value = `결제 실패: ${message || "알 수 없는 오류가 발생했습니다."}`;
   }
   loading.value = false;
 });
 
+// const goBack = () => {
+//   router.push({
+//     path: "/payments",
+//     query: { productId: route.query.productId },
+//   }); // 또는 이전 결제 페이지 경로
+// };
+//위의 주석 처리된 부분을 Nuxt의 navigateTo 사용해서 변형
 const goBack = () => {
-  router.push({
-    path: "/payments",
-    query: { productId: route.query.productId },
-  }); // 또는 이전 결제 페이지 경로
+  navigateTo(`/payments?productId=${route.query.productId}`);
 };
 </script>
 
