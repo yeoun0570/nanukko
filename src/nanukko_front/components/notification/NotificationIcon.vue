@@ -1,21 +1,20 @@
 <script setup>
 defineProps({
-    unreadCount: {
-        type: Number,
-        default: 0,
-    },
+  unreadCount: {
+    type: Number,
+    default: 0,
+  },
 });
 
-defineEmits(['toggle']);
+defineEmits(["toggle"]);
 </script>
 
 <template>
-<div class="notification-icon" @click="$emit('toggle')">
-    <i class="fas fa-bell">
-        <span v-if="unreadCount > 0" class="notification-badge">
-            {{  unreadCount }}
-        </span>
+  <div class="notification-icon" @click="$emit('toggle')">
+    <i class="fas fa-bell" :class="{ 'has-notifications': unreadCount > 0 }">
+      <span v-if="unreadCount > 0" class="notification-badge">
+        {{ unreadCount }}
+      </span>
     </i>
-</div>
-
+  </div>
 </template>

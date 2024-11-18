@@ -81,10 +81,26 @@ const connectSSE = () => {
 // 로그인 시 호출되는 함수
 const initializeNotifications = async () => {
   try {
-  // DB에서 이전 알림들 가져오기
-  await fetchPreviousNotifications();
-  // 그 다음에 SSE 연결 시작
-  connectSSE();
+    // DB에서 이전 알림들 가져오기
+    const response = await axios.get(`${baseURL}/api/notice/previous`, {
+      params: { userId },
+    });
+    const readNotifications =
+      JSON.parse(localStorage.getItem("readNotifications")) || [];
+
+    // 기존 알림 설정
+    notifications.value = response.data.map((notification) => ({
+      ...notification,
+      isRead:
+        readNotifications.includes(notification.notificationId) ||
+        notification.isRead,
+    }));
+
+    // 읽지 않은 알림 수 계산
+    unreadCount.value = response.data.filter((n) => !n.isRead).length;
+
+    // 그 다음에 SSE 연결 시작
+    connectSSE();
   } catch (error) {
     console.log("알림 초기화 실패: ", error);
   }
@@ -99,18 +115,6 @@ const cleanupNotifications = () => {
   notifications.value = [];
   unreadCount.value = 0;
   // LastEventId는 유지 (다음 로그인 시 사용)
-};
-
-//이전 알림 조회를 위해 백에서 가져오기 위한 메서드
-const fetchPreviousNotifications = async () => {
-  try {
-    const response = await axios.get(`${baseURL}/api/notice/previous`);
-    const previousNotifications = response.data;
-    notifications.value = previousNotifications;
-    unreadCount.value = previousNotifications.filter((n) => !n.isRead).length;
-  } catch (error) {
-    console.error("이전 알림 조회 실패: ", error);
-  }
 };
 
 // 새로운 알림을 목록에 추가하는 메서드
@@ -138,6 +142,9 @@ const getNotificationTitle = (type) => {
 //토스트 알림을 화면에 표시하는 메서드
 //토스트 : 화면 구석에 잠깐 나타났다가 사라지는 알림 메시지
 const showToast = (notification) => {
+  // 메시지의 첫번째 줄만 추출
+  const mainMessage = notification.content.split('|||')[0];
+
   //토스트 요소 생성
   const toast = document.createElement("div");
   toast.className = "notification-toast";
@@ -145,7 +152,7 @@ const showToast = (notification) => {
   toast.innerHTML = `
     <div class="toast-content">
       <div class="toast-title">${getNotificationTitle(notification.type)}</div>
-      <div class="toast-message">${notification.content}</div>
+      <div class="toast-message">${mainMessage}</div>
     </div>
   `;
 
@@ -174,17 +181,50 @@ const toggleNotfications = () => {
 };
 
 // 알림 클릭 시 처리하는 함수
-const handleNotificationClick = (notification) => {
+const handleNotificationClick = async (notification) => {
   // 읽지 않은 알림이면 읽음 처리
   if (!notification.isRead) {
-    markAsRead(notification);
+    try {
+      await markAsRead(notification);
+
+      // 해당 알림의 인덱스를 찾아서
+      const index = notifications.value.findIndex(
+        (n) => n.notificationId === notification.notificationId
+      );
+
+      if (index !== -1) {
+        // 새로운 배열을 생성하면서 해당 알림만 새 객체로 교체
+        notifications.value = [
+          ...notifications.value.slice(0, index),
+          { ...notification, isRead: true },
+          ...notifications.value.slice(index + 1),
+        ];
+      }
+
+      // 읽지 않은 알림 수 다시 계산
+      unreadCount.value = notifications.value.filter((n) => !n.isRead).length;
+
+      // 읽은 알림 ID를 LocalStorage에 저장
+      const readNotifications =
+        JSON.parse(localStorage.getItem("readNotifications")) || [];
+      if (!readNotifications.includes(notification.notificationId)) {
+        readNotifications.push(notification.notificationId);
+        localStorage.setItem(
+          "readNotifications",
+          JSON.stringify(readNotifications)
+        );
+      }
+
+      // URL이 있으면 해당 페이지로 이동
+      if (notification.url) {
+        window.location.href = notification.url;
+      }
+      // 알림 목록 닫기
+      showNotifications.value = false;
+    } catch (error) {
+      console.error("알림 읽음 처리 실패: ", error);
+    }
   }
-  // URL이 있으면 해당 페이지로 이동
-  if (notification.url) {
-    window.location.href = notification.url;
-  }
-  // 알림 목록 닫기
-  showNotifications.value = false;
 };
 
 // 알림을 읽음 처리하는 함수
@@ -197,6 +237,30 @@ const markAsRead = async (notification) => {
     notification.isRead = true;
   } catch (error) {
     console.error("알림 읽음 처리 실패: ", error);
+  }
+};
+
+// 모든 알림 읽음 처리 메서드
+const markAllAsRead = async () => {
+  try {
+    await axios.post(`${baseURL}/api/notice/read-all`, null, {
+      params: {
+        userId: userId,
+      },
+    });
+
+    // 모든 알림을 읽음으로 처리
+    notifications.value.forEach((notification) => {
+      notification.isRead = true;
+    });
+
+    // 읽은 알림 ID를 LocalStorage에 저장
+    const allReadIds = notifications.value.map((n) => n.notificationId);
+    localStorage.setItem('readNotifications', JSON.stringify(allReadIds));
+
+    unreadCount.value = 0;
+  } catch (error) {
+    console.error("전체 알림 읽음 처리 실패: ", error);
   }
 };
 
@@ -230,6 +294,7 @@ onUnmounted(() => {
         v-if="showNotifications"
         :notifications="notifications"
         @select="handleNotificationClick"
+        @markAllAsRead="markAllAsRead"
       />
     </transition>
   </div>
