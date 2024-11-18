@@ -1,9 +1,6 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue';
 
-const config = useRuntimeConfig();
-const kakaoMapApiKey = config.public.kakaoMapApiKey;
-
 const props = defineProps({
     lat: {
         type: Number,

@@ -15,53 +15,42 @@ const address = ref(props.initialAddress);
 const detailAddress = ref('');
 const postcode = ref('');
 const coordinates = ref({ lat: null, lon: null });
-const isKakaoInitialized = ref(false);
-
-// 카카오맵 초기화 대기 함수
-const waitForKakaoMap = () => {
-    return new Promise((resolve) => {
-        const checkKakao = setInterval(() => {
-            if (window.kakao?.maps?.services) {
-                clearInterval(checkKakao);
-                isKakaoInitialized.value = true;
-                resolve(true);
-            }
-        }, 100);
-    });
-};
 
 // 주소로 좌표 검색
-const getCoordinates = async (addr) => {
-    try {
-        // 카카오맵 초기화 대기
-        if (!isKakaoInitialized.value) {
-            await waitForKakaoMap();
-        }
+const getCoordinates = (addr) => {
+    return new Promise((resolve, reject) => {
+        const tryServiceInit = () => {
+            if (window.kakao?.maps?.services) {
+                const geocoder = new window.kakao.maps.services.Geocoder();
 
-        return new Promise((resolve, reject) => {
-            const geocoder = new window.kakao.maps.services.Geocoder();
+                geocoder.addressSearch(addr, (result, status) => {
+                    if (status === window.kakao.maps.services.Status.OK) {
+                        resolve({
+                            lat: Number(result[0].y),
+                            lon: Number(result[0].x)
+                        });
+                    } else {
+                        reject('주소를 찾을 수 없습니다.');
+                    }
+                });
+            } else {
+                // 아직 초기화되지 않았다면 잠시 후 다시 시도
+                setTimeout(tryServiceInit, 500);
+            }
+        };
 
-            geocoder.addressSearch(addr, (result, status) => {
-                if (status === window.kakao.maps.services.Status.OK) {
-                    resolve({
-                        lat: Number(result[0].y),
-                        lon: Number(result[0].x)
-                    });
-                } else {
-                    reject(new Error('주소의 좌표를 찾을 수 없습니다.'));
-                }
-            });
-        });
-    } catch (error) {
-        console.error('좌표 변환 오류:', error);
-        throw new Error('좌표 변환에 실패했습니다.');
-    }
+        // 초기 시도
+        tryServiceInit();
+
+        // 10초 후에도 초기화되지 않으면 타임아웃
+        setTimeout(() => {
+            reject('지도 서비스 초기화 시간이 초과되었습니다.');
+        }, 10000);
+    });
 };
 
 // 주소 검색 팝업 열기
 const openAddressSearch = () => {
-    console.log("주소 검색 팝업 열기");
-
     if (!window.daum?.Postcode) {
         alert('주소 검색 서비스를 불러오는 중입니다. 잠시 후 다시 시도해주세요.');
         return;
@@ -88,8 +77,6 @@ const openAddressSearch = () => {
                     latitude: coords.lat,
                     longitude: coords.lon
                 });
-
-                console.log('경도는 ' + latitude + '위도는 ' + longitude);
             } catch (error) {
                 console.error('좌표 변환 실패:', error);
 
@@ -101,22 +88,12 @@ const openAddressSearch = () => {
                     latitude: null,
                     longitude: null
                 });
+
+                alert(typeof error === 'string' ? error : '주소의 좌표를 찾을 수 없습니다.');
             }
         }
     }).open();
 };
-
-// 다음 주소검색 API 로드
-const loadDaumPostcode = () => {
-    const script = document.createElement('script');
-    script.src = '//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js';
-    script.async = true;
-    document.head.appendChild(script);
-};
-
-onMounted(() => {
-    loadDaumPostcode();
-});
 
 // 상세 주소 변경 핸들러
 const handleDetailAddressChange = (e) => {
@@ -144,6 +121,14 @@ const resetAddress = () => {
         longitude: null
     });
 };
+
+// 다음 주소검색 API 로드
+onMounted(() => {
+    const script = document.createElement('script');
+    script.src = '//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js';
+    script.async = true;
+    document.head.appendChild(script);
+});
 </script>
 
 <template>

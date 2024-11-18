@@ -17,12 +17,12 @@ export default defineNuxtConfig({
     head: {
       script: [
         {
-          src: "https://js.tosspayments.com/v1",
-          defer: true,
+          src: `//dapi.kakao.com/v2/maps/sdk.js?appkey=${process.env.NUXT_PUBLIC_KAKAO_MAP_API_KEY}&libraries=services&autoload=true`,
+          type: 'text/javascript',
         },
         {
-          src: "//dapi.kakao.com/v2/maps/sdk.js?appkey=${process.env.NUXT_PUBLIC_KAKAO_MAP_API_KEY}&libraries=services",
-          type: 'text/javascript',
+          src: "https://js.tosspayments.com/v1",
+          defer: true,
         },
       ],
     },
