@@ -6,6 +6,7 @@ import nanukko.nanukko_back.config.FrontendURL;
 import nanukko.nanukko_back.domain.notification.Notification;
 import nanukko.nanukko_back.domain.notification.NotificationType;
 import nanukko.nanukko_back.domain.user.User;
+import nanukko.nanukko_back.dto.notification.NotificationIsReadDTO;
 import nanukko.nanukko_back.dto.notification.NotificationResponseDTO;
 import nanukko.nanukko_back.repository.ProductRepository;
 import nanukko.nanukko_back.repository.UserRepository;
@@ -19,6 +20,7 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -174,6 +176,52 @@ public class NotificationService {
                 .toList();
     }
 
+    // 알림 읽음 처리
+    @Transactional
+    public NotificationIsReadDTO markAsRead(Long notificationId) {
+        Notification notification = notificationRepository.findById(notificationId)
+                .orElseThrow(() -> new IllegalArgumentException("알림을 찾을 수 없습니다."));
+
+        // 읽음 처리 및 읽은 시간 업데이트
+        notification.updateRead(true, LocalDateTime.now());
+
+        notificationRepository.save(notification);
+        log.info("알림 읽음 처리 확인 - notificationId : {}, isRead: {}",
+                notification.getNoticeId(), notification.isRead());
+
+        return NotificationIsReadDTO.builder()
+                .notificationId(notification.getNoticeId())
+                .isRead(notification.isRead())
+                .build();
+    }
+
+    // 알림 모두 읽음 처리
+    @Transactional
+    public List<NotificationIsReadDTO> markAllAsRead(String userId) {
+        List<Notification> notifications = notificationRepository
+                .findByReceiverUserIdAndIsReadFalse(userId);
+
+        notifications.forEach(notification -> {
+            notification.updateRead(true, LocalDateTime.now());
+        });
+
+        notificationRepository.saveAll(notifications);
+
+        return notifications.stream()
+                .map(notification -> NotificationIsReadDTO.builder()
+                        .notificationId(notification.getNoticeId())
+                        .isRead(notification.isRead())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    // 알림 삭제
+    @Transactional
+    public void removeNotice(Long notificationId) {
+        notificationRepository.deleteById(notificationId);
+    }
+
+
     //////////////////////////////////////여기서부턴 알림 보내기위한 메서드 구현(공통으로 사용할 애들)
 
     //사용자 검색
@@ -194,16 +242,24 @@ public class NotificationService {
 
     //사용자가 자신이 판매하는 상품이 결제가 되었을 때 배송해달라는 알림
     @Transactional
-    public void sendConfirmPaymentToSeller(String userId, Long productId) {
-        log.info("판매자 결제 확인 알림 전송 시작 - userId: {}, productId: {}", userId, productId);
+    public void sendConfirmPaymentToSeller(String userId, Long productId, String buyerId) {
+        log.info("판매자 결제 확인 알림 전송 시작 - userId: {}, productId: {}, buyerId: {}", userId, productId, buyerId);
 
         // DB 조회 및 검증
         User receiver = findAndValidateUser(userId);
         findAndValidateProduct(productId);
+        User buyer = userRepository.findById(buyerId)
+                .orElseThrow(() -> new IllegalArgumentException("구매자를 찾을 수 없습니다."));
 
 
-        String content = "상품이 판매되었습니다. 확인하고 배송을 보내주세요!";
         String url = frontendURL.getUrl() + "/my-store/sale-products";
+        String content = String.format("상품이 판매되었습니다. 확인하고 배송을 보내주세요!|||%s|||(%s) %s|||%s|||%s",
+                buyer.getNickname(),
+                buyer.getAddress().getAddrZipcode(),
+                buyer.getAddress().getAddrMain(),
+                buyer.getAddress().getAddrDetail(),
+                buyer.getMobile());
+
 
         send(receiver, NotificationType.PAYMENT, content, url);
         log.info("판매자 결제 확인 알림 전송 완료");
