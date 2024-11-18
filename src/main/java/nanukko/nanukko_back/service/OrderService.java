@@ -106,14 +106,15 @@ public class OrderService {
             // 결제완료 했을 시 판매자에게 알림 전송
             notificationService.sendConfirmPaymentToSeller(
                     result.getSellerId(),
-                    result.getProductId()
+                    result.getProductId(),
+                    confirmDTO.getBuyerId()
             );
 
 
             return result;
         } catch (Exception e) {
-            log.error("결제 처리 중 오류 발생 - productId: {}, error: {}",
-                    confirmDTO.getPaymentKey(), e.getMessage());
+            log.error("결제 처리 중 오류 발생 - buyerId: {}, productId: {}, orderId: {} error: {}",
+                    confirmDTO.getBuyerId(), confirmDTO.getProductId(), confirmDTO.getOrderId(), e.getMessage());
             // 트랜잭션 어노테이션으로 인해 자동 롤백됨
             throw new RuntimeException("결제 처리 실패", e);
         }
