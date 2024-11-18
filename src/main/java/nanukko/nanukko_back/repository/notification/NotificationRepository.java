@@ -10,4 +10,7 @@ import java.util.List;
 public interface NotificationRepository extends JpaRepository<Notification, Long> {
     // 알림 받는 사람 아이디 찾기
     List<Notification> findByReceiverUserIdOrderByCreatedAtDesc(String userId);
+
+    // 읽지 않은 알림 찾기
+    List<Notification> findByReceiverUserIdAndIsReadFalse(String userId);
 }
