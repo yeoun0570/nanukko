@@ -25,7 +25,7 @@ public class StompConfig implements WebSocketMessageBrokerConfigurer {
     /*엔드포인트 생성해서 클라이언트가 webSocket에 연결할 수 있도록 함(핸드셰이크를 위한 설정)*/
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/ws-stomp")//클라이언트 웹소켓 연결을 위한 엔드포인트
+        registry.addEndpoint("/ws-stomp")//클라이언트 웹소켓 연결을 위한 엔드포인트(ex) ws://localhost:8080/ws-stomp)
                 .setAllowedOrigins(//CORS 설정
                         "http://localhost:3000",  // Nuxt 개발 서버
                         "http://localhost:8080"   // 백엔드 개발 서버

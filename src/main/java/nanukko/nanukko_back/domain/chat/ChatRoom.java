@@ -18,11 +18,11 @@ import java.util.List;
 @ToString(exclude = {"chatMessages", "product", "buyer"})//순환 참조를 없애는 설정
 @Entity
 @EntityListeners(AuditingEntityListener.class)
-@Table(indexes = {//인덱스 추가 설정
-        @Index(name = "idx_chat_room_buyer", columnList = "buyer_id"),
-        @Index(name = "idx_chat_room_product", columnList = "product_id"),
-        @Index(name = "idx_chat_room_updated", columnList = "updated_at")
-})
+//@Table(indexes = {//인덱스 추가 설정
+//        @Index(name = "idx_chat_room_buyer", columnList = "buyer_id"),
+//        @Index(name = "idx_chat_room_product", columnList = "product_id"),
+//        @Index(name = "idx_chat_room_updated", columnList = "updated_at")
+//})
 public class ChatRoom {
     @Id  // @Id 만으로도 not null 제약조건 포함
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -54,6 +54,12 @@ public class ChatRoom {
     @Column(name = "buyer_left_at")
     private LocalDateTime buyerLeftAt=null;//구매자 나간 시점
 
+    @Column(name = "is_seller_left", nullable = false, columnDefinition = "TINYINT(1)")
+    private boolean isSellerLeft=false;//판매자 나감 여부, true: 나감, false: 안 나감
+
+    @Column(name = "is_buyer_left" ,nullable = false, columnDefinition = "TINYINT(1)")
+    private boolean isBuyerLeft=false;//구매자 나감 여부
+
     // 판매자/구매자 여부 확인
     public boolean isSeller(String userId) {
         return this.product.getSeller().getUserId().equals(userId);
@@ -78,12 +84,12 @@ public class ChatRoom {
     }
 
 
-    // 이미 나간 상태인지 확인
-    public boolean isAlreadyLeft(String userId) {
+    // 나감 상태 없데이트
+    public boolean updateIsLeft(String userId) {
         if (isSeller(userId)) {
-            return this.sellerLeftAt != null;
+            return this.isSellerLeft = true;
         } else if (isBuyer(userId)) {
-            return this.buyerLeftAt != null;
+            return this.isBuyerLeft = true;
         }
         return false;
     }

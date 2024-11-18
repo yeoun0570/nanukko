@@ -46,8 +46,8 @@ public class ChatService {
     public PageResponseDTO<ChatRoomDTO> getChatRooms(String userId, Pageable pageable) {
         // 1단계: DB에서 페이징된 데이터 조회
         Page<ChatRoom> chatRoomPage = chatRoomRepository.
-                findByBuyer_UserIdAndBuyerLeftAtIsNullOrProduct_Seller_UserIdAndSellerLeftAtIsNullOrderByUpdatedAtDesc
-                        (userId, userId, pageable);
+                findActiveRoomsByUserId
+                        (userId, pageable);
 
         // 2단계: Entity를 DTO로 직접 변환
         Page<ChatRoomDTO> dtoPage = chatRoomPage.map(ChatRoomDTO::from);
@@ -83,7 +83,7 @@ public class ChatService {
     /**
      * 채팅방 생성 또는 재입장
      * - 같은 상품에 대한 채팅방이 있으면 재사용
-     * - 없으면 새로 생성 (구매자만 가능)
+     * - 없으면 새로 생성
      */
     public ChatRoomDTO createOrReturnToChatRoom(String userId, Long productId, Pageable pageable) {
         // 1. 상품 조회
@@ -239,7 +239,7 @@ public class ChatService {
 
         ChatMessageDTO chatMessageDTO = ChatMessageDTO.builder()
                 .chatRoom(chatRoomId)
-                .sender(message.getSender().toString())
+                .sender(message.getSender().getUserId())
                 .chatMessage(savedMessage.getChatMessage())
                 .createdAt(savedMessage.getCreatedAt())
                 .isRead(false)//새 메시지는 안 읽은 상태
@@ -261,6 +261,8 @@ public class ChatService {
 
         // 나가기 시간 기록
         chatRoom.updateLeftAt(userId);
+        // 나감 여부 기록
+        chatRoom.updateIsLeft(userId);
         chatRoomRepository.save(chatRoom);
 
         // 시스템 메시지 저장 -> 추후에 쓸지도?
@@ -277,75 +279,6 @@ public class ChatService {
 //                .build();
 //chatMessageRepository.save(leaveMessage);
 //        return ChatMessageDTO.from(leaveMessage);
-    }
-
-    /**
-     * 채팅방 생성 또는 재입장
-     * - 같은 상품에 대한 채팅방이 있으면 재사용
-     * - 재입장은 사실상 나갔던 시간 다시 null로 초기화 해주는 것
-     * - 없으면 새로 생성
-     */
-    public ChatRoomDTO CreateOrBackToTheChatRoom(String userId, Long productId, Pageable pageable) {
-        // 1. 상품 조회
-        Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new EntityNotFoundException("상품을 찾을 수 없습니다."));
-
-        // 2. 기존 채팅방 찾기 (판매자/구매자 구분 없이)
-        Optional<ChatRoom> existingChatRoom;
-
-        if (product.getSeller().getUserId().equals(userId)) {
-            // 판매자인 경우
-            existingChatRoom = chatRoomRepository
-                    .findByProduct_ProductIdAndProduct_Seller_UserIdAndSellerLeftAtIsNotNull(productId, userId);
-        } else {
-            // 구매자인 경우
-            existingChatRoom = chatRoomRepository
-                    .findByBuyer_UserIdAndProduct_ProductId(userId, productId);
-        }
-
-        // 3. 기존 채팅방이 있는 경우
-        if (existingChatRoom.isPresent()) {
-            ChatRoom chatRoom = existingChatRoom.get();
-
-            // 재입장인 경우 재입장 시점 이전 메시지는 필터링 해서 제외시키고 목록 들고오기, Page의 getContent() 메서드 사용해서 List로 변환 후 다시 dto list 변경
-            List<ChatMessageDTO> messageDTOList = chatMessageRepository
-                    .findMessagesSinceLastExit(chatRoom.getChatRoomId(), userId, pageable)
-                    .getContent()
-                    .stream()
-                    .map(ChatMessageDTO::from)
-                    .collect(Collectors.toList());
-
-            ChatRoomDTO chatRoomDTO = ChatRoomDTO.builder()
-                    .chatRoomId(chatRoom.getChatRoomId())
-                    // 상품 정보
-                    .productId(chatRoom.getProduct().getProductId())
-                    .productName(chatRoom.getProduct().getProductName())  // 상품 이름 추가
-                    // 구매자 정보
-                    .buyerId(chatRoom.getBuyer().getUserId())
-                    .buyerName(chatRoom.getBuyer().getNickname())
-                    // 판매자 정보
-                    .sellerId(chatRoom.getProduct().getSeller().getUserId())
-                    .sellerName(chatRoom.getProduct().getSeller().getNickname())
-                    .chatMessages(messageDTOList)
-                    // 시간 정보
-                    .createdAt(chatRoom.getCreatedAt())
-                    .updatedAt(chatRoom.getUpdatedAt())
-                    .sellerLeftAt(chatRoom.getSellerLeftAt())
-                    .buyerLeftAt(chatRoom.getBuyerLeftAt())
-                    .build();
-
-            return chatRoomDTO;
-        }
-
-        // 4. 새 채팅방 생성 (구매자만 가능)
-        if (product.getSeller().getUserId().equals(userId)) {
-            throw new IllegalStateException("판매자는 새로운 채팅방을 생성할 수 없습니다.");
-        }
-
-        User buyer = userRepository.findById(userId)
-                .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
-
-        return createChatRoom(userId, productId);//새 채팅방 반환
     }
 
 }
