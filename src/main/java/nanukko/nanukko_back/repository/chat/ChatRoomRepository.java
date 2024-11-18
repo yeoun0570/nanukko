@@ -14,13 +14,6 @@ import java.util.Optional;
 
 public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
     //채팅방 목록 조회
-//    @Query("SELECT c FROM ChatRoom c WHERE c.buyer = :userId OR c.product.seller = :userId")
-//    Page<ChatRoom> findChatRoomsByUserId(@Param("userId") String userId, Pageable pageable);
-//
-//    Page<ChatRoom> findByBuyer_UserIdOrProduct_Seller_UserId(String userId, String sameUserId, Pageable pageable);
-
-
-
     // 단일 ChatRoom 타입으로 반환
     @EntityGraph(attributePaths = {"product", "product.seller", "buyer"})
     @Query("SELECT c FROM ChatRoom c " +
@@ -33,13 +26,50 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
             @Param("userId") String userId
     );
 
-    // 로그인한 사람이 판매자이든 구매자이든 나간 채팅방 제외하고 채팅방 목록 조회
+
+        @Query(
+                "SELECT DISTINCT c FROM ChatRoom c " +
+                        "JOIN FETCH c.product p " +
+                        "JOIN FETCH c.buyer b " +
+                        "JOIN FETCH p.seller s " +
+                        "WHERE " +
+                        "(c.buyer.userId = :userId AND c.isBuyerLeft = false) OR " +
+                        "(p.seller.userId = :userId AND c.isSellerLeft = false) " +
+                        "ORDER BY c.updatedAt DESC"
+        )
+        Page<ChatRoom> findActiveRoomsByUserId(
+                @Param("userId") String userId,
+                Pageable pageable
+        );
+
+
+//    @EntityGraph(attributePaths = {"product", "product.seller", "buyer"})
+//    Page<ChatRoom> findByBuyer_UserIdAndIsBuyerLeftFalseOrProduct_Seller_UserIdAndIsSellerLeftFalseOrderByUpdatedAtDesc(
+//            String buyerId,
+//            String sellerId,
+//            Pageable pageable
+//    );
+
+
+    @Query("SELECT c FROM ChatRoom c " +
+            "WHERE c.product.productId = :productId " +
+            "AND ((c.buyer.userId = :userId AND c.isBuyerLeft = false) " +
+            "OR (c.product.seller.userId = :userId AND c.isSellerLeft = false)) " +
+            "ORDER BY c.updatedAt DESC")
+    Optional<ChatRoom> findActiveRoomByProductAndUser(
+            @Param("productId") Long productId,
+            @Param("userId") String userId
+    );
+
+    // 채팅방 목록 조회시 사용할 쿼리
     @EntityGraph(attributePaths = {"product", "product.seller", "buyer"})
-    Page<ChatRoom> findByBuyer_UserIdAndBuyerLeftAtIsNullOrProduct_Seller_UserIdAndSellerLeftAtIsNullOrderByUpdatedAtDesc(
+    Page<ChatRoom> findByBuyer_UserIdAndIsBuyerLeftFalseOrProduct_Seller_UserIdAndIsSellerLeftFalseOrderByUpdatedAtDesc(
             String buyerId,
             String sellerId,
             Pageable pageable
     );
+
+
 
     // 특정 상품에 대한 채팅방 조회
     @EntityGraph(attributePaths = {"product", "product.seller", "buyer"})

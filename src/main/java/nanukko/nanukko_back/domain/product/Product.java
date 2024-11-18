@@ -91,7 +91,7 @@ public class Product {
     private boolean isCompanion; //동행인 여부 -> true면 동행인 동행, false면 동행X
 
     @Column(name = "companion_gender")
-    private boolean companionGender; //동행인 성별 -> true면 남자, false면 여자
+    private boolean companionGender=true; //동행인 성별 -> true면 남자, false면 여자
 
     @Column(name = "free_shipping")
     @NotNull
