@@ -6,6 +6,28 @@ import { useStomp } from '~/composables/chat/useStomp'
 import ChatList from '~/components/chat/ChatList.vue'
 import ChatRoom from '~/components/chat/ChatRoom.vue'
 
+// {
+//       content: [{
+//         chatRoomId: number,
+//         productId: number,
+//         productName: string,
+//         buyerId: string,
+//         buyerName: string,
+//         sellerId: string,
+//         sellerName: string,
+//         chatMessages: ChatMessageDTO[],
+//         createdAt: string,
+//         updatedAt: string,
+//         sellerLeftAt: string | null,
+//         buyerLeftAt: string | null
+//       }],
+//       totalPages: number,
+//       totalElements: number,
+//       currentPage: number,
+//       ...
+//     }
+    
+
 const route = useRoute()
 const userId = computed(() => route.query.userId)
 
@@ -25,7 +47,7 @@ const {
 } = useChatRooms()
 
 // STOMP 관련 상태와 함수들
-const { connected, connectChat, subscribeToChatRoom } = useStomp()
+const { connected, connectChat, subscribeToChatRoom, disconnectChat } = useStomp()
 
 
 // 채팅방 선택 처리
@@ -73,24 +95,89 @@ onMounted(async () => {
 
   try {
     console.log('[Chat] 초기화 시작:', userId.value)
-    await fetchChatRooms(userId.value)
     
-    // STOMP 연결
+    // 1. 먼저 STOMP 연결 설정
     await connectChat(userId.value)
-    
-    // 실시간 업데이트 구독
-    subscribeToChatRoom('/topic/chat-updates', {
-      onMessage: async (message) => {
-        console.log('[Chat] 업데이트 수신:', message)
-        await fetchChatRooms(userId.value)
-        if (currentRoomId.value) {
-          await fetchChatRoom(currentRoomId.value)
+    console.log('[Chat] STOMP 연결 완료')
+
+    // 2. STOMP 연결이 성공한 후에 채팅방 목록 조회
+    await fetchChatRooms(userId.value)
+    console.log('[Chat] 채팅방 목록 조회 완료:', chatRooms.value)
+
+    // 3. 조회된 채팅방들에 대해 구독 설정
+    if (chatRooms.value && chatRooms.value.length > 0) {
+      console.log('[Chat] 채팅방 구독 시작')
+      chatRooms.value.forEach(room => {
+        if (room.chatRoomId) {
+          subscribeToChatRoom(`/topic/chat/${room.chatRoomId}`, {
+            onMessage: async (message) => {
+              console.log('[Chat] 새 메시지 수신:', room.chatRoomId, message)
+              
+              // 메시지 수신 시 채팅방 목록 갱신
+              await fetchChatRooms(userId.value)
+              
+              // 현재 열려있는 채팅방이면 해당 채팅방도 갱신
+              if (currentRoomId.value === room.chatRoomId.toString()) {
+                if (activeChatRoom.value) {
+                  const updatedRoom = await fetchChatRoom(currentRoomId.value)
+                  activeChatRoom.value = updatedRoom
+                }
+              }
+            }
+          })
+          console.log('[Chat] 채팅방 구독 완료:', room.chatRoomId)
         }
-      }
-    })
+      })
+    }
+
   } catch (err) {
     console.error('[Chat] 초기화 실패:', err)
   }
+})
+
+// STOMP 연결 상태 변경 감지
+watch(connected, async (isConnected) => {
+  if (isConnected && userId.value) {
+    // 연결이 성공하면 채팅방 목록 다시 조회
+    try {
+      await fetchChatRooms(userId.value)
+      
+      // 채팅방 재구독
+      if (chatRooms.value && chatRooms.value.length > 0) {
+        chatRooms.value.forEach(room => {
+          if (room.chatRoomId) {
+            subscribeToChatRoom(`/topic/chat/${room.chatRoomId}`, {
+              onMessage: async (message) => {
+                await fetchChatRooms(userId.value)
+                if (currentRoomId.value === room.chatRoomId.toString()) {
+                  if (activeChatRoom.value) {
+                    const updatedRoom = await fetchChatRoom(currentRoomId.value)
+                    activeChatRoom.value = updatedRoom
+                  }
+                }
+              }
+            })
+          }
+        })
+      }
+    } catch (error) {
+      console.error('[Chat] 재연결 후 초기화 실패:', error)
+    }
+  }
+})
+
+// cleanup 함수 추가
+onUnmounted(() => {
+  console.log('[Chat] 컴포넌트 언마운트')
+  // 모든 구독 해제
+  if (chatRooms.value) {
+    chatRooms.value.forEach(room => {
+      if (room.chatRoomId) {
+        unsubscribe(`/topic/chat/${room.chatRoomId}`)
+      }
+    })
+  }
+  disconnectChat()
 })
 
 // URL 변경 감지

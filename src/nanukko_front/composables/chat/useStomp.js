@@ -12,7 +12,7 @@ const WS_URL = 'http://localhost:8080/ws-stomp'
 
 const connectChat = async (userId) => {
   if (client.value?.active) {
-    console.log('[STOMP] Already connected')
+    console.log('[STOMP] 이미 연결')
     return
   }
 
