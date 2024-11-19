@@ -23,7 +23,12 @@ const product = ref({
     companion: false,
     companionGender: false,
     deputy: false,
-    deputyGender: false
+    deputyGender: false,
+    // 카테고리 정보
+    majorId: '',
+    majorName: '',
+    middleId: '',
+    middleName: '',
 });
 
 // 상품 정보 업데이트
