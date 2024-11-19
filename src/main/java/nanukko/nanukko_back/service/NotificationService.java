@@ -5,9 +5,11 @@ import lombok.extern.log4j.Log4j2;
 import nanukko.nanukko_back.config.FrontendURL;
 import nanukko.nanukko_back.domain.notification.Notification;
 import nanukko.nanukko_back.domain.notification.NotificationType;
+import nanukko.nanukko_back.domain.order.Orders;
 import nanukko.nanukko_back.domain.user.User;
 import nanukko.nanukko_back.dto.notification.NotificationIsReadDTO;
 import nanukko.nanukko_back.dto.notification.NotificationResponseDTO;
+import nanukko.nanukko_back.repository.OrderRepository;
 import nanukko.nanukko_back.repository.ProductRepository;
 import nanukko.nanukko_back.repository.UserRepository;
 import nanukko.nanukko_back.repository.notification.EmitterRepository;
@@ -30,6 +32,7 @@ public class NotificationService {
     private final NotificationRepository notificationRepository;
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
+    private final OrderRepository orderRepository;
 
     private final FrontendURL frontendURL;
 
@@ -238,6 +241,13 @@ public class NotificationService {
                 .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
     }
 
+    //주문 검색
+    @Transactional(readOnly = true)
+    protected Orders findAndValidateOrder(String orderId) {
+        return orderRepository.findById(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다."));
+    }
+
     //////////////////////////////////////여기서부턴 알림 보내기위한 메서드 구현(판매자)
 
     //사용자가 자신이 판매하는 상품이 결제가 되었을 때 배송해달라는 알림
@@ -306,14 +316,33 @@ public class NotificationService {
         log.info("판매자 구매 확정 알림 전송 완료");
     }
 
-    //추가되어야될 알림
-    //배송시작?
-    //배송완료
-    //입금완료..?
-
     //////////////////////////////////////여기서부턴 알림 보내기위한 메서드 구현(구매자)
 
-    //추가되어야될 알림
     //배송시작
+    @Transactional
+    public void sendStartDeliveryToBuyer(String userId, String orderId) {
+        User receiver = findAndValidateUser(userId);
+        Orders order = findAndValidateOrder(orderId);
+
+        String content = order.getProduct().getProductName()
+                + " 배송이 출발했어요! 확인해주세요!";
+        String url = frontendURL.getUrl() + "/my-store/buy-products";
+
+        send(receiver, NotificationType.DELIVERY, content, url);
+    }
+
     //배송완료(구매확정, 리뷰작성요청)
+    @Transactional
+    public void sendDeliveredToBuyer(String userId, String orderId) {
+        User receiver = findAndValidateUser(userId);
+        Orders order = findAndValidateOrder(orderId);
+
+        String content = order.getProduct().getProductName()
+                + " 배송이 도착했어요! "
+                + order.getProduct().getSeller().getNickname()
+                + "님에게 리뷰를 작성해볼까요?(3일 뒤 자동으로 구매확정 됩니다.)";
+        String url = frontendURL.getUrl() + "/my-store/buy-products";
+
+        send(receiver, NotificationType.DELIVERY, content, url);
+    }
 }
