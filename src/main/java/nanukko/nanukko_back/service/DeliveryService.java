@@ -4,7 +4,6 @@ package nanukko.nanukko_back.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import nanukko.nanukko_back.config.DeliveryWebhookConfig;
-import nanukko.nanukko_back.config.RestTemplateConfig;
 import nanukko.nanukko_back.domain.order.Delivery;
 import nanukko.nanukko_back.domain.order.DeliveryStatus;
 import nanukko.nanukko_back.domain.order.Orders;
@@ -18,6 +17,7 @@ import org.springframework.http.*;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDateTime;
 import java.util.Base64;
@@ -31,7 +31,6 @@ import java.util.Map;
 public class DeliveryService {
     private final ModelMapper modelMapper;
     private final DeliveryWebhookConfig deliveryWebhookConfig;
-    private final RestTemplateConfig restTemplateConfig;
     private final DeliveryRepository deliveryRepository;
     private final OrderRepository orderRepository;
     private final NotificationService notificationService;
@@ -116,15 +115,16 @@ public class DeliveryService {
             headers.setContentType(MediaType.APPLICATION_JSON);
 
             // GraphQL API 엔드포인트 URL
-            String apiUrl = "https://api.tracker.delivery/graphql";
+            String apiUrl = "https://apis.tracker.delivery/graphql";
 
             // API 요청 본문 생성
             Map<String, String> requestBody = new HashMap<>();
             requestBody.put("query", mutation);
 
             // API 호출 실행
+            RestTemplate restTemplate = new RestTemplate();
             HttpEntity<Map<String, String>> entity = new HttpEntity<>(requestBody, headers);
-            ResponseEntity<String> response = restTemplateConfig.restTemplate().exchange(
+            ResponseEntity<String> response = restTemplate.exchange(
                     apiUrl,
                     HttpMethod.POST,
                     entity,
