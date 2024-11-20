@@ -45,6 +45,7 @@ public class OrderService {
     private final RestTemplateConfig restTemplate;
     private final NotificationService notificationService;
     private final TossPaymentsConfig tossPaymentsConfig;
+    private final MailService mailService;
 
     //결제창 페이지에 출력할 데이터 정의
     @Transactional(readOnly = true)
@@ -114,6 +115,19 @@ public class OrderService {
                     confirmDTO.getBuyerId()
             );
 
+
+            // 결제완료 했을 시 판매자에게 메일 전송
+            // 비동기로 알림과 메일 전송
+            CompletableFuture.runAsync(() -> {
+                try {
+                    mailService.sendMailConfirmPaymentToSeller(
+                            result.getSellerId(),
+                            result.getProductId()
+                    );
+                } catch (Exception e) {
+                    log.error("알림/메일 전송 실패", e);
+                }
+            });
 
             return result;
         } catch (Exception e) {
