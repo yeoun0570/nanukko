@@ -17,4 +17,5 @@ public class UserProductDTO {
     private String productName;
     private int price;
     private ProductStatus status;
+    private boolean hasDelivery;
 }
