@@ -25,7 +25,7 @@
       <!-- actions 채팅, 알림, 로그인, 마이페이지 -->
       <ul class="header-actions">
         <li><NuxtLink to="/chatting">채팅</NuxtLink></li>
-        <li><NuxtLink to="/notifications">알림</NuxtLink></li>
+        <li class="notification-cotainer"><Notification /></li>
         <li><NuxtLink to="/Login">로그인</NuxtLink></li>
         <li><NuxtLink to="/mypage">마이페이지</NuxtLink></li>
       </ul>
@@ -35,6 +35,7 @@
 
 <script setup>
 import { ref } from "vue";
+import Notification from "../notification/Notification.vue";
 
 /* 검색창의 입력값을 관리하기 위한 상태 */
 const searchQuery = ref("");
@@ -75,16 +76,16 @@ const onSearch = () => {
 
 /* 검색창 스타일 */
 .search-bar {
-    min-width: 400px;
-    max-width: 400px;
-    height: 40px;
+  min-width: 400px;
+  max-width: 400px;
+  height: 40px;
   flex: 1;
   display: flex;
   /* justify-content: center; */
   align-items: center;
   justify-content: space-between;
   border-radius: 15px;
-  border:1px solid #333;
+  border: 1px solid #333;
 }
 
 .search-bar input {
@@ -157,5 +158,18 @@ const onSearch = () => {
   font-size: 0.75rem;
   font-weight: bold;
   border-radius: 50%;
+}
+
+/* 이 아래 윤여운이 추가함 */
+.notification-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+/* 알림 아이콘이 있는 li 태그에 대한 스타일 */
+.header-actions li.notification-container {
+  padding: 0;
+  margin: 0 1.2rem;
 }
 </style>
