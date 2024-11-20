@@ -1,7 +1,9 @@
 <script setup>
 import axios from "axios";
+import DeliveryRegistrationModal from "~/components/delivery/DeliveryRegistrationModal.vue";
 
 const router = useRouter();
+const showDeliveryModal = ref(false);
 
 const props = defineProps({
   product: {
@@ -48,12 +50,17 @@ const removeProduct = async () => {
   } catch (error) {
     console.log("상품 삭제에 실패했습니다: ", error);
     console.error("에러 응답:", error.response?.data); // 에러 응답 확인용 로그
-      if (error.response?.data?.message) {
-        alert(error.response.data.message);
-      } else {
-        alert("상품 삭제에 실패했습니다.");
-      }
+    if (error.response?.data?.message) {
+      alert(error.response.data.message);
+    } else {
+      alert("상품 삭제에 실패했습니다.");
     }
+  }
+};
+
+const handleDeliverySuccess = () => {
+  showDeliveryModal.value = false;
+  emit("product-updated");
 };
 </script>
 
@@ -77,9 +84,24 @@ const removeProduct = async () => {
         </p>
       </div>
       <div class="button-container">
+        <button
+          v-if="product.status === 'RESERVED' && !product.hasDelivery"
+          @click="showDeliveryModal = true"
+          class="delivery-btn"
+        >
+          운송장 등록
+        </button>
         <button @click="goToModify" class="modify-btn">수정</button>
         <button @click="removeProduct" class="remove-btn">삭제</button>
       </div>
     </div>
   </div>
+
+  <!-- 운송장 등록 모달 -->
+  <DeliveryRegistrationModal
+    v-if="showDeliveryModal"
+    :product-id="product.productId"
+    @close="showDeliveryModal = false"
+    @success="handleDeliverySuccess"
+  />
 </template>
