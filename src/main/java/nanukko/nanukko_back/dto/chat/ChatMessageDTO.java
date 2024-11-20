@@ -42,6 +42,4 @@ public class ChatMessageDTO {
                 .type(entity.getType())
                 .build();
     }
-
-
 }

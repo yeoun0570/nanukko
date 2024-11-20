@@ -19,12 +19,12 @@ public class ChatMessages {
     @Column(name = "chat_message_id")
     private Long chatMessageId; //채팅 메시지 ID
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     @NotNull
     private User sender; //발신자 ID (FK)
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "chat_room_id")
     @NotNull
     private ChatRoom chatRoom; //채팅방 ID (FK)

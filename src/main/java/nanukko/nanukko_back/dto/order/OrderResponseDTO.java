@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 @Builder
 public class OrderResponseDTO {
     private String orderId;
+    private Long productId;
     private String productName;
     private int totalAmount;
     private PaymentStatus status;

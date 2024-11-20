@@ -71,36 +71,39 @@ onMounted(() => {
   <div class="form-group">
     <label>카테고리</label>
     <div class="category-select">
-      <select
-        :value="selectedCategories.majorId"
-        @change="handleMajorChange"
-        required
-      >
+      <select :value="selectedCategories.majorId" @change="handleMajorChange" required>
         <option value="">대분류 선택</option>
-        <option
-          v-for="major in categories.majorCategories"
-          :key="major.majorId"
-          :value="major.majorId"
-        >
+        <option v-for="major in categories.majorCategories" :key="major.majorId" :value="major.majorId">
           {{ major.majorName }}
         </option>
       </select>
 
-      <select
-        :value="productInfo.middleId"
-        @change="handleMiddleChange"
-        required
-        :disabled="!selectedCategories.majorId"
-      >
+      <select :value="productInfo.middleId" @change="handleMiddleChange" required
+        :disabled="!selectedCategories.majorId">
         <option value="">중분류 선택</option>
-        <option
-          v-for="middle in categories.middleCategories"
-          :key="middle.middleId"
-          :value="middle.middleId"
-        >
+        <option v-for="middle in categories.middleCategories" :key="middle.middleId" :value="middle.middleId">
           {{ middle.middleName }}
         </option>
       </select>
     </div>
   </div>
 </template>
+<style scoped>
+.category-select {
+  display: flex;
+  gap: 1rem;
+}
+
+.category-select select {
+  flex: 1;
+  padding: 0.75rem;
+  border: 1px solid #dee2e6;
+  border-radius: 0.25rem;
+  font-size: 1rem;
+}
+
+.category-select select:focus {
+  outline: none;
+  border-color: #007bff;
+}
+</style>
