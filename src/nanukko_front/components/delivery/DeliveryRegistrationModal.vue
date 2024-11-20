@@ -3,7 +3,7 @@ import axios from "axios";
 
 const props = defineProps({
   productId: {
-    type: String,
+    type: Number,
     required: true,
   },
 });
@@ -34,6 +34,13 @@ const handleSubmit = async () => {
   error.value = null;
 
   try {
+    // 요청 데이터 로깅
+    console.log("배송 등록 요청 데이터:", {
+      productId: props.productId,
+      carrierId: formData.value.carrierId,
+      trackingNumber: formData.value.trackingNumber,
+    });
+
     const response = await axios.post(
       "http://localhost:8080/api/delivery/register",
       {
@@ -42,6 +49,8 @@ const handleSubmit = async () => {
         trackingNumber: formData.value.trackingNumber,
       }
     );
+
+    console.log("response data: ", response.data);
     emit("success");
   } catch (err) {
     error.value = err.response?.data?.message || "운송장 등록에 실패했습니다.";
