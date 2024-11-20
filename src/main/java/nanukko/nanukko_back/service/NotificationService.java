@@ -340,7 +340,7 @@ public class NotificationService {
         String content = order.getProduct().getProductName()
                 + " 배송이 도착했어요! "
                 + order.getProduct().getSeller().getNickname()
-                + "님에게 리뷰를 작성해볼까요?(3일 뒤 자동으로 구매확정 됩니다.)";
+                + "님에게 리뷰를 작성해볼까요? 3일 뒤 자동으로 구매확정 되니까 주의해주세요.";
         String url = frontendURL.getUrl() + "/my-store/buy-products";
 
         send(receiver, NotificationType.DELIVERY, content, url);
