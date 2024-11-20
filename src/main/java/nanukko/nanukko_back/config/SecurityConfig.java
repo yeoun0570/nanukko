@@ -1,16 +1,37 @@
 package nanukko.nanukko_back.config;
 
+import nanukko.nanukko_back.jwt.JWTUtil;
+import nanukko.nanukko_back.jwt.LoginFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+
+
+    //AuthenticationManager가 인자로 받을 AuthenticationConfiguraion 객체 생성자 주입
+    private final AuthenticationConfiguration authenticationConfiguration;
+    private final JWTUtil jwtUtil;
+    public SecurityConfig(AuthenticationConfiguration authenticationConfiguration, JWTUtil jwtUtil) {
+        this.authenticationConfiguration = authenticationConfiguration;
+        this.jwtUtil = jwtUtil;
+    }
+
+    //AuthenticationManager Bean 등록
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
+
+        return configuration.getAuthenticationManager();
+    }
 
     /*검증 과정에서 항상 비밀번호를 해시코드로 암호화해서 관리해야 하므로 비밀번호 암호화하는 데 사용되는 인코더를 생성*/
     @Bean
@@ -21,6 +42,10 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception{
+
+//        // LoginFilter의 경로를 "/api/login"으로 설정
+//        LoginFilter loginFilter = new LoginFilter(authenticationManager, jwtUtil);
+//        loginFilter.setFilterProcessesUrl("/api/login");
 
         // csrf disable
         http
@@ -37,13 +62,17 @@ public class SecurityConfig {
         // 요청 경로별 권한 설정(로그인 구현 완료 후 재설정 해 줄 예정)
 //        http
 //                .authorizeHttpRequests((auth) -> auth
-//                        .requestMatchers("api/login/**", "/", "/api/register", "/ws-stomp/**").permitAll()//적어준 경로에 대해서는 전체 허용
+//                        .requestMatchers("/api/login/**", "/", "/api/register", "/ws-stomp/**").permitAll()//적어준 경로에 대해서는 전체 허용
 //                        .requestMatchers("/admin").hasRole("ADMIN")//적어준 경로에는 ADMIN만 접근 가능
 //                        .anyRequest().authenticated()//나머지 요청에 대해서는 로그인 한 사용자들 다 접근 가능함
 //                );
 
         // 요청 경로별 권한 설정 (모든 요청 허용) -> 개발 중에만 허용하고 추후에 로그인 완료 되면 제거 예정
         http.authorizeHttpRequests((auth) -> auth.anyRequest().permitAll());
+
+        // 커스텀 필터 추가, loginFilter를 통해서 검증 하고, 검증 성공하면 jwtUtil을 통해서 jwt를 생성 후 다시 loginFilter에 구현된 로그인 성공 후 실행될 메소드에 jwt 반환해준다.
+        http
+                .addFilterAt(new LoginFilter(authenticationManager(authenticationConfiguration), jwtUtil), UsernamePasswordAuthenticationFilter.class);
 
 
         // 세션 stateless 상태로 관리
