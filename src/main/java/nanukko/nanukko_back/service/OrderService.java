@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import nanukko.nanukko_back.config.RestTemplateConfig;
 import nanukko.nanukko_back.config.TossPaymentsConfig;
+import nanukko.nanukko_back.domain.order.Delivery;
+import nanukko.nanukko_back.domain.order.DeliveryStatus;
 import nanukko.nanukko_back.domain.order.Orders;
 import nanukko.nanukko_back.domain.order.PaymentStatus;
 import nanukko.nanukko_back.domain.product.Product;
@@ -12,6 +14,7 @@ import nanukko.nanukko_back.domain.user.User;
 import nanukko.nanukko_back.dto.order.OrderConfirmDTO;
 import nanukko.nanukko_back.dto.order.OrderPageDTO;
 import nanukko.nanukko_back.dto.order.OrderResponseDTO;
+import nanukko.nanukko_back.repository.DeliveryRepository;
 import nanukko.nanukko_back.repository.OrderRepository;
 import nanukko.nanukko_back.repository.ProductRepository;
 import nanukko.nanukko_back.repository.UserRepository;
@@ -37,6 +40,7 @@ public class OrderService {
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
     private final OrderRepository orderRepository;
+    private final DeliveryRepository deliveryRepository;
     //RestTemplate : REST API를 호출하고 응답할 때까지 기다리는 동기 방식
     private final RestTemplateConfig restTemplate;
     private final NotificationService notificationService;
@@ -248,6 +252,10 @@ public class OrderService {
         Orders order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다."));
 
+        if (order.getStatus() == PaymentStatus.ESCROW_RELEASED) {
+            throw new IllegalArgumentException("이미 거래 완료된 상품입니다.");
+        }
+
         if (order.getStatus() != PaymentStatus.ESCROW_HOLDING) {
             throw new IllegalArgumentException("에스크로 상태가 아닙니다.");
         }
@@ -345,9 +353,21 @@ public class OrderService {
         Orders order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다."));
 
+        Delivery delivery = deliveryRepository.findByOrderOrderId(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다."));
+
+        // 배송이 시작되었으면 취소 불가
+        if (delivery != null &&
+                (delivery.getStatus() == DeliveryStatus.IN_TRANSIT ||
+                        delivery.getStatus() == DeliveryStatus.DELIVERED)) {
+            throw new IllegalStateException("배송이 시작된 주문은 취소가 불가능합니다.");
+        }
+
+        // 에스크로 상태 확인
         if (order.getStatus() != PaymentStatus.ESCROW_HOLDING) {
             throw new IllegalStateException("에스크로 상태에서만 취소가 가능합니다.");
         }
+
         // 환불 처리
         processRefund(order);
 
@@ -394,48 +414,27 @@ public class OrderService {
 
 
     // 매일 자정에 실행되는 스케줄러
-    // 에스크로 상태가 되고 10일 지나면 자동으로 구매확정 시켜주는 메서드
+    // 배송 완료되고 3일이 지나면 자동으로 구매확정 시켜주는 메서드
     @Scheduled(cron = "0 0 0 * * *")
     @Transactional
     public void autoConfirmExpiredEscrow() {
-        LocalDateTime tenDaysAgo = LocalDateTime.now().minusDays(10);
+        List<Orders> expiredOrders = orderRepository.findByStatusAndEscrowDeadlineBefore(
+                PaymentStatus.DELIVERED,
+                LocalDateTime.now()
+        );
 
-        try {
-            // 14일이 지난 에스크로 주문들 조회
-            List<Orders> expiredOrders = orderRepository.findByStatusAndEscrowDeadlineBefore(
-                    PaymentStatus.ESCROW_HOLDING,
-                    tenDaysAgo
-            );
+        log.info("자동 구매확정 대상 주문 수: {}", expiredOrders.size());
 
-            log.info("자동 구매확정 대상 주문 수: {}", expiredOrders.size());
+        for (Orders order : expiredOrders) {
+            try {
+                //구매 확정 처리
+                confirmPurchase(order.getOrderId());
 
-            for (Orders order : expiredOrders) {
-                try {
-                    // 판매자에게 금액 지급
-                    User seller = order.getProduct().getSeller();
-                    seller.addBalance(order.getProductAmount());
-                    userRepository.save(seller);
-
-                    log.info("자동 구매확정 판매자 정산 완료 - orderId: {}, sellerId: {}, amount: {}",
-                            order.getOrderId(), seller.getUserId(), order.getProductAmount());
-
-                    // 주문 상태 업데이트
-                    order.updateReleased(PaymentStatus.ESCROW_RELEASED, LocalDateTime.now());
-
-                    // 상품 상태 변경
-                    Product product = order.getProduct();
-                    product.updateStatus(ProductStatus.SOLD_OUT);
-                    productRepository.save(product);
-
-                    log.info("자동 구매확정 완료 - orderId: {}", order.getOrderId());
-
-                } catch (Exception e) {
-                    log.error("자동 구매확정 처리 실패 - orderId: {}", order.getOrderId(), e);
-                    // 개별 주문 실패 시 다음 주문 처리를 위해 계속 진행
-                }
+                log.info("배송완료 후 3일 경과로 자동 구매확정 처리 - orderId: {}", order.getOrderId());
+            } catch (Exception e) {
+                log.error("자동 구매확정 처리 실패 - orderId: {}", order.getOrderId(), e);
+                // 개별 주문 실패 시 다음 주문 처리를 위해 계속 진행
             }
-        } catch (Exception e) {
-            log.error("자동 구매확정 배치 처리 실패", e);
         }
     }
 }

@@ -13,7 +13,7 @@ import java.util.List;
 
 @Repository
 public interface OrderRepository extends JpaRepository<Orders, String> {
-    //에스크로 상태가 10일 뒤에 자동으로 구매확정 시키기 위해 필요한 메서드
+    //배송 완료 3일 뒤에 자동으로 구매확정 시키기 위해 필요한 메서드
     List<Orders> findByStatusAndEscrowDeadlineBefore(
             PaymentStatus status,
             LocalDateTime deadline
