@@ -55,7 +55,7 @@ const onSearch = () => {
   align-items: center;
   padding: 0.5rem 1rem;
   background-color: white; /* 흰색 배경 */
-  /* border-bottom: 1px solid #e0e0e0; 하단 경계선 */
+  border-bottom: 1px solid #e0e0e0; /*하단 경계선 */
   /* box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); 약간의 그림자 효과 */
 }
 

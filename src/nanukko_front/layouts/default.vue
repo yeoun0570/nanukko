@@ -1,7 +1,8 @@
 <script setup>
-import Header from '~/components/layout/header.vue'
-import Footer from '~/components/layout/footer.vue'
-import navigator from '~/components/layout/navigator.vue';
+import Header from "~/components/layout/header.vue";
+import Footer from "~/components/layout/footer.vue";
+import navigator from "~/components/layout/navigator.vue";
+import sidebar from "~/components/layout/sidebar.vue";
 </script>
 
 <template>
@@ -12,6 +13,7 @@ import navigator from '~/components/layout/navigator.vue';
 
     <!-- 메인 콘텐츠 영역 -->
     <main>
+    <sidebar />
       <NuxtPage />
     </main>
 
