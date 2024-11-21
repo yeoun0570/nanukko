@@ -1,4 +1,6 @@
 <script setup>
+import NotificationIcon from "./NotificationIcon.vue";
+import NotificationList from "./NotificationList.vue";
 import axios from "axios";
 
 // 알림 목록을 저장할 배열
@@ -143,7 +145,7 @@ const getNotificationTitle = (type) => {
 //토스트 : 화면 구석에 잠깐 나타났다가 사라지는 알림 메시지
 const showToast = (notification) => {
   // 메시지의 첫번째 줄만 추출
-  const mainMessage = notification.content.split('|||')[0];
+  const mainMessage = notification.content.split("|||")[0];
 
   //토스트 요소 생성
   const toast = document.createElement("div");
@@ -256,11 +258,22 @@ const markAllAsRead = async () => {
 
     // 읽은 알림 ID를 LocalStorage에 저장
     const allReadIds = notifications.value.map((n) => n.notificationId);
-    localStorage.setItem('readNotifications', JSON.stringify(allReadIds));
+    localStorage.setItem("readNotifications", JSON.stringify(allReadIds));
 
     unreadCount.value = 0;
   } catch (error) {
     console.error("전체 알림 읽음 처리 실패: ", error);
+  }
+};
+
+// document 클릭 이벤트 핸들러
+const handleClickOutside = (event) => {
+  // notifcation-wrapper 외부 클릭시 알림창 닫기
+  if (
+    showNotifications.value &&
+    !event.target.closest(".notifcation-wrapper")
+  ) {
+    showNotifications.value = false;
   }
 };
 
@@ -271,6 +284,7 @@ onMounted(() => {
     // connectSSE() 대신 initializeNotifications() 사용
     initializeNotifications();
   }
+  document.addEventListener("click", handleClickOutside);
 });
 
 // 컴포넌트 언마운트 시 실행
@@ -280,6 +294,7 @@ onUnmounted(() => {
     eventSource.value.close();
     eventSource.value = null;
   }
+  document.removeEventListener("click", handleClickOutside);
 });
 </script>
 

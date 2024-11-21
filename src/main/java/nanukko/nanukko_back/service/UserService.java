@@ -170,6 +170,7 @@ public class UserService {
                 .productName(product.getProductName())
                 .price(product.getPrice())
                 .status(product.getStatus())
+                .hasDelivery(product.isHasDelivery())
                 .build());
 
         return new PageResponseDTO<>(dtoPage);

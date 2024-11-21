@@ -40,7 +40,7 @@ public class Orders {
     @NotNull
     @Column(name = "charge_amount")
     private int chargeAmount; // 수수료 금액
-    
+
     @Column(name = "shipping_free")
     private int shippingFree; // 배송비
 
@@ -83,7 +83,7 @@ public class Orders {
 
     //주문 취소 메서드 추가
     public void cancel() {
-        if(this.status != PaymentStatus.ESCROW_HOLDING) {
+        if (this.status != PaymentStatus.ESCROW_HOLDING) {
             throw new IllegalArgumentException("에스크로 상태에서만 취소가 가능합니다.");
         }
         this.status = PaymentStatus.CANCELED;

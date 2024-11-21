@@ -1,4 +1,6 @@
 <script setup>
+import NotificationItem from './NotificationItem.vue';
+
 const props = defineProps({
   notifications: {
     type: Array,
@@ -8,7 +10,7 @@ const props = defineProps({
 
 const activeTab = ref("unread"); //탭 상태 관리
 
-defineEmits(["select", "markAllAsRead"]);
+const emit = defineEmits(["select", "markAllAsRead"]);
 
 //알림을 읽음/안읽음으로 분류
 const groupedNotifications = computed(() => {
@@ -68,7 +70,6 @@ const removeNotification = (notificationId) => {
         "
         class="notification-section"
       >
-        <div class="section-title">읽지 않은 알림</div>
         <NotificationItem
           v-for="notification in groupedNotifications.unread"
           :key="notification.notificationId"
@@ -83,7 +84,6 @@ const removeNotification = (notificationId) => {
         v-if="(groupedNotifications.read.length > 0) & (activeTab === 'read')"
         class="notification-section"
       >
-        <div class="section-title">읽은 알림</div>
         <NotificationItem
           v-for="notification in groupedNotifications.read"
           :key="notification.notificationId"

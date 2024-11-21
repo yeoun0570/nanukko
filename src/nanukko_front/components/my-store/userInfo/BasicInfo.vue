@@ -23,6 +23,29 @@ const emit = defineEmits([
 const updateField = (field, value) => {
   emit(`update:${field}`, value);
 };
+
+//년/월/일 선택을 위한 데이터
+const years = computed(() => {
+  const currentYear = new Date().getFullYear();
+  return Array.from({ length: 50 }, (_, i) => currentYear - 80 + i);
+});
+
+const months = Array.from({ length: 12 }, (_, i) => i + 1);
+const days = Array.from({ length: 31 }, (_, i) => i + 1);
+
+//생년월일 파싱
+const birthDate = computed(() => {
+  if (!props.userBirth) return { year: 1980, month: 1, day: 1 };
+  const [year, month, day] = props.userBirth.split("-").map(Number);
+  return { year, month, day };
+});
+
+// 생년월일 업데이트
+const updateBirthDate = (field, value) => {
+  const date = { ...birthDate.value, [field]: value };
+  const formattedDate = `${date.year}-${String(date.month).padStart(2, "0")}-${String(date.day).padStart(2, "0")}`;
+  updateField("userBirth", formattedDate);
+};
 </script>
 
 <template>
@@ -63,13 +86,42 @@ const updateField = (field, value) => {
     <div class="info-item">
       <label>생년월일:</label>
       <span v-if="!isEditing">{{ userBirth }}</span>
-      <input
+      <div v-else class="birth-date-selectors">
+        <select
+          :value="birthDate.year"
+          @change="updateBirthDate('year', $event.target.value)"
+          class="year-select"
+        >
+          <option v-for="year in years" :key="year" :value="year">
+            {{ year }}년
+          </option>
+        </select>
+        <select
+          :value="birthDate.month"
+          @change="updateBirthDate('month', $event.target.value)"
+          class="month-select"
+        >
+          <option v-for="month in months" :key="month" :value="month">
+            {{ month }}월
+          </option>
+        </select>
+        <select
+          :value="birthDate.day"
+          @change="updateBirthDate('day', $event.target.value)"
+          class="day-select"
+        >
+          <option v-for="day in days" :key="day" :value="day">
+            {{ day }}일
+          </option>
+        </select>
+      </div>
+      <!-- <input
         v-else
         :value="userBirth"
         @input="updateField('userBirth', $event.target.value)"
         type="date"
         class="edit-input"
-      />
+      /> -->
     </div>
   </div>
 </template>

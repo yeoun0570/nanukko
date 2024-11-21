@@ -91,7 +91,7 @@ public class Product {
     private boolean isCompanion; //동행인 여부 -> true면 동행인 동행, false면 동행X
 
     @Column(name = "companion_gender")
-    private boolean companionGender=true; //동행인 성별 -> true면 남자, false면 여자
+    private boolean companionGender = true; //동행인 성별 -> true면 남자, false면 여자
 
     @Column(name = "free_shipping")
     @NotNull
@@ -102,6 +102,10 @@ public class Product {
     @ColumnDefault("0")
     private int shippingFree; //배송비
 
+    @Column(name = "has_delivery")
+    @NotNull
+    private boolean hasDelivery; //배송 여부 -> true면 배송시작, false면 배송 안했음
+
 
     //상품 상태 변경
     public void updateStatus(ProductStatus status) {
@@ -111,6 +115,11 @@ public class Product {
     // 카테고리 수정 메서드
     public void updateCategory(MiddleCategory middleCategory) {
         this.middleCategory = middleCategory;
+    }
+
+    // 배송여부 변경
+    public void updateHasDelivery(boolean hasDelivery) {
+        this.hasDelivery = hasDelivery;
     }
 
     //상품 수정
