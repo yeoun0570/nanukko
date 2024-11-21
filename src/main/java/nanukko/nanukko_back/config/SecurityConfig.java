@@ -1,5 +1,6 @@
 package nanukko.nanukko_back.config;
 
+import nanukko.nanukko_back.jwt.JWTFilter;
 import nanukko.nanukko_back.jwt.JWTUtil;
 import nanukko.nanukko_back.jwt.LoginFilter;
 import org.springframework.context.annotation.Bean;
@@ -44,8 +45,8 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception{
 
 //        // LoginFilter의 경로를 "/api/login"으로 설정
-//        LoginFilter loginFilter = new LoginFilter(authenticationManager, jwtUtil);
-//        loginFilter.setFilterProcessesUrl("/api/login");
+        LoginFilter loginFilter = new LoginFilter(authenticationManager(authenticationConfiguration), jwtUtil);
+        loginFilter.setFilterProcessesUrl("/api/login");
 
         // csrf disable
         http
@@ -60,15 +61,19 @@ public class SecurityConfig {
                 .httpBasic((auth)-> auth.disable());
 
         // 요청 경로별 권한 설정(로그인 구현 완료 후 재설정 해 줄 예정)
-//        http
-//                .authorizeHttpRequests((auth) -> auth
-//                        .requestMatchers("/api/login/**", "/", "/api/register", "/ws-stomp/**").permitAll()//적어준 경로에 대해서는 전체 허용
-//                        .requestMatchers("/admin").hasRole("ADMIN")//적어준 경로에는 ADMIN만 접근 가능
-//                        .anyRequest().authenticated()//나머지 요청에 대해서는 로그인 한 사용자들 다 접근 가능함
-//                );
+        http
+                .authorizeHttpRequests((auth) -> auth
+                        .requestMatchers("/api/login/**", "/", "/api/register", "/ws-stomp/**").permitAll()//적어준 경로에 대해서는 전체 허용
+                        .requestMatchers("/api/admin").hasRole("ADMIN")//적어준 경로에는 ADMIN만 접근 가능
+                        .anyRequest().authenticated()//나머지 요청에 대해서는 로그인 한 사용자들 다 접근 가능함
+                );
 
         // 요청 경로별 권한 설정 (모든 요청 허용) -> 개발 중에만 허용하고 추후에 로그인 완료 되면 제거 예정
-        http.authorizeHttpRequests((auth) -> auth.anyRequest().permitAll());
+        //http.authorizeHttpRequests((auth) -> auth.anyRequest().permitAll());
+
+        // JWTFilter를 LoginFilter 앞에 달아줌
+        http
+                .addFilterBefore(new JWTFilter(jwtUtil), LoginFilter.class);
 
         // 커스텀 필터 추가, loginFilter를 통해서 검증 하고, 검증 성공하면 jwtUtil을 통해서 jwt를 생성 후 다시 loginFilter에 구현된 로그인 성공 후 실행될 메소드에 jwt 반환해준다.
         http

@@ -50,6 +50,7 @@ public class JWTUtil {
                 .claim("role", role)
                 .issuedAt(new Date(System.currentTimeMillis()))//토큰이 발행된 시간
                 .expiration(new Date(System.currentTimeMillis() + expiredMs))//만료 시간 설정
+                .signWith(secretKey, Jwts.SIG.HS256)// HS256 알고리즘으로 서명
                 .compact();//토큰을 컴팩트 시킴
     }
 }

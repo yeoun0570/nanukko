@@ -5,6 +5,7 @@ import lombok.extern.log4j.Log4j2;
 import nanukko.nanukko_back.dto.user.UserInfoDTO;
 import nanukko.nanukko_back.service.RegisterService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -27,4 +28,9 @@ public class RegisterController {
         }
     }
 
+    // jwt 발급 테스트용
+    @GetMapping("/api/admin")
+    String admin(){
+        return "음";
+    }
 }
