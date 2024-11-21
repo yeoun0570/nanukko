@@ -51,12 +51,18 @@ public class CustomUserDetails implements UserDetails {
         return user.getPassword();
     }
 
+    // 아이디
     @Override
     public String getUsername() {
         return user.getUserId();
     }
 
+    // 이름
     public String getUserNickname(){
         return user.getNickname();
+    }
+
+    public String getUserEmail(){
+        return user.getEmail();
     }
 }

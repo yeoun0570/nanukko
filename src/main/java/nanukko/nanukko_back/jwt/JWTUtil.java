@@ -43,10 +43,12 @@ public class JWTUtil {
     }
 
     /*로그인이 성공적으로 됐을 때 successfulHandler를 통해서 전달받은 username 등의 정보를 기반으로 토큰 생성 메소드*/
-    public String createJwt(String userId, String nickname, String role, Long expiredMs){//사용자 아이디, 사용자 이름, 권한, 만료기간
+    public String createJwt(String category, String userId, String nickname, String email, String role, Long expiredMs){//사용자 아이디, 사용자 이름, 권한, 만료기간
         return Jwts.builder()
+                .claim("category", category)
                 .claim("userId", userId)//클레임 선언 후 특정한 키에 대한 값을 페이로드 부분에 넣어줄 수 있다
                 .claim("nickname", nickname)// 닉네임 아니고 실제 사용자 이름
+                .claim("email", email)
                 .claim("role", role)
                 .issuedAt(new Date(System.currentTimeMillis()))//토큰이 발행된 시간
                 .expiration(new Date(System.currentTimeMillis() + expiredMs))//만료 시간 설정

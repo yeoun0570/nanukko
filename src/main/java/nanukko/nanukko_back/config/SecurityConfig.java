@@ -1,5 +1,6 @@
 package nanukko.nanukko_back.config;
 
+import jakarta.servlet.http.HttpServletRequest;
 import nanukko.nanukko_back.jwt.JWTFilter;
 import nanukko.nanukko_back.jwt.JWTUtil;
 import nanukko.nanukko_back.jwt.LoginFilter;
@@ -13,6 +14,10 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+
+import java.util.Collections;
 
 @Configuration
 @EnableWebSecurity
@@ -44,7 +49,28 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception{
 
-//        // LoginFilter의 경로를 "/api/login"으로 설정
+        // 로그인 필터들의 CORS 문제 방지를 위한 설정
+        http
+                .cors((cors) ->
+                        cors.configurationSource(new CorsConfigurationSource() {
+                            @Override
+                            public CorsConfiguration getCorsConfiguration(HttpServletRequest request) {
+                                CorsConfiguration configuration = new CorsConfiguration();
+
+                                configuration.setAllowedOrigins(Collections.singletonList("http://localhost:3000"));// 프론트엔드 서버 허용
+                                configuration.setAllowedMethods(Collections.singletonList("*"));// 모든 메소드 허용
+                                configuration.setAllowCredentials(true);// 프론트서버에서 credentials 설정 해주면 여기도 무조건 true 설정 해줘야 함
+                                configuration.setAllowedHeaders(Collections.singletonList("*"));// 허용할 헤더 설정
+                                configuration.setMaxAge(3600L);// 허용 시간 설정
+                                configuration.setExposedHeaders(Collections.singletonList("Authorization"));// 프론트 전송 시 Authorization 헤더에 JWT를 담아 보낼 것이기 때문에 허요
+
+                                return configuration;
+                            }
+                        })
+                        );
+
+
+        // LoginFilter의 경로를 "/api/login"으로 설정 -> 설정 안 먹히는 듯.. 로그인 시 localhost:8080/login 해야됨..
         LoginFilter loginFilter = new LoginFilter(authenticationManager(authenticationConfiguration), jwtUtil);
         loginFilter.setFilterProcessesUrl("/api/login");
 
@@ -65,7 +91,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests((auth) -> auth
                         .requestMatchers("/api/login/**", "/", "/api/register", "/ws-stomp/**").permitAll()//적어준 경로에 대해서는 전체 허용
                         .requestMatchers("/api/admin").hasRole("ADMIN")//적어준 경로에는 ADMIN만 접근 가능
-                        .anyRequest().authenticated()//나머지 요청에 대해서는 로그인 한 사용자들 다 접근 가능함
+                        .anyRequest().authenticated()//나머지 요청에 대해서는 로그인 한 사용자들만 접근 가능함
                 );
 
         // 요청 경로별 권한 설정 (모든 요청 허용) -> 개발 중에만 허용하고 추후에 로그인 완료 되면 제거 예정

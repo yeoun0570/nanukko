@@ -2,9 +2,11 @@ package nanukko.nanukko_back.jwt;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import nanukko.nanukko_back.dto.user.CustomUserDetails;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -40,21 +42,39 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
         return authenticationManager.authenticate(authToken);// 만들어준 토큰 넘겨주면 자동으로 DB에서 회원 정보 들고와서 service에서 검증함
     }
 
+    // 쿠키 생성하기
+    private Cookie createCookie(String key, String value){
+        Cookie cookie = new Cookie(key, value);
+        cookie.setMaxAge(24*60*60);// 24시간
+        cookie.setSecure(true);// HTTPS인 경우 이렇게 설정
+        cookie.setPath("/"); // 쿠키가 설정될 범위(전체 경로)
+        cookie.setHttpOnly(true); // 프론트에서 자바스크립트로 접근 못하게 설정
+        return cookie;
+    }
+
     /*로그인 성공하면 실행될 메소드, 성공 후 JWTUtil에서 JWT 반환을 여기서 받음 */
     @Override
     protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authentication) throws IOException, ServletException {
         CustomUserDetails details = (CustomUserDetails) authentication.getPrincipal();//user 객체 알아냄
-        String userId = details.getUsername();
+//        String userId = details.getUsername();
         String nickname = details.getUserNickname();// 닉네임 아니고 실제 이름ㅎ
+        String email = details.getUserEmail();
+
+        String userId = authentication.getName();// 사용자 아이디
 
         Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();// role 값(컬렉션 형태) 추출
         Iterator<? extends GrantedAuthority> iterator = authorities.iterator();// 반복자 통해서 role 값 꺼냄
         GrantedAuthority auth = iterator.next();
         String role = auth.getAuthority();
 
-        String token = jwtUtil.createJwt(userId, nickname, role, 60*60*10L);// 10시간 만료 설정
-        response.addHeader("Authorization", "Bearer "+token);// 토큰 키 값, JWT 인증방식(공백 한 칸 필수!!), token
+        // 토큰 생성
+        String access = jwtUtil.createJwt("access", userId, nickname, email, role,600000L);// 10분 만료
+        String refresh = jwtUtil.createJwt("refresh", userId, nickname, email, role, 86400000L);// 토큰 10시간 만료
 
+        // 응답 설정
+        response.setHeader("access", access);
+        response.addCookie(createCookie("refresh", refresh));
+        response.setStatus(HttpStatus.OK.value());
 
     }
 
