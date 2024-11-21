@@ -6,8 +6,6 @@ import ProductForm from '~/components/products/products-new/ProductForm.vue';
 
 const product = ref({
     title: '',
-    majorId: '',
-    middleId: '',
     price: 0,
     description: '',
     images: [],
@@ -19,11 +17,10 @@ const product = ref({
         detailAddress: ''
     },
     // 거래 관련 정보
-    person: false,
     companion: false,
-    companionGender: false,
     deputy: false,
-    deputyGender: false,
+    gender: '',
+    ageGroup: '',  // 추가
     // 카테고리 정보
     majorId: '',
     majorName: '',
@@ -140,8 +137,9 @@ const handleCancel = () => {
     margin-bottom: 1rem;
 }
 
-.product-form {
+.product-new form.product-form {
     margin-top: 2rem;
+    padding: 0;
 }
 
 .button-group {

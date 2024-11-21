@@ -47,16 +47,13 @@ public class Product {
     @NotNull
     @Column(name = "created_at")
     private LocalDateTime createdAt; //상품 등록 날짜
+
     @Column(name = "updated_at")
     private LocalDateTime updatedAt; //상품 수정 날짜
-    @Column(name = "refreshed_at")
-    private LocalDateTime refreshedAt; //끌올 날짜
 
-    // private boolean hide; //숨김 여부 -> true = 숨김, false = 공개
-
-    @NotNull
+/*    @NotNull
     @Column(name = "view_count")
-    private int viewCount; //조회수
+    private int viewCount; //조회수*/
 
     @NotNull
     @Column(name = "is_deleted")
@@ -101,7 +98,6 @@ public class Product {
     @NotNull
     @ColumnDefault("0")
     private int shippingFree; //배송비
-
 
     //상품 상태 변경
     public void updateStatus(ProductStatus status) {
@@ -152,7 +148,6 @@ public class Product {
     public void removeProduct(boolean isDeleted) {
         this.isDeleted = isDeleted;
     }
-
 
     //배송비 수정
     public void updateShippingFree(int shippingFree) {

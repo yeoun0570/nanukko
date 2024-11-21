@@ -273,4 +273,3 @@ onMounted(async () => {
     transform: translateY(10px);
 }
 </style>
-```
