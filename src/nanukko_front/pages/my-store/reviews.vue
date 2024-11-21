@@ -1,9 +1,10 @@
 <script setup>
 import axios from "axios";
-import ReviewList from "~/components/my-store/reviews/ReviewList.vue";
+import ReadOnlyStarRating from "~/components/my-store/reviews/ReadOnlyStarRating.vue";
 import StoreScore from "~/components/my-store/reviews/StoreScore.vue";
-import Pagination from "~/components/Pagination.vue";
+import { useApi } from "~/composables/useApi";
 
+const { baseURL } = useApi();
 const reviewInfo = ref([]);
 const userId = "seller1";
 const currentPage = ref(0);
@@ -14,7 +15,7 @@ const reviewRate = ref(0);
 const loadReviews = async (page = 0) => {
   try {
     const response = await axios.get(
-      "http://localhost:8080/api/my-store/reviews",
+      `${baseURL}/my-store/reviews`,
       {
         params: {
           userId: userId,
@@ -37,6 +38,11 @@ const handlePageChange = async (page) => {
   window.scrollTo(0, 0);
 };
 
+const normalizeRating = (rating) => {
+  // 100점 만점을 5점 만점으로 변환
+  return rating / 2;
+};
+
 onMounted(() => {
   loadReviews();
 });
@@ -47,7 +53,29 @@ onMounted(() => {
     <h1 class="main-title">내가 받은 후기 모음</h1>
     <div v-if="reviewInfo.length > 0">
       <StoreScore :reviewRate="reviewRate" />
-      <ReviewList :reviews="reviewInfo" />
+      <div class="reviews-list">
+        <div v-for="review in reviewInfo" :key="review.reviewId" class="review-card">
+          <div class="review-header">
+            <div class="profile-section">
+              <img
+                :src="review.profile || '/default-profile.png'"
+                alt="프로필 사진"
+                class="profile-image"
+              />
+              <h3 class="author-name">{{ review.authorName }}</h3>
+            </div>
+            <div class="rating">
+              <ReadOnlyStarRating :rating="normalizeRating(review.rate)" />
+            </div>
+          </div>
+
+          <div class="product-info">
+            <p class="product-name">{{ review.productName }}</p>
+          </div>
+
+          <p class="review-content">{{ review.review }}</p>
+        </div>
+      </div>
       <Pagination
         v-if="totalPages > 1"
         :currentPage="currentPage"
