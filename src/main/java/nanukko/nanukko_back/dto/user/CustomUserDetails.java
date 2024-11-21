@@ -7,6 +7,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.util.ArrayList;
 import java.util.Collection;
 
+/*Spring Security에서 인증 및 권한 부여를 위해 필요한 사용자 정보를 제공*/
 public class CustomUserDetails implements UserDetails {
 
     private final User user;

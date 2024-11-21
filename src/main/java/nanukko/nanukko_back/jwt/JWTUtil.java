@@ -35,12 +35,18 @@ public class JWTUtil {
                 .getPayload().get("role", String.class);
     }
 
+    // 카테고리 확인
+    public String getCategory(String token){
+        return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload().get("category", String.class);
+    }
+
     // 3. 토큰 만료 확인
     public boolean isExpired(String token){
         return Jwts.parser().verifyWith(secretKey)
                 .build().parseSignedClaims(token)
                 .getPayload().getExpiration().before(new Date());//페이로드에서 토큰 만료일이 new Date() 기준 만료인지 여부를 리턴
     }
+
 
     /*로그인이 성공적으로 됐을 때 successfulHandler를 통해서 전달받은 username 등의 정보를 기반으로 토큰 생성 메소드*/
     public String createJwt(String category, String userId, String nickname, String email, String role, Long expiredMs){//사용자 아이디, 사용자 이름, 권한, 만료기간

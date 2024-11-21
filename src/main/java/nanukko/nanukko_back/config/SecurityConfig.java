@@ -58,10 +58,10 @@ public class SecurityConfig {
                                 CorsConfiguration configuration = new CorsConfiguration();
 
                                 configuration.setAllowedOrigins(Collections.singletonList("http://localhost:3000"));// 프론트엔드 서버 허용
-                                configuration.setAllowedMethods(Collections.singletonList("*"));// 모든 메소드 허용
+                                configuration.setAllowedMethods(Collections.singletonList("GET, POST, PUT, DELETE"));// 메소드 허용
                                 configuration.setAllowCredentials(true);// 프론트서버에서 credentials 설정 해주면 여기도 무조건 true 설정 해줘야 함
-                                configuration.setAllowedHeaders(Collections.singletonList("*"));// 허용할 헤더 설정
-                                configuration.setMaxAge(3600L);// 허용 시간 설정
+                                configuration.setAllowedHeaders(Collections.singletonList("*"));// 허용할 헤더 설정-> Audentification, content-type등 명시적으로 허용하기
+                                configuration.setMaxAge(3600L);// 허용 시간 설정 -> 하루 정도로 변경하기
                                 configuration.setExposedHeaders(Collections.singletonList("Authorization"));// 프론트 전송 시 Authorization 헤더에 JWT를 담아 보낼 것이기 때문에 허요
 
                                 return configuration;
@@ -69,10 +69,6 @@ public class SecurityConfig {
                         })
                         );
 
-
-        // LoginFilter의 경로를 "/api/login"으로 설정 -> 설정 안 먹히는 듯.. 로그인 시 localhost:8080/login 해야됨..
-        LoginFilter loginFilter = new LoginFilter(authenticationManager(authenticationConfiguration), jwtUtil);
-        loginFilter.setFilterProcessesUrl("/api/login");
 
         // csrf disable
         http
@@ -89,7 +85,7 @@ public class SecurityConfig {
         // 요청 경로별 권한 설정(로그인 구현 완료 후 재설정 해 줄 예정)
         http
                 .authorizeHttpRequests((auth) -> auth
-                        .requestMatchers("/api/login/**", "/", "/api/register", "/ws-stomp/**").permitAll()//적어준 경로에 대해서는 전체 허용
+                        .requestMatchers("/api/login/**", "/", "/api/register").permitAll()//적어준 경로에 대해서는 전체 허용
                         .requestMatchers("/api/admin").hasRole("ADMIN")//적어준 경로에는 ADMIN만 접근 가능
                         .anyRequest().authenticated()//나머지 요청에 대해서는 로그인 한 사용자들만 접근 가능함
                 );
