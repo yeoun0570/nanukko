@@ -21,14 +21,14 @@ public class JWTUtil {
 
     /*검증을 할 메소드들 -> 토큰을 jsonParser로 꺼내서 내부 데이터 확인  */
 
-    // 1. username 일치하는지 확인
+    // username 일치하는지 확인
     public String getUsername(String token){
         return Jwts.parser().verifyWith(secretKey)//secretkey를 사용해서 토큰이 우리 서버에서 생성되었는지, secretKey와 일치하는지 검사
                 .build().parseSignedClaims(token)//클레임 확인 후에
                 .getPayload().get("userId", String.class);//페이로드 부분에서 userId라는 키값의 String타입 데이터를 가져옴
     }
 
-    // 2. roll 학인
+    // roll 학인
     public String getRole(String token){
         return Jwts.parser().verifyWith(secretKey)
                 .build().parseSignedClaims(token)
@@ -40,7 +40,22 @@ public class JWTUtil {
         return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload().get("category", String.class);
     }
 
-    // 3. 토큰 만료 확인
+    // email 확인
+    public String getEmail(String token){
+        return Jwts.parser().verifyWith(secretKey)
+                .build().parseSignedClaims(token)
+                .getPayload().get("email", String.class);
+    }
+
+    // 이름 확인
+    public String getNickname(String token){
+        return Jwts.parser().verifyWith(secretKey)
+                .build().parseSignedClaims(token)
+                .getPayload().get("nickname", String.class);
+    }
+
+
+    // 토큰 만료 확인
     public boolean isExpired(String token){
         return Jwts.parser().verifyWith(secretKey)
                 .build().parseSignedClaims(token)
