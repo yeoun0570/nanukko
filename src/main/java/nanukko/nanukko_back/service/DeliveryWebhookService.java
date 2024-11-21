@@ -72,7 +72,7 @@ public class DeliveryWebhookService {
     public void processWebhook(DeliveryWebhook webhook) {
         try {
             //배송상태 업데이트
-            deliveryService.updateDeliverStatus(
+            deliveryService.updateDeliveryStatusFromWebhook(
                     webhook.getTrackingNumber(),
                     webhook.getStatus()
             );

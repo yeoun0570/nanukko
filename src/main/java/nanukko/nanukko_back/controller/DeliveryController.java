@@ -7,14 +7,12 @@ import lombok.extern.log4j.Log4j2;
 import nanukko.nanukko_back.domain.order.DeliveryStatus;
 import nanukko.nanukko_back.dto.order.DeliveryRegistrationDTO;
 import nanukko.nanukko_back.dto.order.DeliveryResponseDTO;
+import nanukko.nanukko_back.dto.order.DeliveryUpdateStatusDTO;
 import nanukko.nanukko_back.exception.ErrorResponse;
 import nanukko.nanukko_back.service.DeliveryService;
 import nanukko.nanukko_back.service.DeliveryWebhookService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 import java.util.UUID;
@@ -88,4 +86,14 @@ public class DeliveryController {
             return ResponseEntity.status(500).body("failed");
         }
     }
+
+    /////////////////////////테스트를 위한 배송상태 업데이트
+    @PostMapping("/update-status")
+    public ResponseEntity<DeliveryUpdateStatusDTO> updateDeliveryStatus(
+            @RequestBody DeliveryUpdateStatusDTO dto
+            ) {
+        DeliveryUpdateStatusDTO response = deliveryService.updateDeliveryStatus(dto);
+        return ResponseEntity.ok(response);
+    }
+
 }

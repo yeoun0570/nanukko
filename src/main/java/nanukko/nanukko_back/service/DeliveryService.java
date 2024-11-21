@@ -12,6 +12,7 @@ import nanukko.nanukko_back.domain.product.Product;
 import nanukko.nanukko_back.domain.product.ProductStatus;
 import nanukko.nanukko_back.dto.order.DeliveryRegistrationDTO;
 import nanukko.nanukko_back.dto.order.DeliveryResponseDTO;
+import nanukko.nanukko_back.dto.order.DeliveryUpdateStatusDTO;
 import nanukko.nanukko_back.repository.DeliveryRepository;
 import nanukko.nanukko_back.repository.OrderRepository;
 import nanukko.nanukko_back.repository.ProductRepository;
@@ -160,7 +161,7 @@ public class DeliveryService {
 
     // 웹훅으로 받은 배송 상태 업데이트
     @Transactional
-    public void updateDeliverStatus(String trackingNumber, DeliveryStatus status) {
+    public void updateDeliveryStatusFromWebhook(String trackingNumber, DeliveryStatus status) {
         Delivery delivery = deliveryRepository.findByTrackingNumber(trackingNumber)
                 .orElseThrow(() -> new IllegalArgumentException("배송 정보를 찾을 수 없습니다."));
 
@@ -206,6 +207,25 @@ public class DeliveryService {
                 if (order.getStatus() == PaymentStatus.ESCROW_HOLDING) {
                     order.updateReleased(PaymentStatus.IN_DELIVERY, null);
                 }
+
+                // 구매자에게 알림 발송 -> 배송이 시작되었다고 알림
+                notificationService.sendStartDeliveryToBuyer(
+                        delivery.getOrder().getBuyer().getUserId(),
+                        delivery.getOrder().getOrderId()
+                );
+
+                // 배송시작 시 구매자에게 메일 전송
+                // 비동기로 알림과 메일 전송
+                CompletableFuture.runAsync(() -> {
+                    try {
+                        mailService.sendMailStartDeliveryToBuyer(
+                                delivery.getOrder().getBuyer().getUserId(),
+                                delivery.getOrder().getOrderId()
+                        );
+                    } catch (Exception e) {
+                        log.error("메일 전송 실패", e);
+                    }
+                });
             }
             case DELIVERED -> {
                 // 배송 완료되면 3일 후로 escrowDeadline 설정
@@ -229,5 +249,29 @@ public class DeliveryService {
                 });
             }
         }
+    }
+
+    //////////테스트를 위한 배송상태 업데이트
+
+    @Transactional
+    public DeliveryUpdateStatusDTO updateDeliveryStatus(DeliveryUpdateStatusDTO dto) {
+        Delivery delivery = deliveryRepository.findByTrackingNumber(dto.getTrackingNumber())
+                .orElseThrow(() -> new IllegalArgumentException("배송을 찾을 수 없습니다."));
+
+        // 현재 상태와 같으면 무시
+        if (delivery.getStatus() == dto.getStatus()) {
+            log.info("이미 같은 상태입니다. trackingNumber: {}, status: {}",
+                    dto.getTrackingNumber(), dto.getStatus());
+            return modelMapper.map(delivery, DeliveryUpdateStatusDTO.class);
+        }
+
+        //상태 업데이트
+        delivery.updateStatus(dto.getStatus());
+        deliveryRepository.save(delivery);
+
+        // 주문 상태 및 알림 처리
+        handleDeliveryStatusChange(delivery);
+
+        return modelMapper.map(delivery, DeliveryUpdateStatusDTO.class);
     }
 }
