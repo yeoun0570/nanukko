@@ -27,6 +27,7 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 @RequiredArgsConstructor
@@ -38,6 +39,7 @@ public class DeliveryService {
     private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
     private final NotificationService notificationService;
+    private final MailService mailService;
 
     // 판매자가 운송장 등록
     @Transactional
@@ -172,6 +174,19 @@ public class DeliveryService {
                         delivery.getOrder().getBuyer().getUserId(),
                         delivery.getOrder().getOrderId()
                 );
+
+                // 배송시작 시 구매자에게 메일 전송
+                // 비동기로 알림과 메일 전송
+                CompletableFuture.runAsync(() -> {
+                    try {
+                        mailService.sendMailStartDeliveryToBuyer(
+                                delivery.getOrder().getBuyer().getUserId(),
+                                delivery.getOrder().getOrderId()
+                        );
+                    } catch (Exception e) {
+                        log.error("메일 전송 실패", e);
+                    }
+                });
             }
         }
 
@@ -199,6 +214,19 @@ public class DeliveryService {
 
                 // 구매자에게 알림 -> 배송이 완료되었으니 3일 이내에 구매확정 하지 않으면 구매확정 된다는 얘기
                 notificationService.sendDeliveredToBuyer(order.getBuyer().getUserId(), order.getOrderId());
+
+                // 배송완료 시 구매자에게 메일 전송
+                // 비동기로 알림과 메일 전송
+                CompletableFuture.runAsync(() -> {
+                    try {
+                        mailService.sendMailStartDeliveryToBuyer(
+                                delivery.getOrder().getBuyer().getUserId(),
+                                delivery.getOrder().getOrderId()
+                        );
+                    } catch (Exception e) {
+                        log.error("메일 전송 실패", e);
+                    }
+                });
             }
         }
     }
