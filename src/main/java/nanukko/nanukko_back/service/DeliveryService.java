@@ -219,7 +219,7 @@ public class DeliveryService {
                 // 비동기로 알림과 메일 전송
                 CompletableFuture.runAsync(() -> {
                     try {
-                        mailService.sendMailStartDeliveryToBuyer(
+                        mailService.sendMailDeliveredToBuyer(
                                 delivery.getOrder().getBuyer().getUserId(),
                                 delivery.getOrder().getOrderId()
                         );
