@@ -12,7 +12,7 @@ const { baseURL } = useApi();
 const userInfo = ref({});
 const loading = ref(true);
 const error = ref(null);
-const userId = "buyer2"; //테스트를 위한 사용자 아이디 임의로 설정
+const userId = "buyer1"; //테스트를 위한 사용자 아이디 임의로 설정
 const isEditing = ref(false); //수정 모드
 
 // 원본 데이터 저장용 ref 추가
@@ -128,6 +128,7 @@ onMounted(() => {
         v-model:addrMain="userInfo.addrMain"
         v-model:addrDetail="userInfo.addrDetail"
         v-model:addrZipcode="userInfo.addrZipcode"
+        v-model:isEditing="isEditing"
       ></AddressInfo>
       <div class="section-header">
         <p class="section-title">우리 아이는요</p>
