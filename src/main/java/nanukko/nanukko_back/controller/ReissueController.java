@@ -1,5 +1,6 @@
 package nanukko.nanukko_back.controller;
 
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import nanukko.nanukko_back.service.ReissueService;
@@ -8,8 +9,21 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 @RestController
 public class ReissueController {
+
+    //쿠키 생성 메소드, refresh 토큰 만료 시간과 동일하게 설정
+    private Cookie createCookie(String key, String value){
+        Cookie cookie = new Cookie(key, value);
+        cookie.setMaxAge(24 * 60 * 60);
+        //cookie.setSecure(true);
+        //cookie.setPath(path);
+        cookie.setHttpOnly(true);
+
+        return cookie;
+    }
     private final ReissueService reissueService;
 
     public ReissueController(ReissueService reissueService){
@@ -27,10 +41,17 @@ public class ReissueController {
             reissueService.validateRefreshToken(refresh);
 
             // 새 Access 토큰 생성
-            String newAccess = reissueService.generateNewAccessToken(refresh);
+            List<String> newTokens = reissueService.generateNewAccessToken(refresh);
 
-            // 응답 헤더에 Access 토큰 설정
-            response.setHeader("access", newAccess);
+            response.setHeader("access", newTokens.get(0));
+
+            // 기존 refresh 쿠키 삭제
+            Cookie deleteCookie = createCookie("refresh", null); // MaxAge를 0으로 설정하여 삭제
+            response.addCookie(deleteCookie);
+
+            // 새 refresh 쿠키 추가
+            Cookie refreshCookie = createCookie("refresh", newTokens.get(1));
+            response.addCookie(refreshCookie);
 
             return ResponseEntity.ok().build();
         } catch (IllegalArgumentException e) {

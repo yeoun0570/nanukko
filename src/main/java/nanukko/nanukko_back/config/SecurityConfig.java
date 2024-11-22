@@ -85,11 +85,26 @@ public class SecurityConfig {
         // 요청 경로별 권한 설정(로그인 구현 완료 후 재설정 해 줄 예정)
         http
                 .authorizeHttpRequests((auth) -> auth
-                        .requestMatchers("/api/login/**", "/", "/api/register", "/api/reissue").permitAll()//적어준 경로에 대해서는 전체 허용
-                        .requestMatchers("/api/admin").hasRole("ADMIN")//적어준 경로에는 ADMIN만 접근 가능
-                        .requestMatchers("/api/reissue").permitAll()// access 토큰 만료된 상태로 요청하므로 permit all
-                        .anyRequest().authenticated()//나머지 요청에 대해서는 로그인 한 사용자들만 접근 가능함
-                );
+                        .requestMatchers("/api/login/**", "/", "/api/register", "/api/reissue").permitAll() // 적어준 경로에 대해서는 전체 허용
+                        .requestMatchers("/api/admin").hasRole("ADMIN") // 적어준 경로에는 ADMIN만 접근 가능
+                        .requestMatchers("/api/reissue").permitAll() // access 토큰 만료된 상태로 요청하므로 permit all
+                        .anyRequest().authenticated() // 나머지 요청에 대해서는 로그인 한 사용자들만 접근 가능함
+                )
+                .formLogin((formLogin) -> formLogin
+                        .loginProcessingUrl("/api/login") // 로그인 경로 변경
+                        .usernameParameter("username")    // 기본 username 필드명
+                        .passwordParameter("password")    // 기본 password 필드명
+                        .permitAll()
+                )
+                .logout((logout) -> logout
+                        .logoutUrl("/api/logout") // 로그아웃 경로 변경
+                        .logoutSuccessUrl("/")    // 로그아웃 성공 후 리다이렉트 경로
+                        .permitAll()
+                )
+                .securityMatcher("/**") // Spring Security가 적용될 경로 범위 설정
+
+        ;
+
 
         // 요청 경로별 권한 설정 (모든 요청 허용) -> 개발 중에만 허용하고 추후에 로그인 완료 되면 제거 예정
         //http.authorizeHttpRequests((auth) -> auth.anyRequest().permitAll());

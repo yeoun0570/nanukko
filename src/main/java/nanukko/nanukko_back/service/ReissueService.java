@@ -7,6 +7,9 @@ import lombok.extern.log4j.Log4j2;
 import nanukko.nanukko_back.jwt.JWTUtil;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Log4j2
 @Service
 public class ReissueService {
@@ -46,16 +49,20 @@ public class ReissueService {
     }
 
     // 새 access 토큰 발급
-    public String generateNewAccessToken(String refresh){
+    public List<String> generateNewAccessToken(String refresh){
         String userId = jwtUtil.getUsername(refresh);
         String role = jwtUtil.getRole(refresh);
         String email = jwtUtil.getEmail(refresh);
         String name = jwtUtil.getNickname(refresh);
 
-        String newAccessToken = jwtUtil.createJwt("access", userId, name, email, role,600000L);
-        log.info("새 토큰"+newAccessToken);
-        //Access 토큰 생성
-        return newAccessToken;
+        //새 토큰 생성(Refresh Rotate)
+        String accessToken = jwtUtil.createJwt("access", userId, name, email, role,600000L);
+        String refreshToken = jwtUtil.createJwt("refresh", userId, name, email, role,86400000L);
+
+        List<String> newTokens = new ArrayList<>(2);
+        newTokens.add(0, accessToken);
+        newTokens.add(1, refreshToken);
+        return newTokens;
     }
 
 }
