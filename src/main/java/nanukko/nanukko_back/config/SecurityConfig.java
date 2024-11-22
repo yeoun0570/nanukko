@@ -18,6 +18,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 
+import java.util.Arrays;
 import java.util.Collections;
 
 @Configuration
@@ -60,10 +61,16 @@ public class SecurityConfig {
                             public CorsConfiguration getCorsConfiguration(HttpServletRequest request) {
                                 CorsConfiguration configuration = new CorsConfiguration();
                                 configuration.setAllowedOrigins(Collections.singletonList("http://localhost:3000"));// 프론트엔드 서버 허용
-                                configuration.setAllowedMethods(Collections.singletonList("GET, POST, PUT, DELETE"));// 메소드 허용
+                                //configuration.setAllowedMethods(Collections.singletonList("GET, POST, PUT, DELETE"));// 메소드 허용
                                 configuration.setAllowCredentials(true);// 프론트서버에서 credentials 설정 해주면 여기도 무조건 true 설정 해줘야 함
                                 configuration.setAllowedHeaders(Collections.singletonList("*"));// 허용할 헤더 설정
                                 configuration.setMaxAge(3600L);// 허용 시간 설정
+
+                                configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"));
+                                configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With",
+                                        "Accept", "Origin", "Access-Control-Request-Method", "Access-Control-Request-Headers"));
+
+
                                 configuration.setExposedHeaders(Collections.singletonList("Authorization"));// 프론트 전송 시 Authorization 헤더에 JWT를 담아 보낼 것이기 때문에 허용
                                 return configuration;
                             }
@@ -84,7 +91,7 @@ public class SecurityConfig {
         // 요청 경로별 권한 설정
         http
                 .authorizeHttpRequests((auth) -> auth
-                        .requestMatchers("/api/login/**", "/", "/api/register", "/api/reissue").permitAll()//적어준 경로에 대해서는 전체 허용
+                        .requestMatchers("/api/login", "/", "/api/register", "/api/reissue").permitAll()//적어준 경로에 대해서는 전체 허용
                         .requestMatchers("/api/admin").hasRole("ADMIN")//적어준 경로에는 ADMIN만 접근 가능
                         .requestMatchers("/api/reissue").permitAll() // access 토큰 만료된 상태로 요청하므로 permit all
                         .anyRequest().authenticated()//나머지 요청에 대해서는 로그인 한 사용자들만 접근 가능함

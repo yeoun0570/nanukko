@@ -17,6 +17,7 @@ public class CorsConfig implements WebMvcConfigurer {
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowCredentials(true)
                 .allowedHeaders("*")
+                .exposedHeaders("Authorization")  // Authorization 헤더 노출 설정 추가
                 .maxAge(3600);
 
         // WebSocket 엔드포인트에 대한 CORS 설정 추가
