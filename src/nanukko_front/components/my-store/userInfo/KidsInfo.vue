@@ -12,7 +12,7 @@ const emit = defineEmits(["update:kids"]);
 // 년/월/일 선택을 위한 데이터
 const years = computed(() => {
   const currentYear = new Date().getFullYear();
-  return Array.from({ length: 10 }, (_, i) => currentYear - 5 + i);
+  return Array.from({ length: 7 }, (_, i) => currentYear - 6 + i);
 });
 
 const months = Array.from({ length: 12 }, (_, i) => i + 1);
@@ -32,20 +32,31 @@ const updateKid = (index, field, value) => {
   emit("update:kids", updatedKids);
 };
 
+// 생년월일 파싱 메서드 - 기본값을 현재 날짜로 설정
+const parseBirthDate = (birthDate) => {
+  if (!birthDate) {
+    const today = new Date();
+    return {
+      year: today.getFullYear(),
+      month: today.getMonth() + 1,
+      day: today.getDate()
+    };
+  }
+  const [year, month, day] = birthDate.split("-").map(Number);
+  return { year, month, day };
+};
+
+// addKid 메서드
 const addKid = () => {
+  const today = new Date();
+  const defaultBirthDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  
   const updatedKids = [...props.kids];
   updatedKids.push({
-    kidBirth: null,
+    kidBirth: defaultBirthDate,
     kidGender: true,
   });
   emit("update:kids", updatedKids);
-};
-
-// 생년월일 파싱 함수
-const parseBirthDate = (birthDate) => {
-  if (!birthDate) return { year: 2020, month: 1, day: 1 };
-  const [year, month, day] = birthDate.split("-").map(Number);
-  return { year, month, day };
 };
 </script>
 
