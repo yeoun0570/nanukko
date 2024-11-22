@@ -1,6 +1,9 @@
 <script setup>
 import axios from "axios";
 import StarRating from "~/components/my-store/buy-products/StarRating.vue";
+import { useApi } from "~/composables/useApi";
+
+const { baseURL } = useApi();
 
 const route = useRoute();
 
@@ -38,7 +41,7 @@ const writeReview = async () => {
       rate: reviewInfo.value.rate,
     };
 
-    await axios.post("http://localhost:8080/api/review/write", reviewData);
+    await axios.post(`${baseURL}/review/write`, reviewData);
     alert("리뷰가 작성되었습니다.");
     navigateTo("/my-store/buy-products");
   } catch (error) {

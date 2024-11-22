@@ -5,6 +5,9 @@ import BasicInfo from "~/components/my-store/userInfo/BasicInfo.vue";
 import KidsInfo from "~/components/my-store/userInfo/KidsInfo.vue";
 import LoginInfo from "~/components/my-store/userInfo/LoginInfo.vue";
 import ProfileImage from "~/components/my-store/userInfo/ProfileImage.vue";
+import { useApi } from "~/composables/useApi";
+
+const { baseURL } = useApi();
 
 const userInfo = ref({});
 const loading = ref(true);
@@ -55,7 +58,7 @@ const updateUserInfo = async () => {
     console.log(updateData);
 
     await axios.post(
-      `http://localhost:8080/api/my-store/modify`,
+      `${baseURL}/my-store/modify`,
       updateData
     );
     alert("정보가 성공적으로 수정되었습니다.");
@@ -75,7 +78,7 @@ const loadUserInfo = async () => {
     loading.value = true;
     error.value = null;
     const response = await axios.get(
-      `http://localhost:8080/api/my-store/info`,
+      `${baseURL}/my-store/info`,
       {
         params: {
           userId: userId,

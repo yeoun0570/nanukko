@@ -3,7 +3,9 @@ import axios from 'axios';
 import Pagination from '~/components/Pagination.vue';
 import OrdersGrid from '~/components/my-store/buy-products/OrdersGrid.vue';
 import StatusFilter from '~/components/my-store/buy-products/StatusFilter.vue';
+import { useApi } from '~/composables/useApi';
 
+const { baseURL } = useApi();
 const userOrders = ref([]);
 const userId = "buyer1";
 const currentStatus = ref("ESCROW_HOLDING");
@@ -14,7 +16,7 @@ const pageSize = ref(5);
 const loadUserOrders = async (page = 0) => {
   try {
     const response = await axios.get(
-      `http://localhost:8080/api/my-store/buy-products`,
+      `${baseURL}/my-store/buy-products`,
       {
         params: { userId, status: currentStatus.value, page, size: pageSize.value }
       }

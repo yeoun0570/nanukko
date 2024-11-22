@@ -1,7 +1,9 @@
 <script setup>
 import axios from "axios";
 import DeliveryRegistrationModal from "~/components/delivery/DeliveryRegistrationModal.vue";
+import { useApi } from "~/composables/useApi";
 
+const { baseURL } = useApi();
 const router = useRouter();
 const showDeliveryModal = ref(false);
 
@@ -36,7 +38,7 @@ const removeProduct = async () => {
   console.log("productId: ", props.product.productId);
   try {
     await axios.post(
-      "http://localhost:8080/api/my-store/sale-products/remove",
+      `${baseURL}/my-store/sale-products/remove`,
       null,
       {
         params: {

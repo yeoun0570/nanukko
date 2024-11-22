@@ -1,6 +1,8 @@
 <script setup>
 import axios from "axios";
+import { useApi } from "~/composables/useApi";
 
+const { baseURL } = useApi();
 const route = useRoute();
 const loading = ref(true);
 const error = ref(null);
@@ -11,7 +13,7 @@ onMounted(async () => {
     const { orderId, paymentKey, amount, productId } = route.query;
 
     if (!localStorage.getItem(`payment_${orderId}`)) {
-      await axios.post("http://localhost:8080/api/payments/confirm", {
+      await axios.post(`${baseURL}/payments/confirm`, {
         paymentKey,
         orderId,
         amount: parseInt(amount),

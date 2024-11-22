@@ -4,6 +4,9 @@ import CategorySelect from "~/components/my-store/CategorySelect.vue";
 import BasicInfoFrom from "~/components/my-store/sale-products/modify/BasicInfoFrom.vue";
 import ButtonGroup from "~/components/my-store/sale-products/modify/ButtonGroup.vue";
 import TransactionForm from "~/components/my-store/sale-products/modify/TransactionForm.vue";
+import { useApi } from "~/composables/useApi";
+
+const { baseURL } = useApi();
 
 const route = useRoute();
 const { productId, userId } = route.query;
@@ -18,7 +21,7 @@ console.log('UserId:', userId);
 const updateProduct = async () => {
   try {
     await axios.post(
-      "http://localhost:8080/api/my-store/sale-products/modify",
+      `${baseURL}/my-store/sale-products/modify`,
       productInfo.value,
       {
         params: {

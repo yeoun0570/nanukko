@@ -2,6 +2,9 @@
 import NotificationIcon from "./NotificationIcon.vue";
 import NotificationList from "./NotificationList.vue";
 import axios from "axios";
+import { useApi } from "~/composables/useApi";
+
+const { baseURL } = useApi();
 
 // 알림 목록을 저장할 배열
 const notifications = ref([]);
@@ -13,8 +16,7 @@ const showNotifications = ref(false);
 // 읽지 않은 알림 수를 저장할 변수
 const unreadCount = ref(0);
 
-const userId = "seller1"; // 추후에 로그인한 사용자로 변경
-const baseURL = "http://localhost:8080";
+const userId = "buyer1"; // 추후에 로그인한 사용자로 변경
 
 // SSE 연결을 설정하는 메서드
 const connectSSE = () => {
@@ -34,7 +36,7 @@ const connectSSE = () => {
 
   // EventSource 객체 생성하여 서버와 SSE 연결
   eventSource.value = new EventSource(
-    `${baseURL}/api/notice/connect?userId=${userId}&lastEventId=${lastEventId}`
+    `${baseURL}/notice/connect?userId=${userId}&lastEventId=${lastEventId}`
   );
 
   // SSE 이벤트 리스너 등록 - 'SSE' 이벤트 수신 시 발생('SSE'는 백에서 설정한 전송할 때 이벤트 이름)
@@ -84,7 +86,7 @@ const connectSSE = () => {
 const initializeNotifications = async () => {
   try {
     // DB에서 이전 알림들 가져오기
-    const response = await axios.get(`${baseURL}/api/notice/previous`, {
+    const response = await axios.get(`${baseURL}/notice/previous`, {
       params: { userId },
     });
     const readNotifications =
@@ -234,7 +236,7 @@ const markAsRead = async (notification) => {
   try {
     // 서버에 읽음 처리 요청
     await axios.post(
-      `${baseURL}/api/notice/${notification.notificationId}/read`
+      `${baseURL}/notice/${notification.notificationId}/read`
     );
     notification.isRead = true;
   } catch (error) {
@@ -245,7 +247,7 @@ const markAsRead = async (notification) => {
 // 모든 알림 읽음 처리 메서드
 const markAllAsRead = async () => {
   try {
-    await axios.post(`${baseURL}/api/notice/read-all`, null, {
+    await axios.post(`${baseURL}/notice/read-all`, null, {
       params: {
         userId: userId,
       },

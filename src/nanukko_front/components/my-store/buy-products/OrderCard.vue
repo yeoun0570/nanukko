@@ -1,5 +1,8 @@
 <script setup>
 import axios from "axios";
+import { useApi } from "~/composables/useApi";
+
+const { baseURL } = useApi();
 
 const props = defineProps({
   order: {
@@ -24,7 +27,7 @@ const confirmPurchase = async () => {
     console.log("구매확정 요청 시작 - orderId:", props.order.orderId);
 
     const response = await axios.post(
-      `http://localhost:8080/api/payments/${props.order.orderId}/confirm`
+      `${baseURL}/payments/${props.order.orderId}/confirm`
     );
 
     console.log("구매확정 응답:", response.data);
@@ -56,7 +59,7 @@ const cancelOrder = async () => {
     console.log("결제 취소 시작 - orderId:", props.order.orderId);
 
     const response = await axios.post(
-      `http://localhost:8080/api/payments/${props.order.orderId}/cancel`
+      `${baseURL}/payments/${props.order.orderId}/cancel`
     );
 
     console.log("결제 취소 완료:", response.data);
