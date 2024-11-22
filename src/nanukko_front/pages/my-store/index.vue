@@ -7,6 +7,10 @@ import LoginInfo from "~/components/my-store/userInfo/LoginInfo.vue";
 import ProfileImage from "~/components/my-store/userInfo/ProfileImage.vue";
 import { useApi } from "~/composables/useApi";
 
+definePageMeta({
+  layout: 'mystore'
+});
+
 const { baseURL } = useApi();
 
 const userInfo = ref({});

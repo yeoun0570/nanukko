@@ -3,6 +3,11 @@ import axios from "axios";
 import StarRating from "~/components/my-store/buy-products/StarRating.vue";
 import { useApi } from "~/composables/useApi";
 
+definePageMeta({
+  layout: 'mystore'
+});
+
+
 const { baseURL } = useApi();
 
 const route = useRoute();

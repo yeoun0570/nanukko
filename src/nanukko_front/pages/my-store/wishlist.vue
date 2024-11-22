@@ -4,6 +4,11 @@ import WishlistGrid from "~/components/my-store/wishlist/WishlistGrid.vue";
 import Pagination from "~/components/Pagination.vue";
 import { useApi } from "~/composables/useApi";
 
+definePageMeta({
+  layout: 'mystore'
+});
+
+
 const { baseURL } = useApi();
 const userWishlist = ref([]);
 const userId = "buyer2";

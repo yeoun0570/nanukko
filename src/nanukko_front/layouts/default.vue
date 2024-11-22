@@ -13,7 +13,6 @@ import sidebar from "~/components/layout/sidebar.vue";
 
     <!-- 메인 콘텐츠 영역 -->
     <main>
-    <sidebar />
       <NuxtPage />
     </main>
 

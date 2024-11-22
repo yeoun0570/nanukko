@@ -5,6 +5,11 @@ import StatusFilter from "~/components/my-store/sale-products/StatusFilter.vue";
 import Pageination from "~/components/Pagination.vue";
 import { useApi } from "~/composables/useApi";
 
+definePageMeta({
+  layout: 'mystore'
+});
+
+
 const { baseURL } = useApi();
 
 const userProducts = ref([]);

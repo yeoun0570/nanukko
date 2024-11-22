@@ -5,6 +5,11 @@ import OrdersGrid from '~/components/my-store/buy-products/OrdersGrid.vue';
 import StatusFilter from '~/components/my-store/buy-products/StatusFilter.vue';
 import { useApi } from '~/composables/useApi';
 
+definePageMeta({
+  layout: 'mystore'
+});
+
+
 const { baseURL } = useApi();
 const userOrders = ref([]);
 const userId = "buyer1";

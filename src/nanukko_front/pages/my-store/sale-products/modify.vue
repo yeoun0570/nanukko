@@ -6,6 +6,10 @@ import ButtonGroup from "~/components/my-store/sale-products/modify/ButtonGroup.
 import TransactionForm from "~/components/my-store/sale-products/modify/TransactionForm.vue";
 import { useApi } from "~/composables/useApi";
 
+definePageMeta({
+  layout: 'mystore'
+});
+
 const { baseURL } = useApi();
 
 const route = useRoute();

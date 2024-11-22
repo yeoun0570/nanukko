@@ -4,6 +4,11 @@ import ReadOnlyStarRating from "~/components/my-store/reviews/ReadOnlyStarRating
 import StoreScore from "~/components/my-store/reviews/StoreScore.vue";
 import { useApi } from "~/composables/useApi";
 
+definePageMeta({
+  layout: 'mystore'
+});
+
+
 const { baseURL } = useApi();
 const reviewInfo = ref([]);
 const userId = "seller1";
