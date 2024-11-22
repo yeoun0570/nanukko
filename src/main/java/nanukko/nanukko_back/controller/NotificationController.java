@@ -40,8 +40,7 @@ public class NotificationController {
     // 알림 읽음 처리
     @PostMapping("/{notificationId}/read")
     public ResponseEntity<NotificationIsReadDTO> markAsReadNotification(
-            @PathVariable Long notificationId)
-    {
+            @PathVariable Long notificationId) {
         NotificationIsReadDTO response = notificationService.markAsRead(notificationId);
         return ResponseEntity.ok(response);
     }
@@ -61,6 +60,15 @@ public class NotificationController {
             @RequestParam Long notificationId
     ) {
         notificationService.removeNotice(notificationId);
+        return ResponseEntity.ok().build();
+    }
+
+    // 알림 모두 삭제
+    @PostMapping("/removeAll")
+    public ResponseEntity<Void> removeAllNotice(
+            @RequestBody List<Long> notificationIds
+    ) {
+        notificationService.removeAllNotice(notificationIds);
         return ResponseEntity.ok().build();
     }
 }

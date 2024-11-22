@@ -224,6 +224,12 @@ public class NotificationService {
         notificationRepository.deleteById(notificationId);
     }
 
+    //알림 모두 삭제
+    @Transactional
+    public void removeAllNotice(List<Long> notificationIds) {
+        notificationRepository.deleteAllById(notificationIds);
+    }
+
 
     //////////////////////////////////////여기서부턴 알림 보내기위한 메서드 구현(공통으로 사용할 애들)
 
