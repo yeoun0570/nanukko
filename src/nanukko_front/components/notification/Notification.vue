@@ -16,7 +16,7 @@ const showNotifications = ref(false);
 // 읽지 않은 알림 수를 저장할 변수
 const unreadCount = ref(0);
 
-const userId = "seller1"; // 추후에 로그인한 사용자로 변경
+const userId = "buyer1"; // 추후에 로그인한 사용자로 변경
 
 // SSE 연결을 설정하는 메서드
 const connectSSE = () => {
@@ -281,6 +281,15 @@ const handleClickOutside = (event) => {
   }
 };
 
+// notifications 배열에서 삭제된 알림들을 제거하는 메서드
+const handleRemoveAll = (removedIds) => {
+  notifications.value = notifications.value.filter(
+    (notification) => !removedIds.includes(notification.notificationId)
+  );
+  // 읽지 않은 알림 수 업데이트
+  updateUnreadCount();
+};
+
 // 컴포넌트 마운트 시 실행
 onMounted(() => {
   // SSE 연결 시작
@@ -315,6 +324,7 @@ onUnmounted(() => {
         :notifications="notifications"
         @select="handleNotificationClick"
         @markAllAsRead="markAllAsRead"
+        @removeAll="handleRemoveAll"
       />
     </transition>
   </div>
