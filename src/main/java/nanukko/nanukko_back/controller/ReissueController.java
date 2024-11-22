@@ -30,7 +30,7 @@ public class ReissueController {
         this.reissueService = reissueService;
     }
 
-    // access 토큰 만료됐을 경우 refresh 토큰 이용해서 새 access 토큰 발급
+    // access 토큰 만료됐을 경우 refresh 토큰 이용해서 새 access 토큰 발급 + refresh 토큰도 갱신
     @PostMapping("/api/reissue")
     public ResponseEntity<?> reissue(HttpServletRequest request, HttpServletResponse response){
         try {
@@ -43,7 +43,7 @@ public class ReissueController {
             // 새 Access 토큰 생성
             List<String> newTokens = reissueService.generateNewAccessToken(refresh);
 
-            response.setHeader("access", newTokens.get(0));
+            response.setHeader("Authorization", "Bearer " + newTokens.get(0));
 
             // 새 refresh 쿠키 추가
             Cookie refreshCookie = createCookie("refresh", newTokens.get(1));

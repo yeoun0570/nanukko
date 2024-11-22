@@ -30,16 +30,56 @@ public class JWTFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
 
-        String accessToken = request.getHeader("access");// 헤더에서 access키에 담긴 토큰 꺼냄
+        // Authorization 헤더에서 토큰 추출
+        String authHeader = request.getHeader("Authorization");
 
-        if(accessToken == null){// 토큰이 없다면 다음 필터로 넘김
+        // Bearer  토큰이 없으면 다음 필터로
+        if(authHeader == null || !authHeader.startsWith("Bearer ")){
             filterChain.doFilter(request, response);
             return;
         }
 
-        // 토큰 만료 여부 확인, 만료시 다음 필터로 넘기지 않음
+        String accessToken = authHeader.substring(7);// 헤더에서 access키에 담긴 토큰 꺼냄
+
         try{
+            // 토큰 만료 여부 확인, 만료시 다음 필터로 넘기지 않음
             jwtUtil.isExpired(accessToken);
+
+            // 토큰이 access인지 확인(발급시 페이로드에서 확인 가능)
+            String category = jwtUtil.getCategory(accessToken);
+
+            if(!category.equals("access")){
+                //response body 메시지
+                PrintWriter writer = response.getWriter();
+                writer.print("access 토큰 아님");
+
+                //response status code
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+
+                return;
+            }
+
+            // username, role 값 획득
+            String username = jwtUtil.getUsername(accessToken);
+            String role = jwtUtil.getRole(accessToken);
+
+            User user = User.builder()
+                    .userId(username)
+                    .role(Role.valueOf(role))
+                    .build();
+
+            //user 객체를 래핑하여 spring security가 이해할 수 있는 형태로 변환
+            CustomUserDetails customUserDetails = new CustomUserDetails(user);
+
+            //Authentication 인터페이스의 구현체에 principal(인증된 사용자 정보), credentials(비밀번호), 사용자의 권한 목록 넘겨줌
+            Authentication authToken = new UsernamePasswordAuthenticationToken(customUserDetails, null, customUserDetails.getAuthorities());
+
+            //security context에 생성한 Authentication 객체를 설정 => 요청 처리 중 인증된 사용자 정보에 접근할 수 있게 된다.(인증된 사용자 정보는 이후 요청 처리에서 활용될 수 있다.)
+            SecurityContextHolder.getContext().setAuthentication(authToken);
+
+            //요청과 인증 과정을 통과했고, 다음 필터로 요청 전달한다.
+            filterChain.doFilter(request, response);
+
         }catch (ExpiredJwtException e){//토큰 만료
             //response body에 에러 메시지 표시
             PrintWriter writer = response.getWriter();
@@ -54,41 +94,6 @@ public class JWTFilter extends OncePerRequestFilter {
             PrintWriter writer = response.getWriter();
             writer.print("잘못된 형식의 토큰");
         }
-
-        // 토큰이 access인지 확인(발급시 페이로드에서 확인 가능)
-        String category = jwtUtil.getCategory(accessToken);
-
-        if(!category.equals("access")){
-            //response body 메시지
-            PrintWriter writer = response.getWriter();
-            writer.print("access 토큰 아님");
-
-            //response status code
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-
-            return;
-        }
-
-        // username, role 값 획득
-        String username = jwtUtil.getUsername(accessToken);
-        String role = jwtUtil.getRole(accessToken);
-
-        User user = User.builder()
-                .userId(username)
-                .role(Role.valueOf(role))
-                .build();
-
-        //user 객체를 래핑하여 spring security가 이해할 수 있는 형태로 변환
-        CustomUserDetails customUserDetails = new CustomUserDetails(user);
-
-        //Authentication 인터페이스의 구현체에 principal(인증된 사용자 정보), credentials(비밀번호), 사용자의 권한 목록 넘겨줌
-        Authentication authToken = new UsernamePasswordAuthenticationToken(customUserDetails, null, customUserDetails.getAuthorities());
-
-        //security context에 생성한 Authentication 객체를 설정 => 요청 처리 중 인증된 사용자 정보에 접근할 수 있게 된다.(인증된 사용자 정보는 이후 요청 처리에서 활용될 수 있다.)
-        SecurityContextHolder.getContext().setAuthentication(authToken);
-
-        //요청과 인증 과정을 통과했고, 다음 필터로 요청 전달한다.
-        filterChain.doFilter(request, response);
 
     }
 }
