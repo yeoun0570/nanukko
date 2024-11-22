@@ -5,7 +5,9 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import nanukko.nanukko_back.domain.jwt.RefreshJWT;
 import nanukko.nanukko_back.dto.user.CustomUserDetails;
+import nanukko.nanukko_back.repository.RefreshJWTRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -17,17 +19,23 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.Iterator;
 
 public class LoginFilter extends UsernamePasswordAuthenticationFilter {
 
     private final AuthenticationManager authenticationManager;
     private final JWTUtil jwtUtil;
+    private final RefreshJWTRepository refreshJWTRepository;
 
     // spring security에서는 불변객체 관리(보안, 안정성 관리) + 확실한 의존성 주입을 위해 생성자 주입 방식을 권장함
-    public LoginFilter(AuthenticationManager authenticationManager, JWTUtil jwtUtil){
+    public LoginFilter(AuthenticationManager authenticationManager, JWTUtil jwtUtil, RefreshJWTRepository refreshJWTRepository){
         this.authenticationManager = authenticationManager;
         this.jwtUtil = jwtUtil;
+        this.refreshJWTRepository = refreshJWTRepository;
+
+        // 로그인 처리 URL 설정
+        setFilterProcessesUrl("/api/login");
     }
 
     @Override
@@ -45,10 +53,11 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
     // 쿠키 생성하기
     private Cookie createCookie(String key, String value){
         Cookie cookie = new Cookie(key, value);
-        cookie.setMaxAge(24*60*60);// 24시간
-        cookie.setSecure(true);// HTTPS인 경우 이렇게 설정
-        cookie.setPath("/"); // 쿠키가 설정될 범위(전체 경로)
-        cookie.setHttpOnly(true); // 프론트에서 자바스크립트로 접근 못하게 설정
+        cookie.setMaxAge(24 * 60 * 60);
+        cookie.setSecure(false); //true로 변경하면 https에서만 동작함
+        cookie.setPath("/");// 쿠키가 설정될 범위
+        cookie.setHttpOnly(true);
+
         return cookie;
     }
 
@@ -56,7 +65,6 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
     @Override
     protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authentication) throws IOException, ServletException {
         CustomUserDetails details = (CustomUserDetails) authentication.getPrincipal();//user 객체 알아냄
-//        String userId = details.getUsername();
         String nickname = details.getUserNickname();// 닉네임 아니고 실제 이름ㅎ
         String email = details.getUserEmail();
 
@@ -71,11 +79,26 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
         String access = jwtUtil.createJwt("access", userId, nickname, email, role,600000L);// 10분 만료
         String refresh = jwtUtil.createJwt("refresh", userId, nickname, email, role, 86400000L);// 토큰 10시간 만료
 
+        // Refresh 토큰 DB 저장
+        addRefreshEntity(userId, refresh, 86400000L);
+
         // 응답 설정
         response.setHeader("access", access);
         response.addCookie(createCookie("refresh", refresh));
         response.setStatus(HttpStatus.OK.value());
 
+    }
+
+    /*refresh 토큰 DB 저장 메소드*/
+    private void addRefreshEntity(String username, String refresh, Long expiredMs){
+        Date date = new Date(System.currentTimeMillis() + expiredMs);
+
+        RefreshJWT entity = RefreshJWT.builder()
+                .username(username)
+                .refresh(refresh)
+                .expiration(date.toString())
+                .build();
+        refreshJWTRepository.save(entity);
     }
 
     /*로그인 실패하면 실행될 메소드 -> 실패하면 로그인 페이지 이동*/

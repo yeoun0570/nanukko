@@ -18,8 +18,8 @@ public class ReissueController {
     private Cookie createCookie(String key, String value){
         Cookie cookie = new Cookie(key, value);
         cookie.setMaxAge(24 * 60 * 60);
-        //cookie.setSecure(true);
-        //cookie.setPath(path);
+        cookie.setSecure(false); //true로 변경하면 https에서만 동작함
+        cookie.setPath("/");// 쿠키가 설정될 범위
         cookie.setHttpOnly(true);
 
         return cookie;
@@ -44,10 +44,6 @@ public class ReissueController {
             List<String> newTokens = reissueService.generateNewAccessToken(refresh);
 
             response.setHeader("access", newTokens.get(0));
-
-            // 기존 refresh 쿠키 삭제
-            Cookie deleteCookie = createCookie("refresh", null); // MaxAge를 0으로 설정하여 삭제
-            response.addCookie(deleteCookie);
 
             // 새 refresh 쿠키 추가
             Cookie refreshCookie = createCookie("refresh", newTokens.get(1));
