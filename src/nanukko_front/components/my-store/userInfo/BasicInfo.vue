@@ -27,7 +27,7 @@ const updateField = (field, value) => {
 //년/월/일 선택을 위한 데이터
 const years = computed(() => {
   const currentYear = new Date().getFullYear();
-  return Array.from({ length: 50 }, (_, i) => currentYear - 80 + i);
+  return Array.from({ length: 62 }, (_, i) => currentYear - 80 + i);
 });
 
 const months = Array.from({ length: 12 }, (_, i) => i + 1);
