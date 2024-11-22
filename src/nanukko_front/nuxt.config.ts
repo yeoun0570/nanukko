@@ -24,6 +24,10 @@ export default defineNuxtConfig({
           src: "https://js.tosspayments.com/v1",
           defer: true,
         },
+        {
+          src: "//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js",
+          type: 'text/javascript'
+        },
       ],
       link: [
         {
