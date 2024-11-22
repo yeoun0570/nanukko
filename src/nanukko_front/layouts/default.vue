@@ -2,7 +2,6 @@
 import Header from "~/components/layout/header.vue";
 import Footer from "~/components/layout/footer.vue";
 import navigator from "~/components/layout/navigator.vue";
-import sidebar from "~/components/layout/sidebar.vue";
 </script>
 
 <template>
