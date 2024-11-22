@@ -16,7 +16,7 @@ const showNotifications = ref(false);
 // 읽지 않은 알림 수를 저장할 변수
 const unreadCount = ref(0);
 
-const userId = "buyer1"; // 추후에 로그인한 사용자로 변경
+const userId = "seller1"; // 추후에 로그인한 사용자로 변경
 
 // SSE 연결을 설정하는 메서드
 const connectSSE = () => {
@@ -101,7 +101,7 @@ const initializeNotifications = async () => {
     }));
 
     // 읽지 않은 알림 수 계산
-    unreadCount.value = response.data.filter((n) => !n.isRead).length;
+    updateUnreadCount();
 
     // 그 다음에 SSE 연결 시작
     connectSSE();
@@ -178,10 +178,6 @@ const showToast = (notification) => {
 // 알림 목록 표시 상태를 토글하는 함수
 const toggleNotfications = () => {
   showNotifications.value = !showNotifications.value;
-  // 목록을 열면 모든 알림을 읽음 처리
-  if (showNotifications.value) {
-    unreadCount.value = 0;
-  }
 };
 
 // 알림 클릭 시 처리하는 함수
@@ -205,9 +201,6 @@ const handleNotificationClick = async (notification) => {
         ];
       }
 
-      // 읽지 않은 알림 수 다시 계산
-      unreadCount.value = notifications.value.filter((n) => !n.isRead).length;
-
       // 읽은 알림 ID를 LocalStorage에 저장
       const readNotifications =
         JSON.parse(localStorage.getItem("readNotifications")) || [];
@@ -219,9 +212,15 @@ const handleNotificationClick = async (notification) => {
         );
       }
 
+      //읽지 않은 알림 수 업데이트
+      updateUnreadCount();
+
       // URL이 있으면 해당 페이지로 이동
       if (notification.url) {
-        window.location.href = notification.url;
+        console.log(notification.url);
+        await navigateTo(notification.url, {
+          external: true, // 외부 URL 허용
+        });
       }
       // 알림 목록 닫기
       showNotifications.value = false;
@@ -231,13 +230,16 @@ const handleNotificationClick = async (notification) => {
   }
 };
 
+// 읽지 않은 알림 수를 계산하는 메서드
+const updateUnreadCount = () => {
+  unreadCount.value = notifications.value.filter((n) => !n.isRead).length;
+};
+
 // 알림을 읽음 처리하는 함수
 const markAsRead = async (notification) => {
   try {
     // 서버에 읽음 처리 요청
-    await axios.post(
-      `${baseURL}/notice/${notification.notificationId}/read`
-    );
+    await axios.post(`${baseURL}/notice/${notification.notificationId}/read`);
     notification.isRead = true;
   } catch (error) {
     console.error("알림 읽음 처리 실패: ", error);
@@ -304,6 +306,7 @@ onUnmounted(() => {
   <div class="notification-wrapper" @click.stop>
     <NotificationIcon
       :unread-count="unreadCount"
+      :show-badge="!showNotifications"
       @toggle="toggleNotfications"
     />
     <transition name="slide-fade">

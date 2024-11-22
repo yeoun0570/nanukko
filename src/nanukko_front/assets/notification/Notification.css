@@ -80,6 +80,10 @@
   display: none;
 }
 
+.has-notifications {
+  color: inherit;
+}
+
 /* NotificationItem */
 .notification-item {
   position: relative;
