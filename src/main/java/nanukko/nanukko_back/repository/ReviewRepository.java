@@ -10,8 +10,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.util.Optional;
-
 @Repository
 public interface ReviewRepository extends JpaRepository<Review, Long> {
     // 판매자의 상점 후기 평균 구하기
