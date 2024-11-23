@@ -1,12 +1,16 @@
 package nanukko.nanukko_back.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import nanukko.nanukko_back.dto.user.UserSetProductDTO;
-import nanukko.nanukko_back.service.UserService;
+import nanukko.nanukko_back.dto.product.ProductRequestDto;
+import nanukko.nanukko_back.service.ProductService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -14,7 +18,24 @@ import java.util.Map;
 @Log4j2
 @RequestMapping("/api/products")
 public class ProductController {
-    private final UserService userService;
+    private final ProductService productService;
+
+    @PostMapping("/new")
+    public ResponseEntity<Long> createProduct(
+            @RequestPart(value = "productInfo") @Valid ProductRequestDto productRequestDto,
+            @RequestPart(value = "images") List<MultipartFile> images) {
+        try {
+            productService.createProduct(productRequestDto, images);
+
+            return ResponseEntity.ok(productId);
+        } catch (JsonProcessingException e) {
+            log.error("JSON 파싱 에러: ", e);
+            return ResponseEntity.badRequest().build();
+        } catch (Exception e) {
+            log.error("상품 등록 에러: ", e);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
 /*
     @PostMapping("/new")
     public ResponseEntity<?> createNewProduct (
