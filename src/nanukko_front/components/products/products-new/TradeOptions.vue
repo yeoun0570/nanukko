@@ -1,5 +1,5 @@
 <script setup>
-import { defineProps, defineEmits, computed } from 'vue';
+import { defineProps, defineEmits } from 'vue';
 
 const props = defineProps({
     productInfo: {
@@ -14,20 +14,19 @@ const handleInput = (field, value) => {
     emit("update:options", field, value);
 };
 
-const ageGroups = [
-    { value: '10s', label: '10대' },
-    { value: '20s', label: '20대' },
-    { value: '30s', label: '30대' },
-    { value: '40s', label: '40대' },
-    { value: '50s', label: '50대' },
-    { value: '60s', label: '60대 이상' }
-];
+const handleGenderChange = (value) => {
+    // true = 남자, false = 여자로 변환
+    emit("update:options", "gender", value === 'male');
+};
 
-const selectedAgeLabel = computed(() => {
-    if (!props.productInfo.ageGroup) return '동행인 또는 대리인의 나이';
-    const selectedAge = ageGroups.find(group => group.value === props.productInfo.ageGroup);
-    return selectedAge ? `선택된 연령대: ${selectedAge.label}` : '동행인 또는 대리인의 나이';
-});
+const ageGroups = [
+    { value: '10S', label: '10대' },
+    { value: '20S', label: '20대' },
+    { value: '30S', label: '30대' },
+    { value: '40S', label: '40대' },
+    { value: '50S', label: '50대' },
+    { value: '60S', label: '60대 이상' }
+];
 </script>
 
 <template>
@@ -39,13 +38,13 @@ const selectedAgeLabel = computed(() => {
                     <label class="option-label">동행인 동반</label>
                     <div class="radio-group">
                         <label class="radio-label">
-                            <input type="radio" :checked="productInfo.companion === true"
-                                @change="handleInput('companion', true)" name="companion" />
+                            <input type="radio" :checked="productInfo.isCompanion === true"
+                                @change="handleInput('isCompanion', true)" name="companion" />
                             <span class="radio-text">예</span>
                         </label>
                         <label class="radio-label">
-                            <input type="radio" :checked="productInfo.companion === false"
-                                @change="handleInput('companion', false)" name="companion" />
+                            <input type="radio" :checked="productInfo.isCompanion === false"
+                                @change="handleInput('isCompanion', false)" name="companion" />
                             <span class="radio-text">아니오</span>
                         </label>
                     </div>
@@ -55,41 +54,39 @@ const selectedAgeLabel = computed(() => {
                     <label class="option-label">대리인 거래</label>
                     <div class="radio-group">
                         <label class="radio-label">
-                            <input type="radio" :checked="productInfo.deputy === true"
-                                @change="handleInput('deputy', true)" name="deputy" />
+                            <input type="radio" :checked="productInfo.isDeputy === true"
+                                @change="handleInput('isDeputy', true)" name="deputy" />
                             <span class="radio-text">예</span>
                         </label>
                         <label class="radio-label">
-                            <input type="radio" :checked="productInfo.deputy === false"
-                                @change="handleInput('deputy', false)" name="deputy" />
+                            <input type="radio" :checked="productInfo.isDeputy === false"
+                                @change="handleInput('isDeputy', false)" name="deputy" />
                             <span class="radio-text">아니오</span>
                         </label>
                     </div>
                 </div>
             </div>
 
-            <!-- 오른쪽 컬럼: 성별/나이 선택 -->
-            <div class="right-column" v-if="productInfo.companion || productInfo.deputy">
+            <!-- 오른쪽 컬럼: 성별 선택 -->
+            <div class="right-column" v-if="productInfo.isCompanion || productInfo.isDeputy">
                 <div class="option-group">
                     <label class="option-label">동행인 또는 대리인의 성별</label>
                     <div class="radio-group">
                         <label class="radio-label">
-                            <input type="radio" :checked="productInfo.gender === 'male'"
-                                @change="handleInput('gender', 'male')" name="gender" />
+                            <input type="radio" :checked="productInfo.gender === true"
+                                @change="handleGenderChange('male')" name="gender" />
                             <span class="radio-text">남성</span>
                         </label>
                         <label class="radio-label">
-                            <input type="radio" :checked="productInfo.gender === 'female'"
-                                @change="handleInput('gender', 'female')" name="gender" />
+                            <input type="radio" :checked="productInfo.gender === false"
+                                @change="handleGenderChange('female')" name="gender" />
                             <span class="radio-text">여성</span>
                         </label>
                     </div>
                 </div>
 
                 <div class="option-group">
-                    <label class="option-label" :class="{ 'selected': productInfo.ageGroup }">
-                        {{ selectedAgeLabel }}
-                    </label>
+                    <label class="option-label">동행인 또는 대리인의 연령대</label>
                     <div class="select-wrapper">
                         <select class="age-select" :value="productInfo.ageGroup"
                             @change="handleInput('ageGroup', $event.target.value)">
@@ -133,11 +130,6 @@ const selectedAgeLabel = computed(() => {
 .option-label {
     font-weight: 500;
     color: #333;
-    transition: color 0.3s ease;
-}
-
-.option-label.selected {
-    color: #007bff;
 }
 
 .radio-group {
@@ -180,7 +172,6 @@ const selectedAgeLabel = computed(() => {
     border-color: #007bff;
 }
 
-/* 반응형 스타일 */
 @media (max-width: 768px) {
     .options-grid {
         grid-template-columns: 1fr;

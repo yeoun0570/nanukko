@@ -1,9 +1,9 @@
 <script setup>
 import { ref, computed } from 'vue';
-import CategoryModal from '~/components/products/products-new/CategoryModal.vue';
 import TradeOptions from '~/components/products/products-new/TradeOptions.vue';
 import AddressSearch from '~/components/common/AddressSearch.vue';
 import Map from '~/components/products/products-detail/Map.vue';
+import CategorySelect from '~/components/my-store/CategorySelect.vue';
 
 const props = defineProps({
     modelValue: {
@@ -13,112 +13,20 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['update:modelValue']);
-const showCategoryModal = ref(false);
-const includeShipping = ref(false);
 
-const updateField = (field, value) => {
-    // 가격과 배송비의 경우 음수와 소수점 처리
-    if (field === 'price' || field === 'deliveryFee') {
-        value = Math.max(0, Math.floor(Number(value)));
-    }
-
-    emit('update:modelValue', {
-        ...props.modelValue,
-        [field]: value
-    });
-};
-
-const selectedCategoryText = computed(() => {
-    if (props.modelValue.majorName && props.modelValue.middleName) {
-        return `${props.modelValue.majorName} > ${props.modelValue.middleName}`;
-    } else if (props.modelValue.majorName) {
-        return props.modelValue.majorName;
-    }
-    return '';
-});
-
-const tradeOptions = computed(() => ({
-    companion: props.modelValue.companion || false,
-    deputy: props.modelValue.deputy || false,
-    gender: props.modelValue.gender || '',
-    ageGroup: props.modelValue.ageGroup || ''  // 추가
-}));
-
-const handleCategorySelect = (category) => {
-    updateField('majorId', category.majorId);
-    updateField('majorName', category.majorName);
-    updateField('middleId', category.middleId);
-    updateField('middleName', category.middleName);
-};
-
-const handleTradeOptionUpdate = (field, value) => {
-    updateField(field, value);
-};
-
-const handleDeliveryTypeChange = (type) => {
-    const currentTypes = Array.isArray(props.modelValue.deliveryType)
-        ? [...props.modelValue.deliveryType]
-        : [];
-
-    const index = currentTypes.indexOf(type);
-    if (index > -1) {
-        currentTypes.splice(index, 1);
-    } else {
-        currentTypes.push(type);
-    }
-
-    const updatedProduct = {
-        ...props.modelValue,
-        deliveryType: currentTypes
-    };
-
-    if (!currentTypes.includes('delivery')) {
-        updatedProduct.deliveryFee = 0;
-    }
-    if (!currentTypes.includes('direct')) {
-        updatedProduct.dealLocation = { zipCode: '', address: '', detailAddress: '' };
-        updatedProduct.companion = false;
-        updatedProduct.deputy = false;
-    }
-
-    emit('update:modelValue', updatedProduct);
-};
-
-const handleAddressUpdate = (addressInfo) => {
-    updateField('dealLocation', addressInfo);
-};
-
-const handleIncludeShippingChange = (value) => {
-    includeShipping.value = value;
-    if (value && props.modelValue.deliveryType?.includes('delivery')) {
-        updateField('deliveryFee', 0);
-    }
-};
-
-const productConditions = [
-    { value: 'NEW', label: '미사용', description: '사용하지 않은 새 상품이예요' },
-    { value: 'LIKE_NEW', label: '사용감 없음', description: '사용은 했지만 눈에 띄는 부분은 없어요' },
-    { value: 'USED', label: '사용감 적음', description: '눈에 띄는 부분이 약간 있어요' },
-    { value: 'HEAVILY_USED', label: '사용감 많음', description: '눈에 띄는 부분이 많아요' }
-];
-
-// 숫자 포맷팅 함수
+// 가격과 배송비 입력 처리를 위한 유틸리티 함수들
 const formatNumber = (value) => {
     if (!value) return '';
     return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 };
 
-// 숫자만 추출하는 함수
 const extractNumber = (value) => {
     return value.replace(/[^\d]/g, '');
 };
 
-// 입력값 처리 함수
 const handlePriceInput = (event, field) => {
     let value = extractNumber(event.target.value);
-
-    // 앞자리 0 제거
-    value = value.replace(/^0+/, '');
+    value = value.replace(/^0+/, ''); // 앞자리 0 제거
 
     // 최대값 체크 (999,999,999)
     if (Number(value) > 999999999) {
@@ -130,46 +38,133 @@ const handlePriceInput = (event, field) => {
         value = '0';
     }
 
-    // 콤마가 있는 형태로 입력창에 표시
     event.target.value = formatNumber(value);
-
-    // 실제 숫자값을 데이터에 저장
     updateField(field, Number(value));
 };
 
-// 포커스를 잃었을 때 처리 함수
 const handlePriceBlur = (event, field) => {
     let value = extractNumber(event.target.value);
-
-    // 빈 값이거나 0인 경우 0으로 설정
     if (!value) {
         value = '0';
     }
-
-    // 콤마가 있는 형태로 다시 표시
     event.target.value = formatNumber(value);
     updateField(field, Number(value));
 };
+
+const updateField = (field, value) => {
+    // 가격과 배송비의 경우 음수와 소수점 처리
+    if (field === 'price' || field === 'shippingFee') {
+        value = Math.max(0, Math.floor(Number(value)));
+    }
+
+    emit('update:modelValue', {
+        ...props.modelValue,
+        [field]: value
+    });
+};
+
+// 거래 옵션 computed 속성
+const tradeOptions = computed(() => ({
+    isCompanion: props.modelValue.isCompanion || false,
+    isDeputy: props.modelValue.isDeputy || false,
+    gender: props.modelValue.gender ?? true,  // true = 남성, false = 여성
+    ageGroup: props.modelValue.ageGroup || ''
+}));
+
+// 카테고리 업데이트 핸들러
+const handleCategoryUpdate = (field, value) => {
+    if (field === "middleCategory") {
+        // value는 {majorId, middleId} 형태의 객체
+        updateField('middleCategory', value);
+    }
+};
+
+const handleTradeTypeChange = (type) => {
+    const updatedProduct = { ...props.modelValue };
+
+    if (type === 'shipping') {
+        updatedProduct.isShipping = !updatedProduct.isShipping;
+        // 배송 거래 해제시 관련 필드 초기화
+        if (!updatedProduct.isShipping) {
+            updatedProduct.freeShipping = false;
+            updatedProduct.shippingFee = 0;
+        }
+    } else if (type === 'person') {
+        updatedProduct.isPerson = !updatedProduct.isPerson;
+        // 직거래 해제시 관련 필드 초기화
+        if (!updatedProduct.isPerson) {
+            updatedProduct.zipCode = '';
+            updatedProduct.address = '';
+            updatedProduct.detailAddress = '';
+            updatedProduct.latitude = null;
+            updatedProduct.longitude = null;
+            updatedProduct.isCompanion = false;
+            updatedProduct.isDeputy = false;
+            updatedProduct.gender = true;
+            updatedProduct.ageGroup = '';
+        }
+    }
+
+    // 최소 하나의 거래 방식이 선택되어 있는지 확인
+    if (!updatedProduct.isShipping && !updatedProduct.isPerson) {
+        // 모든 관련 필드 초기화
+        updatedProduct.freeShipping = false;
+        updatedProduct.shippingFee = 0;
+        updatedProduct.zipCode = '';
+        updatedProduct.address = '';
+        updatedProduct.detailAddress = '';
+        updatedProduct.latitude = null;
+        updatedProduct.longitude = null;
+        updatedProduct.isCompanion = false;
+        updatedProduct.isDeputy = false;
+        updatedProduct.gender = true;
+        updatedProduct.ageGroup = '';
+    }
+
+    emit('update:modelValue', updatedProduct);
+};
+
+// 배송비 포함 여부 변경 핸들러
+const handleIncludeShippingChange = (value) => {
+    const updatedProduct = { ...props.modelValue };
+    updatedProduct.freeShipping = value;
+    updatedProduct.shippingFee = 0;  // 배송비 포함 시 무조건 0으로 설정
+    emit('update:modelValue', updatedProduct);
+};
+
+// 주소 업데이트 핸들러
+const handleAddressUpdate = (addressInfo) => {
+    updateField('zipCode', addressInfo.zipCode);
+    updateField('address', addressInfo.address);
+    updateField('detailAddress', addressInfo.detailAddress);
+    updateField('latitude', addressInfo.latitude);
+    updateField('longitude', addressInfo.longitude);
+};
+
+// 거래 옵션 업데이트 핸들러
+const handleTradeOptionUpdate = (field, value) => {
+    updateField(field, value);
+};
+
+// 상품 상태 옵션
+const productConditions = [
+    { value: 'NEW', label: '미사용', description: '사용하지 않은 새 상품이예요' },
+    { value: 'LIKE_NEW', label: '사용감 없음', description: '사용은 했지만 눈에 띄는 부분은 없어요' },
+    { value: 'USED', label: '사용감 적음', description: '눈에 띄는 부분이 약간 있어요' },
+    { value: 'HEAVILY_USED', label: '사용감 많음', description: '눈에 띄는 부분이 많아요' }
+];
 </script>
 
 <template>
     <div class="product-form">
         <div class="form-group">
-            <label for="title">상품명</label>
-            <input type="text" id="title" :value="modelValue.title" @input="updateField('title', $event.target.value)"
-                required>
+            <label for="productName">상품명</label>
+            <input type="text" id="productName" :value="modelValue.productName"
+                @input="updateField('productName', $event.target.value)" required>
         </div>
 
-        <div class="form-group">
-            <label>카테고리</label>
-            <div class="category-select">
-                <button type="button" class="category-button" @click="showCategoryModal = true">
-                    {{ selectedCategoryText || '카테고리를 선택해주세요' }}
-                </button>
-            </div>
-        </div>
-
-        <CategoryModal v-model="showCategoryModal" @select="handleCategorySelect" />
+        <!-- 카테고리 선택 부분 -->
+        <CategorySelect :productInfo="modelValue" @update:category="handleCategoryUpdate" />
 
         <!-- 가격 입력 부분 -->
         <div class="form-group">
@@ -184,75 +179,62 @@ const handlePriceBlur = (event, field) => {
             </div>
         </div>
 
-        <!-- 배송비 포함 여부 부분 -->
-        <div class="form-group shipping-include">
-            <label class="checkbox-label">
-                <input type="checkbox" :checked="includeShipping"
-                    @change="handleIncludeShippingChange($event.target.checked)">
-                <span>배송비 포함</span>
-                <div class="shipping-tooltip">가격에 배송비가 포함되요</div>
-            </label>
-        </div>
-
         <div class="form-group">
-            <label>배송 방식 (다중 선택 가능)</label>
-            <div class="delivery-options">
-                <div class="delivery-type">
-                    <button type="button" :class="['delivery-button', {
-                        active: Array.isArray(modelValue.deliveryType) &&
-                            modelValue.deliveryType.includes('delivery')
-                    }]" @click="handleDeliveryTypeChange('delivery')">
-                        택배
-                    </button>
-                    <button type="button" :class="['delivery-button', {
-                        active: Array.isArray(modelValue.deliveryType) &&
-                            modelValue.deliveryType.includes('direct')
-                    }]" @click="handleDeliveryTypeChange('direct')">
-                        직거래
-                    </button>
-                </div>
+            <label>거래 방식 (1개 이상 선택)</label>
+            <div class="delivery-type">
+                <button type="button" :class="['delivery-button', { active: modelValue.isShipping }]"
+                    @click="handleTradeTypeChange('shipping')">
+                    택배
+                </button>
+                <button type="button" :class="['delivery-button', { active: modelValue.isPerson }]"
+                    @click="handleTradeTypeChange('person')">
+                    직거래
+                </button>
             </div>
         </div>
 
-        <!-- 배송비 입력 부분 -->
-        <template v-if="Array.isArray(modelValue.deliveryType) && modelValue.deliveryType.includes('delivery')">
-            <div class="form-group">
-                <label for="deliveryFee">배송비</label>
+        <!-- 택배 거래 관련 옵션 -->
+        <template v-if="modelValue.isShipping">
+            <!-- 배송비 포함 여부 -->
+            <div class="form-group shipping-include">
+                <label class="checkbox-label">
+                    <input type="checkbox" :checked="modelValue.freeShipping"
+                        @change="handleIncludeShippingChange($event.target.checked)">
+                    <span>배송비 포함</span>
+                    <div class="shipping-tooltip">가격에 배송비가 포함되요</div>
+                </label>
+            </div>
+
+            <!-- 배송비 입력 (배송비 포함이 아닐 때만 표시) -->
+            <div class="form-group" v-if="!modelValue.freeShipping">
+                <label for="shippingFee">배송비</label>
                 <div class="price-input-wrapper">
                     <div class="input-container">
-                        <input type="text" inputmode="numeric" id="deliveryFee"
-                            :value="formatNumber(modelValue.deliveryFee)"
-                            @input="handlePriceInput($event, 'deliveryFee')"
-                            @blur="handlePriceBlur($event, 'deliveryFee')" :disabled="includeShipping" maxlength="11"
-                            required>
+                        <input type="text" inputmode="numeric" id="shippingFee"
+                            :value="formatNumber(modelValue.shippingFee)"
+                            @input="handlePriceInput($event, 'shippingFee')"
+                            @blur="handlePriceBlur($event, 'shippingFee')" maxlength="11" required>
                         <span class="currency-label">원</span>
                     </div>
                 </div>
             </div>
         </template>
 
-        <!-- 직거래 장소 입력 부분 -->
-        <template v-if="Array.isArray(modelValue.deliveryType) && modelValue.deliveryType.includes('direct')">
+        <!-- 직거래 관련 옵션 -->
+        <template v-if="modelValue.isPerson">
             <div class="form-group">
                 <label>거래 장소</label>
-                <AddressSearch :initial-address="modelValue.dealLocation?.address"
-                    @update:address="handleAddressUpdate" />
+                <AddressSearch :initial-address="modelValue.address" @update:address="handleAddressUpdate" />
 
-                <div v-if="modelValue.dealLocation?.latitude && modelValue.dealLocation?.longitude">
-                    <Map :lat="Number(modelValue.dealLocation.latitude)"
-                        :lon="Number(modelValue.dealLocation.longitude)"></Map>
+                <div v-if="modelValue.latitude && modelValue.longitude">
+                    <Map :lat="Number(modelValue.latitude)" :lon="Number(modelValue.longitude)"></Map>
                 </div>
             </div>
 
             <TradeOptions :productInfo="tradeOptions" @update:options="handleTradeOptionUpdate" />
         </template>
 
-        <div class="form-group">
-            <label for="description">상품 설명</label>
-            <textarea id="description" :value="modelValue.description"
-                @input="updateField('description', $event.target.value)" rows="4" required></textarea>
-        </div>
-
+        <!-- 상품 상태 선택 -->
         <div class="form-group">
             <label>상품 상태</label>
             <div class="condition-options">
@@ -263,6 +245,13 @@ const handlePriceBlur = (event, field) => {
                     <div class="condition-tooltip">{{ condition.description }}</div>
                 </div>
             </div>
+        </div>
+
+        <!-- 상품 설명 -->
+        <div class="form-group">
+            <label for="content">상품 설명</label>
+            <textarea id="content" :value="modelValue.content" @input="updateField('content', $event.target.value)"
+                rows="4" required></textarea>
         </div>
     </div>
 </template>
