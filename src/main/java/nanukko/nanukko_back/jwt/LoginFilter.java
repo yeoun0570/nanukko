@@ -96,7 +96,7 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
         RefreshJWT entity = RefreshJWT.builder()
                 .username(username)
                 .refresh(refresh)
-                .expiration(date.toString())
+                .expiration(date)
                 .build();
         refreshJWTRepository.save(entity);
     }

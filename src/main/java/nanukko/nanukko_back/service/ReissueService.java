@@ -78,7 +78,7 @@ public class ReissueService {
         RefreshJWT entity = RefreshJWT.builder()
                 .username(userId)
                 .refresh(newRefreshToken)
-                .expiration(date.toString())
+                .expiration(date)
                 .build();
         refreshJWTRepository.save(entity);
 
