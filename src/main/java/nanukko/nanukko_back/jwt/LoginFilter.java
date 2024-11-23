@@ -6,14 +6,18 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import nanukko.nanukko_back.domain.jwt.RefreshJWT;
+import nanukko.nanukko_back.domain.user.User;
 import nanukko.nanukko_back.dto.user.CustomUserDetails;
 import nanukko.nanukko_back.repository.RefreshJWTRepository;
+import nanukko.nanukko_back.repository.UserRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import java.io.IOException;
@@ -27,13 +31,14 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
     private final AuthenticationManager authenticationManager;
     private final JWTUtil jwtUtil;
     private final RefreshJWTRepository refreshJWTRepository;
+    private final UserRepository userRepository;
 
     // spring security에서는 불변객체 관리(보안, 안정성 관리) + 확실한 의존성 주입을 위해 생성자 주입 방식을 권장함
-    public LoginFilter(AuthenticationManager authenticationManager, JWTUtil jwtUtil, RefreshJWTRepository refreshJWTRepository){
+    public LoginFilter(AuthenticationManager authenticationManager, JWTUtil jwtUtil, RefreshJWTRepository refreshJWTRepository, UserRepository userRepository){
         this.authenticationManager = authenticationManager;
         this.jwtUtil = jwtUtil;
         this.refreshJWTRepository = refreshJWTRepository;
-
+        this.userRepository = userRepository;
         // 로그인 처리 URL 설정
         setFilterProcessesUrl("/api/login");
     }
@@ -43,6 +48,14 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
 
         String userId = obtainUsername(request);//입력값 가로채서 받기
         String password = obtainPassword(request);
+
+        // 탈퇴 회원 체크
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다."));
+
+        if (user.isCanceled()) {
+            throw new DisabledException("탈퇴한 회원입니다.");
+        }
 
         // Authentication Manager에게 id, pw 넘겨주어 검증하기 위해서는 token(여기서는 dto 역할)에 담아서 넘겨줌, roll값은 일단 null 처리
         UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(userId, password, null);
