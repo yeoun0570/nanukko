@@ -1,10 +1,12 @@
 package nanukko.nanukko_back.config;
 
 import jakarta.servlet.http.HttpServletRequest;
+import nanukko.nanukko_back.jwt.CustomLogoutFilter;
 import nanukko.nanukko_back.jwt.JWTFilter;
 import nanukko.nanukko_back.jwt.JWTUtil;
 import nanukko.nanukko_back.jwt.LoginFilter;
 import nanukko.nanukko_back.repository.RefreshJWTRepository;
+import nanukko.nanukko_back.repository.UserRepository;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -15,6 +17,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.logout.LogoutFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 
@@ -28,11 +31,13 @@ public class SecurityConfig {
     private final AuthenticationConfiguration authenticationConfiguration;
     private final JWTUtil jwtUtil;
     private final RefreshJWTRepository refreshJWTRepository;
+    private final UserRepository userRepository;
 
-    public SecurityConfig(AuthenticationConfiguration authenticationConfiguration, JWTUtil jwtUtil, RefreshJWTRepository refreshJWTRepository) {
+    public SecurityConfig(AuthenticationConfiguration authenticationConfiguration, JWTUtil jwtUtil, RefreshJWTRepository refreshJWTRepository, UserRepository userRepository) {
         this.authenticationConfiguration = authenticationConfiguration;
         this.jwtUtil = jwtUtil;
         this.refreshJWTRepository = refreshJWTRepository;
+        this.userRepository = userRepository;
     }
 
     //AuthenticationManager Bean 등록
@@ -50,7 +55,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         // LoginFilter URL 설정 추가
-        LoginFilter loginFilter = new LoginFilter(authenticationManager(authenticationConfiguration), jwtUtil, refreshJWTRepository);
+        LoginFilter loginFilter = new LoginFilter(authenticationManager(authenticationConfiguration), jwtUtil, refreshJWTRepository, userRepository);
         loginFilter.setFilterProcessesUrl("/api/login"); // 실제 로그인 요청을 처리할 URL 명시적 설정
 
         // 로그인 필터들의 CORS 문제 방지를 위한 설정
@@ -91,7 +96,7 @@ public class SecurityConfig {
         // 요청 경로별 권한 설정
         http
                 .authorizeHttpRequests((auth) -> auth
-                        .requestMatchers("/api/login", "/", "/api/register", "/api/reissue").permitAll()//적어준 경로에 대해서는 전체 허용
+                        .requestMatchers("/api/login", "/api/logout", "/", "/api/register", "/api/reissue").permitAll()//적어준 경로에 대해서는 전체 허용
                         .requestMatchers("/api/admin").hasRole("ADMIN")//적어준 경로에는 ADMIN만 접근 가능
                         .requestMatchers("/api/reissue").permitAll() // access 토큰 만료된 상태로 요청하므로 permit all
                         .anyRequest().authenticated()//나머지 요청에 대해서는 로그인 한 사용자들만 접근 가능함
@@ -105,6 +110,11 @@ public class SecurityConfig {
         http
                 .addFilterAt(loginFilter, UsernamePasswordAuthenticationFilter.class);
         // loginFilter를 통해서 검증 하고, 검증 성공하면 jwtUtil을 통해서 jwt를 생성 후 다시 loginFilter에 구현된 로그인 성공 후 실행될 메소드에 jwt 반환해준다.
+
+
+        // 커스텀 로그아웃 필터 추가
+        http
+                .addFilterBefore(new CustomLogoutFilter(jwtUtil, refreshJWTRepository), LogoutFilter.class);
 
         // 세션 stateless 상태로 관리
         http

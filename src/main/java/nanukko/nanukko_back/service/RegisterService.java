@@ -28,6 +28,8 @@ public class RegisterService {
         if (userRepository.existsById(dto.getUserId())) {
             throw new IllegalStateException("이미 존재하는 회원입니다.");
         }
+
+
         // 비밀번호 암호화
         dto.setPassword(bCryptPasswordEncoder.encode(dto.getPassword()));
         // 2. UserDTO -> User Entity 변환 및 저장
