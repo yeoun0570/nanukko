@@ -5,19 +5,19 @@ import lombok.extern.log4j.Log4j2;
 import nanukko.nanukko_back.dto.user.UserInfoDTO;
 import nanukko.nanukko_back.service.RegisterService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
 @Log4j2
+@RequestMapping("/api/register")
 public class RegisterController {
 
     private final RegisterService registerService;
 
-    @PostMapping("/api/register")
+    @PostMapping("/")
     public ResponseEntity<String> resister(@RequestBody UserInfoDTO dto){
         try{
             registerService.registerUser(dto);
@@ -28,9 +28,12 @@ public class RegisterController {
         }
     }
 
-    // jwt 발급 테스트용
-    @GetMapping("/api/admin")
-    String admin(){
-        return "음";
+    @PostMapping("/duplicatedIdCheck")
+    public ResponseEntity<Boolean> duplicatedIdCheck(@RequestBody Map<String, String> request){
+        String inputId = request.get("userId");
+        boolean exist = registerService.existsById(inputId);
+
+        return ResponseEntity.ok(exist);
     }
+
 }

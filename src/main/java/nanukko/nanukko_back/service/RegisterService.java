@@ -48,7 +48,9 @@ public class RegisterService {
             // Kid Entity 저장
             kidList.forEach(kidRepository::save);
         }
+    }
 
-
+    public boolean existsById(String id){
+        return userRepository.existsById(id);
     }
 }
