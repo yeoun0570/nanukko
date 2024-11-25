@@ -22,7 +22,7 @@ public class JWTUtil {
     /*검증을 할 메소드들 -> 토큰을 jsonParser로 꺼내서 내부 데이터 확인  */
 
     // username 일치하는지 확인
-    public String getUsername(String token){
+    public String getUsername(String token){//username이라고 되어있지만 아이디를 의미
         return Jwts.parser().verifyWith(secretKey)//secretkey를 사용해서 토큰이 우리 서버에서 생성되었는지, secretKey와 일치하는지 검사
                 .build().parseSignedClaims(token)//클레임 확인 후에
                 .getPayload().get("userId", String.class);//페이로드 부분에서 userId라는 키값의 String타입 데이터를 가져옴

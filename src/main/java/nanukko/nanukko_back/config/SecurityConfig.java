@@ -7,6 +7,7 @@ import nanukko.nanukko_back.jwt.JWTUtil;
 import nanukko.nanukko_back.jwt.LoginFilter;
 import nanukko.nanukko_back.repository.RefreshJWTRepository;
 import nanukko.nanukko_back.repository.UserRepository;
+import nanukko.nanukko_back.service.ReissueService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -32,12 +33,14 @@ public class SecurityConfig {
     private final JWTUtil jwtUtil;
     private final RefreshJWTRepository refreshJWTRepository;
     private final UserRepository userRepository;
+    private final ReissueService reissueService;
 
-    public SecurityConfig(AuthenticationConfiguration authenticationConfiguration, JWTUtil jwtUtil, RefreshJWTRepository refreshJWTRepository, UserRepository userRepository) {
+    public SecurityConfig(AuthenticationConfiguration authenticationConfiguration, JWTUtil jwtUtil, RefreshJWTRepository refreshJWTRepository, UserRepository userRepository, ReissueService reissueService) {
         this.authenticationConfiguration = authenticationConfiguration;
         this.jwtUtil = jwtUtil;
         this.refreshJWTRepository = refreshJWTRepository;
         this.userRepository = userRepository;
+        this.reissueService = reissueService;
     }
 
     //AuthenticationManager Bean 등록
@@ -104,7 +107,7 @@ public class SecurityConfig {
 
         // JWTFilter를 LoginFilter 앞에 달아줌
         http
-                .addFilterBefore(new JWTFilter(jwtUtil), LoginFilter.class);
+                .addFilterBefore(new JWTFilter(jwtUtil, reissueService), LoginFilter.class);
 
         // 커스텀 필터 추가
         http
