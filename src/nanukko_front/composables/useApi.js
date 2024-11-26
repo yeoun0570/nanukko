@@ -150,3 +150,104 @@ export const useApi = () => {
     delete: del
   };
 };
+
+
+
+
+
+// import { ref } from 'vue'
+
+// const isClient = typeof window !== 'undefined'
+
+// export const useApi = () => {
+//   const getStoredToken = () => {
+//     if (!isClient) return null
+//     return localStorage.getItem('access_token')
+//   }
+
+//   const PUBLIC_PATHS = ['/login', '/register', '/reissue', '/', '/logout']
+
+//   const isPublicPath = (path) => {
+//     return PUBLIC_PATHS.some(publicPath => path.startsWith(publicPath))
+//   }
+
+//   const commonFetch = async (url, options = {}) => {
+//     try {
+//       const baseOptions = {
+//         credentials: 'include',
+//         headers: {
+//           'Content-Type': 'application/json'
+//         }
+//       }
+
+//       if (!isPublicPath(url)) {
+//         const token = getStoredToken()
+//         if (token) {
+//           baseOptions.headers.Authorization = `Bearer ${token}`
+//         }
+//       }
+
+//       const fullUrl = url.startsWith('http') ? url : `${useRuntimeConfig().public.apiBase}${url}`
+
+//       const finalOptions = {
+//         ...baseOptions,
+//         ...options,
+//         headers: {
+//           ...baseOptions.headers,
+//           ...options.headers
+//         }
+//       }
+
+//       const response = await fetch(fullUrl, finalOptions)
+
+//       if (response.status === 401 && !isPublicPath(fullUrl)) {
+//         if (isClient) {
+//           alert('로그인이 필요합니다.')
+//           window.location.href = '/auth/login'
+//         }
+//         throw new Error('인증이 필요합니다.')
+//       }
+
+//       return response
+
+//     } catch (error) {
+//       console.error('API 요청 실패:', error)
+//       throw error
+//     }
+//   }
+
+//   return {
+//     get: (url, options = {}) => commonFetch(url, { method: 'GET', ...options }),
+//     post: (url, data, options = {}) => {
+//       if (url === '/login') {
+//         const formData = new URLSearchParams()
+//         formData.append('username', data.userId)
+//         formData.append('password', data.password)
+        
+//         return commonFetch(url, {
+//           method: 'POST',
+//           headers: {
+//             'Content-Type': 'application/x-www-form-urlencoded'
+//           },
+//           body: formData,
+//           ...options
+//         })
+//       }
+
+//       return commonFetch(url, {
+//         method: 'POST',
+//         body: JSON.stringify(data),
+//         ...options
+//       })
+//     },
+//     put: (url, data, options = {}) => commonFetch(url, {
+//       method: 'PUT',
+//       body: JSON.stringify(data),
+//       ...options
+//     }),
+//     delete: (url, options = {}) => commonFetch(url, {
+//       method: 'DELETE',
+//       ...options
+//     })
+//   }
+// }

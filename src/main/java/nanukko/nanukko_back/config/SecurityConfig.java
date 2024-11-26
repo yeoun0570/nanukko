@@ -102,6 +102,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/login", "/api/logout", "/", "/api/register/**", "/api/reissue").permitAll()//적어준 경로에 대해서는 전체 허용
                         .requestMatchers("/api/admin").hasRole("ADMIN")//적어준 경로에는 ADMIN만 접근 가능
                         .requestMatchers("/api/reissue").permitAll() // access 토큰 만료된 상태로 요청하므로 permit all
+                        .requestMatchers("/ws-stomp/**").permitAll()  // WebSocket 엔드포인트 허용
                         .anyRequest().authenticated()//나머지 요청에 대해서는 로그인 한 사용자들만 접근 가능함
                 );
 

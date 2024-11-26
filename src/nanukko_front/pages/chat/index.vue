@@ -205,12 +205,13 @@ watch(() => route.query.userId, async (newUserId) => {
       <!-- 오른쪽: 채팅방 컴포넌트 -->
       <div class="chat-room-section">
         <ChatRoom
-          v-if="currentRoomId && activeChatRoom"
+          v-if="currentRoomId && activeChatRoom && connected" 
           :key="currentRoomId"
           :room-id="currentRoomId"
           :user-id="userId"
           :product-id="selectedProductId"
           :current-room="activeChatRoom"
+          :connected="connected"  
         />
         <div v-else class="empty-state">
           <p>채팅방을 선택해주세요</p>
