@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
@@ -33,5 +34,10 @@ public class PageResponseDTO<T> {
         this.last = page.isLast();
         this.hasNext = page.hasNext();
         this.hasPrevious = page.hasPrevious();
+    }
+
+    public static <T> PageResponseDTO<T> empty(Pageable pageable) { //검색어가 빈 경우 빈 결과 반환
+        Page<T> emptyPage = Page.empty(pageable);
+        return new PageResponseDTO<>(emptyPage);
     }
 }

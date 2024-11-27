@@ -41,8 +41,7 @@ public class Product {
     @ColumnDefault("SELLING")
     private ProductStatus status; //상품 상태 -> Selling 디폴트
 
-    @NotNull
-    @Column(name = "is_deleted")
+    @Column(name = "is_deleted", nullable = false)
     private boolean isDeleted = false; //삭제 여부 -> true = 삭제, false = 삭제X -> false 디폴트
 
 
@@ -142,6 +141,18 @@ public class Product {
 
 
     ///////////////////////////////////////////////////////////////////
+    @PrePersist
+    private void prePersist() {
+        if (this.status == null) {
+            this.status = ProductStatus.SELLING; // 기본값 설정
+        }
+        this.isDeleted = this.isDeleted != true ? false : this.isDeleted;
+        if (this.viewCount == 0) this.viewCount = 0;
+        if (this.favoriteCount == 0) this.favoriteCount = 0;
+        if (this.talkCount == 0) this.talkCount = 0;
+    }
+
+
     //상품 상태 변경
     public void updateStatus(ProductStatus status) {
         this.status = status;
