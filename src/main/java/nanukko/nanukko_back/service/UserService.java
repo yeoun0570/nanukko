@@ -195,7 +195,7 @@ public class UserService {
                 .createdAt(LocalDateTime.now())
                 .isDeleted(false) //삭제여부는 false
                 .status(ProductStatus.SELLING) //초기 상태는 판매중
-                .viewCount(0) //초기 조회수
+//                .viewCount(0) //초기 조회수
                 .images(productDTO.getImages())
                 .thumbnailImage(productDTO.getThumbnailImage())
                 .condition(productDTO.getCondition())
@@ -228,7 +228,7 @@ public class UserService {
             product.updateCategory(middleCategory);
         }
 
-        //상품 정보 수정
+      /*  //상품 정보 수정
         product.updateProduct(
                 productDTO.getProductName(),
                 productDTO.getPrice(),
@@ -243,14 +243,14 @@ public class UserService {
                 productDTO.isCompanion(),
                 productDTO.isCompanionGender(),
                 productDTO.isFreeShipping(),
-                productDTO.getShippingFree(),
+                productDTO.getShippingFee(),
                 LocalDateTime.now()
         );
 
         //수정한 상품이 배송비 별도이면 배송비도 수정
         if (productDTO.isFreeShipping()) {
-            product.updateShippingFree(productDTO.getShippingFree());
-        }
+            product.updateShippingFee(productDTO.getShippingFee());
+        }*/
 
         return convertToUserSetProductDTO(product);
     }
@@ -272,11 +272,8 @@ public class UserService {
                 .condition(product.getCondition())
                 .isPerson(product.isPerson())
                 .isDeputy(product.isDeputy())
-                .deputyGender(product.isDeputyGender())
                 .isCompanion(product.isCompanion())
-                .companionGender(product.isCompanionGender())
                 .freeShipping(product.isFreeShipping())
-                .shippingFree(product.getShippingFree())
                 .build();
     }
 

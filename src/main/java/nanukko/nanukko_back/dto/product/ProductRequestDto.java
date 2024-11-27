@@ -6,7 +6,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import nanukko.nanukko_back.domain.product.Condition;
 
-import java.time.LocalDateTime;
 
 @Data
 @AllArgsConstructor
@@ -14,10 +13,19 @@ import java.time.LocalDateTime;
 @Builder
 public class ProductRequestDto {
     // 기본 정보
+    private Long id;
     private String productName;
     private int price;
     private String content;
     private Condition condition; // Condition의 String 값
+
+    // 이미지 정보
+    private String image1;
+    private String image2;
+    private String image3;
+    private String image4;
+    private String image5;
+    private String thumbnailImage;
 
     // 카테고리 정보
     private Long majorId; //
@@ -41,5 +49,13 @@ public class ProductRequestDto {
     private String detailAddress;
     private Double latitude;
     private Double longitude;
+
+    // 찜 여부
+    private boolean isWished;
+
+    //좋아요 수
+    private Integer favorite_count;
+    private Integer view_count;
+    private Integer talk_count;
 
 }
