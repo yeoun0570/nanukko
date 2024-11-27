@@ -31,14 +31,14 @@ export function useStomp() {
             heartbeatIncoming: 4000,
             heartbeatOutgoing: 4000,
             onConnect: () => {
-              console.log('STOMP connection successful!')
+              console.log('연결 성공 - STOMP connection successful!')
               connected.value = true
               resolve(true)
             },
             onStompError: (frame) => {
               console.error('STOMP error:', frame)
               connected.value = false
-              reject(new Error('STOMP connection failed'))
+              reject(new Error('연결 실패 - STOMP connection failed'))
             },
             onWebSocketClose: () => {
               console.log('WebSocket closed')
@@ -59,7 +59,7 @@ export function useStomp() {
       }
     }
     
-    throw new Error('Failed to establish STOMP connection after max attempts')
+    throw new Error('결국 연결 실패..- Failed to establish STOMP connection after max attempts')
   }
 
   const connectChat = async (userId, token) => {
@@ -79,11 +79,11 @@ export function useStomp() {
 
   const subscribeToChatRoom = async (roomId, callbacks = {}) => {
     if (!client.value?.active) {
-      throw new Error('No active STOMP connection');
+      throw new Error('커넥션 에러 - No active STOMP connection');
     }
 
     const destination = `/queue/chat/${roomId}`;
-    console.log('Subscribing to:', destination);
+    console.log('구독하기-Subscribing to:', destination);
 
     // 기존 구독 해제
     if (subscriptions.has(destination)) {
@@ -99,14 +99,14 @@ export function useStomp() {
             console.log('Parsed message:', payload);
             callbacks.onMessage?.(payload);
           } catch (error) {
-            console.error('Message handling error:', error);
+            console.error('메시지 핸들링 error:', error);
           }
         });
 
         subscriptions.set(destination, subscription);
         resolve(subscription);
       } catch (error) {
-        console.error('Subscription error:', error);
+        console.error('구독 error:', error);
         reject(error);
       }
     });
@@ -119,7 +119,7 @@ export function useStomp() {
     }
 
     const destination = `/app/chat/${roomId}`
-    console.log('Sending message to:', destination, message)
+    console.log('메시지 전송:', destination, message)
 
     return client.value.publish({
       destination,
