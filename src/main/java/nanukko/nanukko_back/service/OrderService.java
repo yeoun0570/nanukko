@@ -73,7 +73,7 @@ public class OrderService {
                 .addrDetail(buyer.getAddress().getAddrDetail())
                 .addrZipcode(buyer.getAddress().getAddrZipcode())
                 .mobile(buyer.getMobile())
-                .shippingFree(product.getShippingFree())
+                .shippingFree(product.getShippingFee())
                 .build();
     }
 
@@ -160,7 +160,7 @@ public class OrderService {
         //수수료 + 배송비 계산
         int productAmount = product.getPrice();
         int chargeAmount = (int) (productAmount * chargeRate);
-        int shippingFree = product.getShippingFree();
+        int shippingFree = product.getShippingFee();
         int totalAmount = productAmount + chargeAmount + shippingFree;
 
 

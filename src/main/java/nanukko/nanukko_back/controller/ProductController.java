@@ -2,6 +2,7 @@ package nanukko.nanukko_back.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
@@ -10,6 +11,7 @@ import nanukko.nanukko_back.domain.product.Product;
 import nanukko.nanukko_back.domain.user.User;
 import nanukko.nanukko_back.dto.page.PageResponseDTO;
 import nanukko.nanukko_back.dto.product.ProductRequestDto;
+import nanukko.nanukko_back.dto.user.CustomUserDetails;
 import nanukko.nanukko_back.repository.UserRepository;
 import nanukko.nanukko_back.service.ProductService;
 import org.springframework.data.domain.PageRequest;
@@ -18,6 +20,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
@@ -57,11 +60,11 @@ public class ProductController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ProductRequestDto> getProductById(@PathVariable Long id, @AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<ProductRequestDto> getProductById(@PathVariable Long id, @AuthenticationPrincipal CustomUserDetails userDetails) {
         User currentUser = null;
         if (userDetails != null) {
             String userId = userDetails.getUsername();
-            currentUser = userRepository.findById(userId);
+            currentUser = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없음"));
         }
         ProductRequestDto product = productService.getProductDetail(id, currentUser);
         return ResponseEntity.ok(product);
@@ -114,10 +117,10 @@ public class ProductController {
     }
 
     @GetMapping("/related")
-    public ResponseEntity<List<Product>> getRelatedProducts(
+    public ResponseEntity<List<ProductRequestDto>> getRelatedProducts(
             @RequestParam Long productId,
             @RequestParam(defaultValue = "5") int limit) {
-        List<Product> relatedProducts = productService.findRelatedProducts(productId, limit);
+        List<ProductRequestDto> relatedProducts = productService.findRelatedProducts(productId);
         return ResponseEntity.ok(relatedProducts);
     }
 
