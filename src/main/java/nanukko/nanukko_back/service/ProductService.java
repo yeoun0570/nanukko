@@ -109,7 +109,7 @@ public class ProductService {
         return new PageResponseDTO<>(result);
     }
 
-    public List<ProductRequestDto> findRelatedProducts(Long productId, int limit) {
+    public List<ProductRequestDto> findRelatedProducts(Long productId) {
         // 1. 현재 상품의 중분류 ID 조회
         Product currentProduct = getProductById(productId);
         Long middleId = currentProduct.getMiddleCategory().getMiddleId();

@@ -76,7 +76,7 @@ public class DeliveryService {
         // 배송 추적 웹훅 등록
         registerOrRefreshWebhook(delivery);
 
-        // 상품 배송여부 변경
+        // 상품 배송여부
         product.updateHasDelivery(true);
 
         return modelMapper.map(delivery, DeliveryResponseDTO.class);

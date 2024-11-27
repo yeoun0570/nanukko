@@ -38,8 +38,7 @@ public class Product {
 
     @Enumerated(EnumType.STRING)
     @NotNull
-    @ColumnDefault("SELLING")
-    private ProductStatus status; //상품 상태 -> Selling 디폴트
+    private ProductStatus status = ProductStatus.SELLING; //상품 상태 or @ColumnDefault("'SELLING'")
 
     @Column(name = "is_deleted", nullable = false)
     private boolean isDeleted = false; //삭제 여부 -> true = 삭제, false = 삭제X -> false 디폴트
@@ -94,6 +93,9 @@ public class Product {
     @ColumnDefault("0")
     private int shippingFee = 0; //배송비
 
+    @Column(name = "has_delivery")
+    @NotNull
+    private boolean hasDelivery = false; //배송 여부 -> true면 배송시작, false면 배송 안했음
 
     ////////////////거래 관련 정보 //////////////
     @Column(name = "is_companion")
@@ -163,6 +165,22 @@ public class Product {
         this.middleCategory = middleCategory;
     }
 
+    // 배송여부 변경
+    public void updateHasDelivery(boolean hasDelivery) {
+        this.hasDelivery = hasDelivery;
+    }
+
+    //상품 삭제
+    public void removeProduct(boolean isDeleted) {
+        this.isDeleted = isDeleted;
+    }
+
+    //배송비 수정
+    public void updateShippingFee(int shippingFree) {
+        this.shippingFee = shippingFree;
+    }
+
+
     //상품 수정
 /*
     public void updateProduct(
@@ -195,14 +213,6 @@ public class Product {
     }
 */
 
-    //상품 삭제
-    public void removeProduct(boolean isDeleted) {
-        this.isDeleted = isDeleted;
-    }
 
-    //배송비 수정
-    public void updateShippingFee(int shippingFree) {
-        this.shippingFee = shippingFree;
-    }
 
 }
