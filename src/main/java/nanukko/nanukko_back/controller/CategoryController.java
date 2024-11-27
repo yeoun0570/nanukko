@@ -30,9 +30,9 @@ public class CategoryController {
 
     @GetMapping("/middle/{majorId}")
     public ResponseEntity<List<MiddleCategory>> getMiddleCategories(@PathVariable Long majorId) {
-        if (!categoryService.existsById(majorId)) {
-            throw CategoryExceptions.NOT_FOUND.get();
-        }
+//        if (!categoryService.existsById(majorId)) {
+//            throw CategoryExceptions.NOT_FOUND.get();
+//        }
         List<MiddleCategory> middleCategories = categoryService.getMiddleCategoriesByMajorId(majorId);
         log.info("Middle Categories for majorId {}: {}", majorId, middleCategories);  // 로그 추가
         return ResponseEntity.ok(middleCategories);
