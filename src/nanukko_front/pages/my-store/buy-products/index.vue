@@ -2,6 +2,10 @@
 import Pagination from '~/components/Pagination.vue';
 import OrdersGrid from '~/components/my-store/buy-products/OrdersGrid.vue';
 import StatusFilter from '~/components/my-store/buy-products/StatusFilter.vue';
+import { useApi } from '@/composables/useApi';
+
+const api = useApi();
+
 
 definePageMeta({
   layout: 'mystore'
@@ -15,15 +19,18 @@ const pageSize = ref(5);
 
 const loadUserOrders = async (page = 0) => {
   try {
-    const response = await get(
+    const response = await api.get(
       `/my-store/buy-products`,
       {
         params: { status: currentStatus.value, page, size: pageSize.value }
       }
     );
-    userOrders.value = response.data.content;
-    totalPages.value = response.data.totalPages;
-    currentPage.value = response.data.currentPage;
+    console.log("받아온 데이터: ", response);
+    console.log("총 페이지: ", response.totalPages);
+
+    userOrders.value = response.content;
+    totalPages.value = response.totalPages;
+    currentPage.value = response.currentPage;
   } catch (error) {
     console.error("로딩중 에러: ", error);
   }

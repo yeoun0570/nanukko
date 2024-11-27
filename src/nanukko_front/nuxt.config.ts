@@ -6,12 +6,12 @@ export default defineNuxtConfig({
     dirs: ["~/components", "~/components/payments"],
   },
   runtimeConfig: {
-    apiSecret: '',
+    apiSecret: "",
     public: {
       kakaoMapApiKey: process.env.NUXT_PUBLIC_KAKAO_MAP_API_KEY,
-      baseURL: process.env.API_BASE_URL || 'http://localhost:8080/api',
-      apiBase: process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:8080',
-    }
+      baseURL: process.env.API_BASE_URL || "http://localhost:8080/api",
+      apiBase: process.env.NUXT_PUBLIC_API_BASE || "http://localhost:8080",
+    },
   },
   // 토스 페이먼츠 스크립트
   app: {
@@ -19,7 +19,7 @@ export default defineNuxtConfig({
       script: [
         {
           src: `//dapi.kakao.com/v2/maps/sdk.js?appkey=${process.env.NUXT_PUBLIC_KAKAO_MAP_API_KEY}&libraries=services&autoload=true`,
-          type: 'text/javascript',
+          type: "text/javascript",
         },
         {
           src: "https://js.tosspayments.com/v1",
@@ -27,14 +27,14 @@ export default defineNuxtConfig({
         },
         {
           src: "//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js",
-          type: 'text/javascript'
+          type: "text/javascript",
         },
       ],
       link: [
         {
-          rel: 'stylesheet',
-          href: 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css'
-        }
+          rel: "stylesheet",
+          href: "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css",
+        },
       ],
     },
   },
@@ -50,49 +50,40 @@ export default defineNuxtConfig({
   // Vite 설정
   vite: {
     define: {
-      'process.env.DEBUG': false,
-      global: 'globalThis'
+      "process.env.DEBUG": false,
+      global: "globalThis",
     },
     optimizeDeps: {
-      include: ['sockjs-client']
+      include: ["sockjs-client"],
     },
     server: {
       proxy: {
-        '/api': {
-          target: 'http://localhost:8080',
+        "/api": {
+          target: "http://localhost:8080",
           changeOrigin: true,
-          secure: false
-        }
-      }
-    }
-  },
-
-  // 런타임 설정
-  runtimeConfig: {
-    public: {
-      apiBase: process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:8080'
-    }
+          secure: false,
+        },
+      },
+    },
   },
 
   // 프록시 설정 (Nitro)
   nitro: {
     devProxy: {
-      '/api': {
-        target: 'http://localhost:8080',
+      "/api": {
+        target: "http://localhost:8080",
         changeOrigin: true,
-      }
-    }
+      },
+    },
   },
 
   // 빌드 설정
   build: {
-    transpile: ['@stomp/stompjs']
+    transpile: ["@stomp/stompjs"],
   },
 
   // 플러그인
-  plugins: [
-    { src: '~/plugins/socket', mode: 'client' }
-  ],
+  plugins: [{ src: "~/plugins/socket", mode: "client" }],
 
-  compatibilityDate: '2024-11-17'
-})
+  compatibilityDate: "2024-11-17",
+});

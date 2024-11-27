@@ -1,19 +1,15 @@
 <script setup>
-import axios from "axios";
 import DeliveryRegistrationModal from "~/components/delivery/DeliveryRegistrationModal.vue";
-import { useApi } from "~/composables/useApi";
+import { useApi } from '@/composables/useApi';
 
-const { baseURL } = useApi();
+const api = useApi();
+
 const router = useRouter();
 const showDeliveryModal = ref(false);
 
 const props = defineProps({
   product: {
     type: Object,
-    required: true,
-  },
-  userId: {
-    type: String,
     required: true,
   },
 });
@@ -24,7 +20,6 @@ const goToModify = () => {
   router.push({
     path: "/my-store/sale-products/modify?productId",
     query: {
-      userId: props.userId,
       productId: props.product.productId,
     },
     state: {
@@ -34,15 +29,13 @@ const goToModify = () => {
 };
 
 const removeProduct = async () => {
-  console.log("userId: ", props.userId);
   console.log("productId: ", props.product.productId);
   try {
-    await axios.post(
-      `${baseURL}/my-store/sale-products/remove`,
+    await api.post(
+      `/my-store/sale-products/remove`,
       null,
       {
         params: {
-          userId: props.userId,
           productId: props.product.productId,
         },
       }

@@ -4,13 +4,14 @@ import PaymentProductSection from "~/components/payments/PaymentProductSection.v
 import DeliverySection from "~/components/payments/DeliverySection.vue";
 import PaymentAmountSection from "~/components/payments/PaymentAmountSection.vue";
 import PaymentButton from "~/components/payments/PaymentButton.vue";
-import { useApi } from "~/composables/useApi";
+import { useApi } from '@/composables/useApi';
+
+const api = useApi();
 
 //추후에 상세페이지에서 라우팅 받으면 받아야 될 값
 const route = useRoute();
 // const productId = route.query.productId;
 
-const { baseURL } = useApi();
 const orderData = ref(null);
 const loading = ref(false);
 const error = ref(null);
@@ -20,10 +21,10 @@ const productId = 3;
 
 const loadOrderPage = async () => {
   try {
-    const response = await axios.get(
-      `${baseURL}/payments/page/${productId}`
+    const response = await api.get(
+      `/payments/page/${productId}`
     );
-    orderData.value = response.data;
+    orderData.value = response;
     console.log(orderData.value.status);
     if (response.data.status !== "SELLING") {
       alert("판매중인 상품이 아닙니다.");

@@ -6,10 +6,6 @@ defineProps({
     type: Array,
     required: true,
   },
-  userId: {
-    type: String,
-    required: true,
-  },
 });
 
 const emit = defineEmits(["products-updated"]);
@@ -25,7 +21,6 @@ const handleProductUpdate = () => {
       v-for="product in products"
       :key="product.productId"
       :product="product"
-      :userId="userId"
       @product-updated="handleProductUpdate"
     />
   </div>

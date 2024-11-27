@@ -1,4 +1,8 @@
 <script setup>
+import { useApi } from '@/composables/useApi';
+
+const api = useApi();
+
 const hasReview = ref(false);
 
 const props = defineProps({
@@ -13,12 +17,12 @@ const emit = defineEmits(["order-updated"]);
 // 해당 주문에 대한 리뷰 존재 여부 확인
 const checkReviewExists = async () => {
   try {
-    const response = await get(`/review/check`, {
+    const response = await api.get(`/review/check`, {
       params: {
         orderId: props.order.orderId,
       },
     });
-    hasReview.value = response.data.exists;
+    hasReview.value = response.exists;
   } catch (error) {
     console.error("리뷰 존재 여부 확인 중 에러: ", error);
     hasReview.value = false;
@@ -34,22 +38,22 @@ const confirmPurchase = async () => {
   try {
     console.log("구매확정 요청 시작 - orderId:", props.order.orderId);
 
-    const response = await post(
+    const response = await api.post(
       `/payments/${props.order.orderId}/confirm`
     );
 
-    console.log("구매확정 응답:", response.data);
+    console.log("구매확정 응답:", response);
 
     if (response.data.status === "ESCROW_RELEASED") {
       alert("구매가 확정되었습니다.");
       emit("order-updated");
     } else {
-      throw new Error(`잘못된 상태: ${response.data.status}`);
+      throw new Error(`잘못된 상태: ${response.status}`);
     }
   } catch (error) {
     console.error("구매 확정 중 오류:", error);
     error.value =
-      error.response?.data?.message || "구매 확정 중 오류가 발생했습니다.";
+      error.response?.message || "구매 확정 중 오류가 발생했습니다.";
     alert(error.value);
   }
 };
@@ -66,11 +70,11 @@ const cancelOrder = async () => {
 
     console.log("결제 취소 시작 - orderId:", props.order.orderId);
 
-    const response = await post(
+    const response = await api.post(
       `/payments/${props.order.orderId}/cancel`
     );
 
-    console.log("결제 취소 완료:", response.data);
+    console.log("결제 취소 완료:", response);
     alert("결제가 취소되었습니다. 전체 금액이 환불됩니다.");
     emit("order-updated");
 
@@ -79,7 +83,7 @@ const cancelOrder = async () => {
   } catch (error) {
     console.error("결제 취소 중 오류:", error);
     error.value =
-      error.response?.data?.message || "결제 취소 중 오류가 발생했습니다.";
+      error.response?.message || "결제 취소 중 오류가 발생했습니다.";
   }
 };
 

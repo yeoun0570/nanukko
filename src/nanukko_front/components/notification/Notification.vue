@@ -1,10 +1,12 @@
 <script setup>
 import NotificationIcon from "./NotificationIcon.vue";
 import NotificationList from "./NotificationList.vue";
-import axios from "axios";
-import { useApi } from "~/composables/useApi";
+import { useApi } from "@/composables/useApi";
+import { useAuth } from "~/composables/auth/useAuth";
 
-const { baseURL } = useApi();
+const api = useApi();
+const auth = useAuth();
+const baseURL = "http://localhost:8080/api";
 
 // 알림 목록을 저장할 배열
 const notifications = ref([]);
@@ -16,12 +18,10 @@ const showNotifications = ref(false);
 // 읽지 않은 알림 수를 저장할 변수
 const unreadCount = ref(0);
 
-const userId = "buyer1"; // 추후에 로그인한 사용자로 변경
-
 // SSE 연결을 설정하는 메서드
 const connectSSE = () => {
   // userId가 없으면(로그인하지 않았으면) 연결하지 않음
-  if (!userId) {
+  if (!auth.userId.value) {
     console.log("로그인이 필요합니다");
     return;
   }
@@ -36,7 +36,7 @@ const connectSSE = () => {
 
   // EventSource 객체 생성하여 서버와 SSE 연결
   eventSource.value = new EventSource(
-    `${baseURL}/notice/connect?userId=${userId}&lastEventId=${lastEventId}`
+    `${baseURL}/notice/connect?userId=${auth.userId.value}&lastEventId=${lastEventId}`
   );
 
   // SSE 이벤트 리스너 등록 - 'SSE' 이벤트 수신 시 발생('SSE'는 백에서 설정한 전송할 때 이벤트 이름)
@@ -74,7 +74,7 @@ const connectSSE = () => {
     }
     //3초 후 재연결 시도
     setTimeout(() => {
-      if (userId) {
+      if (auth.userId.value) {
         // 여전히 로그인 상태일 때만 재연결
         connectSSE();
       }
@@ -85,15 +85,25 @@ const connectSSE = () => {
 // 로그인 시 호출되는 함수
 const initializeNotifications = async () => {
   try {
+    // 로그인 상태 체크 후
+    // 로그인 상태 체크
+    console.log("로그인 상태 확인 - auth.userId:", auth.userId.value);
+    if (!auth.userId.value) {
+      console.log("로그인이 필요합니다");
+      return;
+    }
+
     // DB에서 이전 알림들 가져오기
-    const response = await axios.get(`${baseURL}/notice/previous`, {
-      params: { userId },
-    });
+    console.log("이전 알림 조회 요청 시작");
+    const response = await api.get(`/notice/previous`);
+    console.log("서버 응답:", response); // 응답 데이터 확인
+
     const readNotifications =
       JSON.parse(localStorage.getItem("readNotifications")) || [];
+    console.log("로컬 스토리지의 읽은 알림:", readNotifications);
 
     // 기존 알림 설정
-    notifications.value = response.data.map((notification) => ({
+    notifications.value = response.map((notification) => ({
       ...notification,
       isRead:
         readNotifications.includes(notification.notificationId) ||
@@ -239,7 +249,7 @@ const updateUnreadCount = () => {
 const markAsRead = async (notification) => {
   try {
     // 서버에 읽음 처리 요청
-    await axios.post(`${baseURL}/notice/${notification.notificationId}/read`);
+    await api.post(`/notice/${notification.notificationId}/read`);
     notification.isRead = true;
   } catch (error) {
     console.error("알림 읽음 처리 실패: ", error);
@@ -249,11 +259,7 @@ const markAsRead = async (notification) => {
 // 모든 알림 읽음 처리 메서드
 const markAllAsRead = async () => {
   try {
-    await axios.post(`${baseURL}/notice/read-all`, null, {
-      params: {
-        userId: userId,
-      },
-    });
+    await api.post(`/notice/read-all`, null);
 
     // 모든 알림을 읽음으로 처리
     notifications.value.forEach((notification) => {
@@ -293,7 +299,7 @@ const handleRemoveAll = (removedIds) => {
 // 컴포넌트 마운트 시 실행
 onMounted(() => {
   // SSE 연결 시작
-  if (userId) {
+  if (auth.userId.value) {
     // connectSSE() 대신 initializeNotifications() 사용
     initializeNotifications();
   }

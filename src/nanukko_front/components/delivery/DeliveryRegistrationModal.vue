@@ -1,4 +1,8 @@
 <script setup>
+import { useApi } from '../../composables/useApi'
+
+const api = useApi();
+
 const props = defineProps({
   productId: {
     type: Number,
@@ -39,7 +43,7 @@ const handleSubmit = async () => {
       trackingNumber: formData.value.trackingNumber,
     });
 
-    const response = await post(
+    const response = await api.post(
       `/delivery/register`,
       {
         productId: props.productId,
@@ -48,7 +52,7 @@ const handleSubmit = async () => {
       }
     );
 
-    console.log("response data: ", response.data);
+    console.log("response: ", response);
     emit("success");
   } catch (err) {
     error.value = err.response?.data?.message || "운송장 등록에 실패했습니다.";
