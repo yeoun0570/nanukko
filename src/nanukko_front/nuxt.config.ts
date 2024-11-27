@@ -79,11 +79,15 @@ export default defineNuxtConfig({
 
   // 빌드 설정
   build: {
-    transpile: ["@stomp/stompjs"],
+    transpile: ["@stomp/stompjs", "vuetify"],
   },
 
   // 플러그인
   plugins: [{ src: "~/plugins/socket", mode: "client" }],
 
   compatibilityDate: "2024-11-17",
+
+  //css
+  css: ['vuetify/styles'], // Vuetify 스타일 로드
+  
 });
