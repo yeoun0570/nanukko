@@ -28,15 +28,15 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     // - 다른 트랜잭션이 해당 데이터를 읽거나 쓰는 것을 모두 차단
     // - 데이터베이스 수준에서 'SELECT FOR UPDATE' 쿼리를 실행
     // - 첫 번째 트랜잭션이 커밋되거나 롤백될 때까지 다른 트랜잭션은 대기
+    @QueryHints({@QueryHint(name = "javax.persistence.lock.timeout", value = "10000")})
+    // 락 획득 시도 시 대기할 시간을 설정합니다.
+    // 3000ms(3초) 동안 락 획득을 시도하고, 실패하면 예외를 발생시킵니다.
+    // 이는 무한정 대기하는 것을 방지하기 위한 설정입니다.
     @Query("select p from Product p where p.productId = :id")
     // 실제 실행될 JPQL 쿼리를 정의합니다.
     // 일반 select 쿼리지만 @Lock 애노테이션으로 인해 FOR UPDATE가 추가됩니다.
     // 실제 실행되는 SQL은 다음과 같습니다:
     // SELECT * FROM product WHERE id = ? FOR UPDATE
-    @QueryHints({@QueryHint(name = "javax.persistence.lock.timeout", value = "3000")})
-    // 락 획득 시도 시 대기할 시간을 설정합니다.
-    // 3000ms(3초) 동안 락 획득을 시도하고, 실패하면 예외를 발생시킵니다.
-    // 이는 무한정 대기하는 것을 방지하기 위한 설정입니다.
     Optional<Product> findByIdWithPessimisticLock(@Param("id") Long productId);
 
 }

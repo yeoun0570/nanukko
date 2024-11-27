@@ -44,6 +44,7 @@ public class Orders {
     @Column(name = "shipping_free")
     private int shippingFree; // 배송비
 
+    @Setter
     @NotNull
     @Column(name = "total_amount")
     private int totalAmount; //총 금액 (상품 금액 + 수수료 금액)
