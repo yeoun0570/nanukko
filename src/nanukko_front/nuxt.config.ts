@@ -10,7 +10,6 @@ export default defineNuxtConfig({
     public: {
       kakaoMapApiKey: process.env.NUXT_PUBLIC_KAKAO_MAP_API_KEY,
       baseURL: process.env.API_BASE_URL || 'http://localhost:8080/api'
-      kakaoMapApiKey: process.env.NUXT_PUBLIC_KAKAO_MAP_API_KEY,
       apiBase: process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:8080',
     }
   },
@@ -65,13 +64,6 @@ export default defineNuxtConfig({
           secure: false
         }
       }
-    }
-  },
-
-  // 런타임 설정
-  runtimeConfig: {
-    public: {
-      apiBase: process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:8080'
     }
   },
 
