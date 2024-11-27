@@ -9,7 +9,7 @@ export default defineNuxtConfig({
     apiSecret: '',
     public: {
       kakaoMapApiKey: process.env.NUXT_PUBLIC_KAKAO_MAP_API_KEY,
-      baseURL: process.env.API_BASE_URL || 'http://localhost:8080/api'
+      baseURL: process.env.API_BASE_URL || 'http://localhost:8080/api',
       apiBase: process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:8080',
     }
   },
@@ -67,13 +67,19 @@ export default defineNuxtConfig({
     }
   },
 
+  // 런타임 설정
+  runtimeConfig: {
+    public: {
+      apiBase: process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:8080'
+    }
+  },
+
   // 프록시 설정 (Nitro)
   nitro: {
     devProxy: {
       '/api': {
         target: 'http://localhost:8080',
         changeOrigin: true,
-        cors: true
       }
     }
   },
