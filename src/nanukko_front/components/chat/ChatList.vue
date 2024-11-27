@@ -77,7 +77,7 @@ import { useStomp } from '~/composables/chat/useStomp'
 
 // props 정의
 const props = defineProps({
-  chatRooms: {
+  chatRooms: {// PageResponseDTO의 content 배열
     type: Array,
     default: () => []
   },
@@ -92,6 +92,9 @@ const props = defineProps({
   userId: {
     type: String,
     required: true
+  },
+  connected: {
+    type: Boolean,
   }
 })
 
