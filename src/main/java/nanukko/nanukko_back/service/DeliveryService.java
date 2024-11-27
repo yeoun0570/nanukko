@@ -8,10 +8,14 @@ import nanukko.nanukko_back.domain.order.Delivery;
 import nanukko.nanukko_back.domain.order.DeliveryStatus;
 import nanukko.nanukko_back.domain.order.Orders;
 import nanukko.nanukko_back.domain.order.PaymentStatus;
+import nanukko.nanukko_back.domain.product.Product;
+import nanukko.nanukko_back.domain.product.ProductStatus;
 import nanukko.nanukko_back.dto.order.DeliveryRegistrationDTO;
 import nanukko.nanukko_back.dto.order.DeliveryResponseDTO;
+import nanukko.nanukko_back.dto.order.DeliveryUpdateStatusDTO;
 import nanukko.nanukko_back.repository.DeliveryRepository;
 import nanukko.nanukko_back.repository.OrderRepository;
+import nanukko.nanukko_back.repository.ProductRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.http.*;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -24,6 +28,7 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 @RequiredArgsConstructor
@@ -33,17 +38,28 @@ public class DeliveryService {
     private final DeliveryWebhookConfig deliveryWebhookConfig;
     private final DeliveryRepository deliveryRepository;
     private final OrderRepository orderRepository;
+    private final ProductRepository productRepository;
     private final NotificationService notificationService;
+    private final MailService mailService;
 
     // 판매자가 운송장 등록
     @Transactional
     public DeliveryResponseDTO registerDelivery(DeliveryRegistrationDTO dto) {
+        // 상품 정보 조회
+        Product product = productRepository.findById(dto.getProductId())
+                .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
+
         // 주문 조회
-        Orders order = orderRepository.findById(dto.getOrderId())
+        Orders order = orderRepository.findByProductAndProductStatus(product, ProductStatus.RESERVED)
                 .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다."));
 
+        // 주문 상태 검증
+        if (product.getStatus() != ProductStatus.RESERVED) {
+            throw new IllegalStateException("예약중인 상품만 운송장을 등록할 수 있습니다.");
+        }
+
         // 이미 배송이 등록되어 있는지 확인
-        if (deliveryRepository.findByOrderOrderId(dto.getOrderId()).isPresent()) {
+        if (deliveryRepository.findByOrderOrderId(order.getOrderId()).isPresent()) {
             throw new IllegalStateException("이미 배송이 등록된 주문입니다.");
         }
 
@@ -60,8 +76,8 @@ public class DeliveryService {
         // 배송 추적 웹훅 등록
         registerOrRefreshWebhook(delivery);
 
-        // 구매자에게 알림 발송 -> 배송이 시작되었다고 알림
-        notificationService.sendStartDeliveryToBuyer(order.getBuyer().getUserId(), order.getOrderId());
+        // 상품 배송여부 변경
+        product.updateHasDelivery(true);
 
         return modelMapper.map(delivery, DeliveryResponseDTO.class);
     }
@@ -145,14 +161,34 @@ public class DeliveryService {
 
     // 웹훅으로 받은 배송 상태 업데이트
     @Transactional
-    public void updateDeliverStatus(String trackingNumber, DeliveryStatus status) {
+    public void updateDeliveryStatusFromWebhook(String trackingNumber, DeliveryStatus status) {
         Delivery delivery = deliveryRepository.findByTrackingNumber(trackingNumber)
                 .orElseThrow(() -> new IllegalArgumentException("배송 정보를 찾을 수 없습니다."));
 
         // 현재 상태와 같으면 무시(중복 상태 업데이트 방지)
         if (delivery.getStatus() == status) {
             log.info("이미 같은 상태입니다. trackingNumber: {}, status: {}", trackingNumber, status);
-            return;
+
+            if (status == DeliveryStatus.IN_TRANSIT) {
+                // 구매자에게 알림 발송 -> 배송이 시작되었다고 알림
+                notificationService.sendStartDeliveryToBuyer(
+                        delivery.getOrder().getBuyer().getUserId(),
+                        delivery.getOrder().getOrderId()
+                );
+
+                // 배송시작 시 구매자에게 메일 전송
+                // 비동기로 알림과 메일 전송
+                CompletableFuture.runAsync(() -> {
+                    try {
+                        mailService.sendMailStartDeliveryToBuyer(
+                                delivery.getOrder().getBuyer().getUserId(),
+                                delivery.getOrder().getOrderId()
+                        );
+                    } catch (Exception e) {
+                        log.error("메일 전송 실패", e);
+                    }
+                });
+            }
         }
 
         delivery.updateStatus(status);
@@ -171,6 +207,25 @@ public class DeliveryService {
                 if (order.getStatus() == PaymentStatus.ESCROW_HOLDING) {
                     order.updateReleased(PaymentStatus.IN_DELIVERY, null);
                 }
+
+                // 구매자에게 알림 발송 -> 배송이 시작되었다고 알림
+                notificationService.sendStartDeliveryToBuyer(
+                        delivery.getOrder().getBuyer().getUserId(),
+                        delivery.getOrder().getOrderId()
+                );
+
+                // 배송시작 시 구매자에게 메일 전송
+                // 비동기로 알림과 메일 전송
+                CompletableFuture.runAsync(() -> {
+                    try {
+                        mailService.sendMailStartDeliveryToBuyer(
+                                delivery.getOrder().getBuyer().getUserId(),
+                                delivery.getOrder().getOrderId()
+                        );
+                    } catch (Exception e) {
+                        log.error("메일 전송 실패", e);
+                    }
+                });
             }
             case DELIVERED -> {
                 // 배송 완료되면 3일 후로 escrowDeadline 설정
@@ -179,7 +234,44 @@ public class DeliveryService {
 
                 // 구매자에게 알림 -> 배송이 완료되었으니 3일 이내에 구매확정 하지 않으면 구매확정 된다는 얘기
                 notificationService.sendDeliveredToBuyer(order.getBuyer().getUserId(), order.getOrderId());
+
+                // 배송완료 시 구매자에게 메일 전송
+                // 비동기로 알림과 메일 전송
+                CompletableFuture.runAsync(() -> {
+                    try {
+                        mailService.sendMailDeliveredToBuyer(
+                                delivery.getOrder().getBuyer().getUserId(),
+                                delivery.getOrder().getOrderId()
+                        );
+                    } catch (Exception e) {
+                        log.error("메일 전송 실패", e);
+                    }
+                });
             }
         }
+    }
+
+    //////////테스트를 위한 배송상태 업데이트
+
+    @Transactional
+    public DeliveryUpdateStatusDTO updateDeliveryStatus(DeliveryUpdateStatusDTO dto) {
+        Delivery delivery = deliveryRepository.findByTrackingNumber(dto.getTrackingNumber())
+                .orElseThrow(() -> new IllegalArgumentException("배송을 찾을 수 없습니다."));
+
+        // 현재 상태와 같으면 무시
+        if (delivery.getStatus() == dto.getStatus()) {
+            log.info("이미 같은 상태입니다. trackingNumber: {}, status: {}",
+                    dto.getTrackingNumber(), dto.getStatus());
+            return modelMapper.map(delivery, DeliveryUpdateStatusDTO.class);
+        }
+
+        //상태 업데이트
+        delivery.updateStatus(dto.getStatus());
+        deliveryRepository.save(delivery);
+
+        // 주문 상태 및 알림 처리
+        handleDeliveryStatusChange(delivery);
+
+        return modelMapper.map(delivery, DeliveryUpdateStatusDTO.class);
     }
 }

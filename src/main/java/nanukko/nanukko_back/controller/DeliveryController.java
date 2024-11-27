@@ -1,18 +1,18 @@
 package nanukko.nanukko_back.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import nanukko.nanukko_back.domain.order.DeliveryStatus;
 import nanukko.nanukko_back.dto.order.DeliveryRegistrationDTO;
 import nanukko.nanukko_back.dto.order.DeliveryResponseDTO;
+import nanukko.nanukko_back.dto.order.DeliveryUpdateStatusDTO;
+import nanukko.nanukko_back.exception.ErrorResponse;
 import nanukko.nanukko_back.service.DeliveryService;
 import nanukko.nanukko_back.service.DeliveryWebhookService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 import java.util.UUID;
@@ -28,10 +28,21 @@ public class DeliveryController {
 
     // 판매자가 운송장 등록
     @PostMapping("/register")
-    public ResponseEntity<DeliveryResponseDTO> registerDelivery(
-            @RequestBody DeliveryRegistrationDTO request) {
-        //배송 등록 처리 및 결과 반환
-        return ResponseEntity.ok(deliveryService.registerDelivery(request));
+    public ResponseEntity<?> registerDelivery(@Valid @RequestBody DeliveryRegistrationDTO request) {
+        try {
+            log.info("운송장 등록 요청 - productId: {}, orderId: {}, carrierId: {}, trackingNumber: {}",
+                    request.getProductId(), request.getOrderId(), request.getCarrierId(), request.getTrackingNumber());
+
+            DeliveryResponseDTO response = deliveryService.registerDelivery(request);
+
+            log.info("운송장 등록 완료 - deliveryId: {}", response.getDeliveryId());
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("운송장 등록 실패: ", e);  // 에러 스택트레이스 출력
+            return ResponseEntity.badRequest()
+                    .body(new ErrorResponse(e.getMessage()));
+        }
     }
 
     // 웹훅 수신
@@ -75,4 +86,14 @@ public class DeliveryController {
             return ResponseEntity.status(500).body("failed");
         }
     }
+
+    /////////////////////////테스트를 위한 배송상태 업데이트
+    @PostMapping("/update-status")
+    public ResponseEntity<DeliveryUpdateStatusDTO> updateDeliveryStatus(
+            @RequestBody DeliveryUpdateStatusDTO dto
+            ) {
+        DeliveryUpdateStatusDTO response = deliveryService.updateDeliveryStatus(dto);
+        return ResponseEntity.ok(response);
+    }
+
 }

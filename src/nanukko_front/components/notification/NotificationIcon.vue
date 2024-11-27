@@ -4,6 +4,10 @@ defineProps({
     type: Number,
     default: 0,
   },
+  showBadge: {
+    type: Boolean,
+    default: true,
+  },
 });
 
 defineEmits(["toggle"]);
@@ -12,7 +16,7 @@ defineEmits(["toggle"]);
 <template>
   <div class="notification-icon" @click="$emit('toggle')">
     <i class="fas fa-bell" :class="{ 'has-notifications': unreadCount > 0 }">
-      <span v-if="unreadCount > 0" class="notification-badge">
+      <span v-show="unreadCount > 0 && showBadge" class="notification-badge">
         {{ unreadCount }}
       </span>
     </i>

@@ -45,6 +45,7 @@ public class OrderService {
     private final RestTemplateConfig restTemplate;
     private final NotificationService notificationService;
     private final TossPaymentsConfig tossPaymentsConfig;
+    private final MailService mailService;
 
     //결제창 페이지에 출력할 데이터 정의
     @Transactional(readOnly = true)
@@ -114,6 +115,19 @@ public class OrderService {
                     confirmDTO.getBuyerId()
             );
 
+
+            // 결제완료 했을 시 판매자에게 메일 전송
+            // 비동기로 알림과 메일 전송
+            CompletableFuture.runAsync(() -> {
+                try {
+                    mailService.sendMailConfirmPaymentToSeller(
+                            result.getSellerId(),
+                            result.getProductId()
+                    );
+                } catch (Exception e) {
+                    log.error("메일 전송 실패", e);
+                }
+            });
 
             return result;
         } catch (Exception e) {
@@ -202,6 +216,17 @@ public class OrderService {
         //결제만 하면 결제 상태가 IN_PROGRESS 로 변경되고, 결제 승인하면 DONE 으로 변경됨
         //즉, IN_PROGRESS 과정에서 바로 DONE 으로 만들어주는 메서드
 
+        //비관적 락으로 상품 조회
+        //이 시점에서 다른 트랜잭션은 이 상품에 접근할 수 없음
+        Product product = productRepository.findByIdWithPessimisticLock(request.getProductId())
+                .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
+
+        // 상품 상태 검증
+        // 락이 걸려있어 다른 트랜잭션에서 상태를 변경할 수 없으므로 안전하게 상태 검증 가능
+        if (product.getStatus() != ProductStatus.SELLING) {
+            throw new IllegalStateException("이미 판매된 상품입니다.");
+        }
+
         log.info("결제 승인 시작 - paymentKey: {}, productId: {}, buyerId: {}",
                 request.getPaymentKey(), request.getProductId(), request.getBuyerId());
 
@@ -234,11 +259,17 @@ public class OrderService {
             //결제 승인이 완료되면 에스크로 처리진행
             //위에 결제승인 API로 응답받은 body 가 null 값이 아니고 결제상태가 DONE 이면 진행
             if (response.getBody() != null && response.getBody().getStatus() == PaymentStatus.DONE) {
+                // 여전히 락이 유지된 상태에서 결제 처리
+                // 다른 사용자의 결제 시도는 여전히 블로킹됨
                 return processPayment(request);
             } else {
                 throw new RuntimeException("결제 승인 실패");
             }
+            
+            // 메서드 종료 시 트랜잭셔닝 커밋되면서 락이 해제됨
+            
         } catch (Exception e) {
+            //예외 발생 시 트랜잭션이 롤백되면서 락이 해제됨
             log.error("결제 승인 실패", e);
             throw new RuntimeException("결제 승인 실패", e);
         }
@@ -279,6 +310,19 @@ public class OrderService {
         // 판매자에게 구매확정 알림 전송
         notificationService.sendConfirmPurchaseToSeller(
                 order.getProduct().getSeller().getUserId(), order.getProduct().getProductId());
+
+        // 구매확정 됐을 시 판매자에게 메일 전송
+        // 비동기로 알림과 메일 전송
+        CompletableFuture.runAsync(() -> {
+            try {
+                mailService.sendMailConfirmPurchaseToSeller(
+                        order.getProduct().getSeller().getUserId(),
+                        order.getProduct().getProductId()
+                );
+            } catch (Exception e) {
+                log.error("메일 전송 실패", e);
+            }
+        });
 
         return modelMapper.map(order, OrderResponseDTO.class);
     }
@@ -381,6 +425,19 @@ public class OrderService {
         notificationService.sendCancelPaymentToSeller(
                 order.getProduct().getSeller().getUserId(), order.getProduct().getProductId()
         );
+
+        // 결제취소 했을 시 판매자에게 메일 전송
+        // 비동기로 알림과 메일 전송
+        CompletableFuture.runAsync(() -> {
+            try {
+                mailService.sendMailCancelPaymentToSeller(
+                        order.getProduct().getSeller().getUserId(),
+                        order.getProduct().getProductId()
+                );
+            } catch (Exception e) {
+                log.error("메일 전송 실패", e);
+            }
+        });
 
         return modelMapper.map(order, OrderResponseDTO.class);
     }

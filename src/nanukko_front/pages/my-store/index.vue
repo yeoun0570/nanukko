@@ -5,11 +5,18 @@ import BasicInfo from "~/components/my-store/userInfo/BasicInfo.vue";
 import KidsInfo from "~/components/my-store/userInfo/KidsInfo.vue";
 import LoginInfo from "~/components/my-store/userInfo/LoginInfo.vue";
 import ProfileImage from "~/components/my-store/userInfo/ProfileImage.vue";
+import { useApi } from "~/composables/useApi";
+
+definePageMeta({
+  layout: 'mystore'
+});
+
+const { baseURL } = useApi();
 
 const userInfo = ref({});
 const loading = ref(true);
 const error = ref(null);
-const userId = "buyer2"; //테스트를 위한 사용자 아이디 임의로 설정
+const userId = "buyer1"; //테스트를 위한 사용자 아이디 임의로 설정
 const isEditing = ref(false); //수정 모드
 
 // 원본 데이터 저장용 ref 추가
@@ -55,7 +62,7 @@ const updateUserInfo = async () => {
     console.log(updateData);
 
     await axios.post(
-      `http://localhost:8080/api/my-store/modify`,
+      `${baseURL}/my-store/modify`,
       updateData
     );
     alert("정보가 성공적으로 수정되었습니다.");
@@ -75,7 +82,7 @@ const loadUserInfo = async () => {
     loading.value = true;
     error.value = null;
     const response = await axios.get(
-      `http://localhost:8080/api/my-store/info`,
+      `${baseURL}/my-store/info`,
       {
         params: {
           userId: userId,
@@ -125,6 +132,7 @@ onMounted(() => {
         v-model:addrMain="userInfo.addrMain"
         v-model:addrDetail="userInfo.addrDetail"
         v-model:addrZipcode="userInfo.addrZipcode"
+        v-model:isEditing="isEditing"
       ></AddressInfo>
       <div class="section-header">
         <p class="section-title">우리 아이는요</p>

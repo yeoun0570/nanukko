@@ -1,6 +1,8 @@
-sㄴ
 <script setup>
 import axios from "axios";
+import { useApi } from "~/composables/useApi";
+
+const { baseURL } = useApi();
 
 const props = defineProps({
   notification: {
@@ -14,7 +16,7 @@ const emit = defineEmits(["click", "remove"]);
 // 알림 삭제
 const removeNotice = async () => {
   try {
-    await axios.post("http://localhost:8080/api/notice/remove", null, {
+    await axios.post(`${baseURL}/notice/remove`, null, {
       params: {
         notificationId: props.notification.notificationId,
       },

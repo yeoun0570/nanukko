@@ -1,5 +1,8 @@
 <script setup>
 import axios from "axios";
+import { useApi } from "~/composables/useApi";
+
+const { baseURL } = useApi();
 
 const route = useRoute();
 
@@ -19,7 +22,7 @@ const removeUser = async () => {
 
   try {
     const response = await axios.post(
-      "http://localhost:8080/api/my-store/remove",
+      `${baseURL}/my-store/remove`,
       null,
       {
         params: {

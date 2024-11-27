@@ -224,6 +224,12 @@ public class NotificationService {
         notificationRepository.deleteById(notificationId);
     }
 
+    //알림 모두 삭제
+    @Transactional
+    public void removeAllNotice(List<Long> notificationIds) {
+        notificationRepository.deleteAllById(notificationIds);
+    }
+
 
     //////////////////////////////////////여기서부턴 알림 보내기위한 메서드 구현(공통으로 사용할 애들)
 
@@ -340,7 +346,7 @@ public class NotificationService {
         String content = order.getProduct().getProductName()
                 + " 배송이 도착했어요! "
                 + order.getProduct().getSeller().getNickname()
-                + "님에게 리뷰를 작성해볼까요?(3일 뒤 자동으로 구매확정 됩니다.)";
+                + "님에게 리뷰를 작성해볼까요? 3일 뒤 자동으로 구매확정 되니까 주의해주세요.";
         String url = frontendURL.getUrl() + "/my-store/buy-products";
 
         send(receiver, NotificationType.DELIVERY, content, url);

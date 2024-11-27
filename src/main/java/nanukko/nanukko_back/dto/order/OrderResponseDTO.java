@@ -21,4 +21,5 @@ public class OrderResponseDTO {
     private LocalDateTime escrowReleasedAt;
     private String buyerId; // User 정보
     private String sellerId; // Product의 seller 정보
+    private String sellerEmail;
 }
