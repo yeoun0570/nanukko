@@ -1,6 +1,5 @@
 // composables/useApi.js
 
-
 /**
  * JWT 토큰 검증이 필요없는 공개 API 경로 목록
  */
@@ -8,7 +7,6 @@ const PUBLIC_PATHS = [
   '/login',
   '/register',
   '/reissue',
-  '/',
   '/logout'
 ];
 
@@ -35,24 +33,16 @@ export const useApi = () => {
 
   // 기본 옵션
   const commonFetch = async (url, options = {}) => {
-    
     try {
-      // 기본 옵션 설정
       const baseOptions = {
-        credentials: 'include', //모든 요청에 쿠키 포함
-        headers:{
+        credentials: 'include',
+        headers: {
           'Content-Type': 'application/json'
         }
-      };
-      // 공개 API가 아닌 경우에만 Authorization 헤더 추가
-      if(!isPublicPath(url)){
-        baseOptions.headers.Authorization = `Bearer ${localStorage.getItem('access_token')}`;
       }
-
-      //baseURL 자동 추가(http로 시작하면 입력 경로 그대로 쓰고 아니면 baseURL 추가해서 url 설정)
-      const fullUrl = url.startsWith('http') ? url : `${baseURL}${url}`;
-
-      // 옵션 병합 (사용자 정의 옵션 우선)
+  
+      const fullUrl = url.startsWith('http') ? url : `${baseURL}${url}`
+      
       const finalOptions = {
         ...baseOptions,
         ...options,
@@ -60,25 +50,74 @@ export const useApi = () => {
           ...baseOptions.headers,
           ...options.headers
         }
-      };
-
-      const response = await fetch(fullUrl, finalOptions);
-
-       // 401 에러 처리 (공개 API 제외)
-      if (response.status === 401 && !isPublicPath(fullUrl)) {
-        // 인증 실패 처리 (로그인 페이지로 리다이렉트 등)
-        alert('로그인 후 이용해주세요.');// 추후 토스트 팝업 리팩토링하면 좋을 듯
-        window.location.href = '/auth/login';
-        throw new Error('인증이 필요합니다.');
       }
-
-      return response;
-
+  
+      const response = await fetch(fullUrl, finalOptions)
+  
+      // rawResponse 옵션이 있으면 response 객체를 직접 반환
+      if (options.rawResponse) {
+        return response
+      }
+  
+      // 응답이 있는 경우에만 JSON 파싱 시도
+      const contentType = response.headers.get('content-type')
+      if (contentType && contentType.includes('application/json')) {
+        return await response.json()
+      }
+  
+      // JSON이 아닌 경우 response 객체 반환
+      return response
+  
     } catch (error) {
-      console.error('API 요청 실패:', error);
-      throw error;
+      console.error('API 요청 실패:', error)
+      throw error
     }
-  };
+  }
+  // const commonFetch = async (url, options = {}) => {
+    
+  //   try {
+  //     // 기본 옵션 설정
+  //     const baseOptions = {
+  //       credentials: 'include', //모든 요청에 쿠키 포함
+  //       headers:{
+  //         'Content-Type': 'application/json'
+  //       }
+  //     };
+  //     // 공개 API가 아닌 경우에만 Authorization 헤더 추가
+  //     if(!isPublicPath(url)){
+  //       baseOptions.headers.Authorization = `Bearer ${localStorage.getItem('access_token')}`;
+  //     }
+
+  //     //baseURL 자동 추가(http로 시작하면 입력 경로 그대로 쓰고 아니면 baseURL 추가해서 url 설정)
+  //     const fullUrl = url.startsWith('http') ? url : `${baseURL}${url}`;
+
+  //     // 옵션 병합 (사용자 정의 옵션 우선)
+  //     const finalOptions = {
+  //       ...baseOptions,
+  //       ...options,
+  //       headers: {
+  //         ...baseOptions.headers,
+  //         ...options.headers
+  //       }
+  //     };
+
+  //     const response = await fetch(fullUrl, finalOptions);
+
+  //      // 401 에러 처리 (공개 API 제외)
+  //     if (response.status === 401 && !isPublicPath(fullUrl)) {
+  //       // 인증 실패 처리 (로그인 페이지로 리다이렉트 등)
+  //       alert('로그인 후 이용해주세요.');// 추후 토스트 팝업 리팩토링하면 좋을 듯
+  //       window.location.href = '/auth/login';
+  //       throw new Error('인증이 필요합니다.');
+  //     }
+
+  //     return await response.json();
+
+  //   } catch (error) {
+  //     console.error('API 요청 실패:', error);
+  //     throw error;
+  //   }
+  // };
 
    /**
    * GET 요청 메서드
@@ -150,104 +189,3 @@ export const useApi = () => {
     delete: del
   };
 };
-
-
-
-
-
-// import { ref } from 'vue'
-
-// const isClient = typeof window !== 'undefined'
-
-// export const useApi = () => {
-//   const getStoredToken = () => {
-//     if (!isClient) return null
-//     return localStorage.getItem('access_token')
-//   }
-
-//   const PUBLIC_PATHS = ['/login', '/register', '/reissue', '/', '/logout']
-
-//   const isPublicPath = (path) => {
-//     return PUBLIC_PATHS.some(publicPath => path.startsWith(publicPath))
-//   }
-
-//   const commonFetch = async (url, options = {}) => {
-//     try {
-//       const baseOptions = {
-//         credentials: 'include',
-//         headers: {
-//           'Content-Type': 'application/json'
-//         }
-//       }
-
-//       if (!isPublicPath(url)) {
-//         const token = getStoredToken()
-//         if (token) {
-//           baseOptions.headers.Authorization = `Bearer ${token}`
-//         }
-//       }
-
-//       const fullUrl = url.startsWith('http') ? url : `${useRuntimeConfig().public.apiBase}${url}`
-
-//       const finalOptions = {
-//         ...baseOptions,
-//         ...options,
-//         headers: {
-//           ...baseOptions.headers,
-//           ...options.headers
-//         }
-//       }
-
-//       const response = await fetch(fullUrl, finalOptions)
-
-//       if (response.status === 401 && !isPublicPath(fullUrl)) {
-//         if (isClient) {
-//           alert('로그인이 필요합니다.')
-//           window.location.href = '/auth/login'
-//         }
-//         throw new Error('인증이 필요합니다.')
-//       }
-
-//       return response
-
-//     } catch (error) {
-//       console.error('API 요청 실패:', error)
-//       throw error
-//     }
-//   }
-
-//   return {
-//     get: (url, options = {}) => commonFetch(url, { method: 'GET', ...options }),
-//     post: (url, data, options = {}) => {
-//       if (url === '/login') {
-//         const formData = new URLSearchParams()
-//         formData.append('username', data.userId)
-//         formData.append('password', data.password)
-        
-//         return commonFetch(url, {
-//           method: 'POST',
-//           headers: {
-//             'Content-Type': 'application/x-www-form-urlencoded'
-//           },
-//           body: formData,
-//           ...options
-//         })
-//       }
-
-//       return commonFetch(url, {
-//         method: 'POST',
-//         body: JSON.stringify(data),
-//         ...options
-//       })
-//     },
-//     put: (url, data, options = {}) => commonFetch(url, {
-//       method: 'PUT',
-//       body: JSON.stringify(data),
-//       ...options
-//     }),
-//     delete: (url, options = {}) => commonFetch(url, {
-//       method: 'DELETE',
-//       ...options
-//     })
-//   }
-// }

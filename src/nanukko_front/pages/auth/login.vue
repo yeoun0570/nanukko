@@ -90,12 +90,18 @@ const handleLogin = async () => {
       password: password.value
     };
     
-    const response = await api.post('/login', loginData);
-  
+    //const response = await api.post('/login', loginData);
+    // API 호출 시 raw response를 받도록 수정
+    const response = await api.post('/login', loginData, {
+      rawResponse: true // useApi에 이 옵션을 추가해야 함
+    })
+
 
     // 응답 검증
     if (!response.ok) {
-      throw new Error('아이디 또는 비밀번호가 올바르지 않습니다.');
+      // 에러 응답의 경우 JSON으로 파싱 시도
+      const errorData = await response.text()
+      throw new Error(errorData || '로그인에 실패했습니다.')
     }
 
     // 응답 헤더에서 토큰 추출
