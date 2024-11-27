@@ -40,23 +40,20 @@ public class Orders {
     @NotNull
     @Column(name = "charge_amount")
     private int chargeAmount; // 수수료 금액
-    
+
     @Column(name = "shipping_free")
     private int shippingFree; // 배송비
 
+    @Setter
     @NotNull
     @Column(name = "total_amount")
     private int totalAmount; //총 금액 (상품 금액 + 수수료 금액)
-
-//    private String orderName; //상품명인데 FK로 가져와야 될듯?
 
     @Enumerated(EnumType.STRING) // 결제 상태 enum으로 저장
     @Column(length = 20)
     @NotNull
     private PaymentStatus status; // 현재 결제 상태
 
-//    @Column(name = "order_message")
-//    private String orderMessage; //거래 요청 사항
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;        // 결제 생성 시점
@@ -69,15 +66,25 @@ public class Orders {
     @Column(name = "escrow_deadline")
     private LocalDateTime escrowDeadline;   // 에스크로 자동 확정 기한
 
-    //주문 상태 업데이트를 위한 메서드
+    //주문 상태를 배송 완료로 변경하기 위한 메서드
+    public void updateDelivery(PaymentStatus status) {
+        this.status = status;
+    }
+
+    //주문 상태를 구매 확정으로 변경하기 위한 메서드
     public void updateReleased(PaymentStatus status, LocalDateTime escrowReleasedAt) {
         this.status = status;
         this.escrowReleasedAt = escrowReleasedAt;
     }
 
+    // 데드라인 설정
+    public void updateEscrowDeadline(LocalDateTime escrowDeadline) {
+        this.escrowDeadline = escrowDeadline;
+    }
+
     //주문 취소 메서드 추가
     public void cancel() {
-        if(this.status != PaymentStatus.ESCROW_HOLDING) {
+        if (this.status != PaymentStatus.ESCROW_HOLDING) {
             throw new IllegalArgumentException("에스크로 상태에서만 취소가 가능합니다.");
         }
         this.status = PaymentStatus.CANCELED;

@@ -8,7 +8,9 @@ export default defineNuxtConfig({
   runtimeConfig: {
     apiSecret: '',
     public: {
-      kakaoMapApiKey: process.env.NUXT_PUBLIC_KAKAO_MAP_API_KEY
+      kakaoMapApiKey: process.env.NUXT_PUBLIC_KAKAO_MAP_API_KEY,
+      baseURL: process.env.API_BASE_URL || 'http://localhost:8080/api',
+      apiBase: process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:8080',
     }
   },
   // 토스 페이먼츠 스크립트
@@ -23,6 +25,16 @@ export default defineNuxtConfig({
           src: "https://js.tosspayments.com/v1",
           defer: true,
         },
+        {
+          src: "//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js",
+          type: 'text/javascript'
+        },
+      ],
+      link: [
+        {
+          rel: 'stylesheet',
+          href: 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css'
+        }
       ],
     },
   },
@@ -67,7 +79,7 @@ export default defineNuxtConfig({
     devProxy: {
       '/api': {
         target: 'http://localhost:8080',
-        changeOrigin: true
+        changeOrigin: true,
       }
     }
   },

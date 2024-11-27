@@ -1,7 +1,7 @@
 <script setup>
 import Header from "~/components/layout/header.vue";
+import Footer from "~/components/layout/footer.vue";
 import navigator from "~/components/layout/navigator.vue";
-// import Footer from "~/components/layout/footer.vue";
 </script>
 
 <template>
@@ -16,7 +16,7 @@ import navigator from "~/components/layout/navigator.vue";
     </main>
 
     <!-- Footer 컴포넌트 -->
-    <!-- <Footer /> -->
+    <Footer />
   </div>
 </template>
 

@@ -16,6 +16,7 @@ import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.handler.annotation.SendTo;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -27,23 +28,25 @@ import java.util.Map;
 @Log4j2
 public class ChatMessageController {
     private final ChatService chatService;
+    private final SimpMessagingTemplate simpMessagingTemplate;// 해당 객체를 통해 메시지 브로커로 데이터를 전달한다.
 
     /*메시지 전송*/
     @MessageMapping("/chat/{chatRoomId}") // StompConfig에 설정해놓은 /app과 합쳐져 /app/chat으로 왔을 때 이 컨트롤러 탐(클라이언트에서 메시지를 보낼 주소)
-    @SendTo("/topic/{chatRoomId}") //핸들러에서 처리를 마친 후 반환 값을 /topic/message의 경로로 메시지를 보냄(메시지를 구독중인 클라이언트들에게 브로드캐스트)
+    @SendTo("/queue/chat/{chatRoomId}") //핸들러에서 처리를 마친 후 반환 값을 /topic/message의 경로로 메시지를 보냄(메시지를 구독중인 클라이언트들에게 브로드캐스트)
     public ChatMessageDTO sendMessage(
             @DestinationVariable Long chatRoomId,
-            ChatMessageDTO msg
+            @Payload ChatMessageDTO msg
     ) throws InterruptedException {
         Thread.sleep(500); // 메시지 처리 시간 시뮬레이션
         log.info("채팅 메시지 전송: roomId={}, message={}", chatRoomId, msg.getChatMessage());
+
         return chatService.sendMessage(chatRoomId, msg); // 메시지 전송 + DB 저장
     }
 
     /*채팅방 입장*/
     // 채팅방의 이전 메시지 내역 조회 + 안 읽은 메시지 읽음 처리 (채팅방 첫 입장 시 호출)
     @MessageMapping("/chat/enter/{chatRoomId}")
-    @SendTo("/topic/chat/{chatRoomId}")
+    @SendTo("/queue/chat/{chatRoomId}")
     public PageResponseDTO<ChatMessageDTO> enterAndGetChatMessages(
             @DestinationVariable Long chatRoomId,
             @Payload Map<String, Object> payload  // DTO 대신 Map으로 받기
@@ -58,7 +61,7 @@ public class ChatMessageController {
 
     /*채팅방 나가기*/
     @MessageMapping("/chat/leave/{chatRoomId}")
-    @SendTo("/topic/chat/{chatRoomId}")
+    @SendTo("/queue/chat/{chatRoomId}")
     public ResponseEntity<PageResponseDTO<ChatRoomDTO>> leaveRoom(
             @DestinationVariable Long chatRoomId,
             @RequestParam String userId,
@@ -69,6 +72,15 @@ public class ChatMessageController {
         Pageable pageable = PageRequest.of(page, size);
         PageResponseDTO<ChatRoomDTO> chatRooms = chatService.getChatRooms(userId, pageable); // 나간 상태의 채팅방 목록 반환
         return ResponseEntity.ok(chatRooms);
+    }
+
+    @MessageMapping("/chat/{chatRoomId}/read")
+    @SendTo("/queue/{chatRoomId}")
+    public void markMessageAsRead(
+            @DestinationVariable Long chatRoomId,
+            @Payload ChatMessageDTO messageDTO
+    ) {
+        chatService.markMessageAsRead(chatRoomId, messageDTO.getSender(), messageDTO.getChatMessageId());
     }
 
 

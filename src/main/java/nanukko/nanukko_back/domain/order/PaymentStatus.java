@@ -12,5 +12,9 @@ public enum PaymentStatus {
 
     // 에스크로 추가 상태
     ESCROW_HOLDING,    // 에스크로 보관 중 (DONE 상태에서 전환)
-    ESCROW_RELEASED    // 구매확정으로 판매자 지급 완료
+    ESCROW_RELEASED,    // 구매확정으로 판매자 지급 완료
+
+    // 배송 중인 상태
+    IN_DELIVERY, //배송중
+    DELIVERED //배송완료
 }

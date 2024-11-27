@@ -1,18 +1,29 @@
 <script setup>
-import axios from "axios";
+const hasReview = ref(false);
 
 const props = defineProps({
   order: {
     type: Object,
     required: true,
   },
-  userId: {
-    type: String,
-    required: true,
-  },
 });
 
 const emit = defineEmits(["order-updated"]);
+
+// 해당 주문에 대한 리뷰 존재 여부 확인
+const checkReviewExists = async () => {
+  try {
+    const response = await get(`/review/check`, {
+      params: {
+        orderId: props.order.orderId,
+      },
+    });
+    hasReview.value = response.data.exists;
+  } catch (error) {
+    console.error("리뷰 존재 여부 확인 중 에러: ", error);
+    hasReview.value = false;
+  }
+};
 
 // 구매 확정 처리
 const confirmPurchase = async () => {
@@ -23,8 +34,8 @@ const confirmPurchase = async () => {
   try {
     console.log("구매확정 요청 시작 - orderId:", props.order.orderId);
 
-    const response = await axios.post(
-      `http://localhost:8080/api/payments/${props.order.orderId}/confirm`
+    const response = await post(
+      `/payments/${props.order.orderId}/confirm`
     );
 
     console.log("구매확정 응답:", response.data);
@@ -55,8 +66,8 @@ const cancelOrder = async () => {
 
     console.log("결제 취소 시작 - orderId:", props.order.orderId);
 
-    const response = await axios.post(
-      `http://localhost:8080/api/payments/${props.order.orderId}/cancel`
+    const response = await post(
+      `/payments/${props.order.orderId}/cancel`
     );
 
     console.log("결제 취소 완료:", response.data);
@@ -78,12 +89,17 @@ const goToWriteReview = async () => {
     path: "/my-store/buy-products/write-review",
     query: {
       orderId: props.order.orderId,
-      userId: props.userId,
       productName: props.order.productName,
       thumbnailImage: props.order.thumbnailImage,
     },
   });
 };
+
+onMounted(() => {
+  if (props.order.status === "ESCROW_RELEASED") {
+    checkReviewExists();
+  }
+});
 </script>
 
 <template>
@@ -125,9 +141,13 @@ const goToWriteReview = async () => {
         <button
           v-if="order.status === 'ESCROW_RELEASED'"
           @click="goToWriteReview"
-          class="goReview-btn"
+          :class="{
+            'review-btn': !hasReview,
+            'review-completed-btn': hasReview,
+          }"
+          :disabled="hasReview"
         >
-          후기 쓰기
+          {{ hasReview ? '후기 작성 완료' : '후기 작성' }}
         </button>
       </div>
     </div>

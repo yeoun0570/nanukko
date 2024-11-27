@@ -22,6 +22,8 @@ import org.springframework.web.socket.config.annotation.WebSocketTransportRegist
 @RequiredArgsConstructor
 public class StompConfig implements WebSocketMessageBrokerConfigurer {
 
+
+
     /*엔드포인트 생성해서 클라이언트가 webSocket에 연결할 수 있도록 함(핸드셰이크를 위한 설정)*/
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
@@ -68,7 +70,7 @@ public class StompConfig implements WebSocketMessageBrokerConfigurer {
     public void configureClientInboundChannel(ChannelRegistration registration) {
         registration.interceptors(new ChannelInterceptor() {
             @Override
-            public Message<?> preSend(Message<?> message, MessageChannel channel) {
+            public Message<?> preSend(Message<?> message, MessageChannel channel) {//Client에서 메시지를 보내게 될 때 interceptor를 통해 핸들링
                 StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(
                         message, StompHeaderAccessor.class);
 

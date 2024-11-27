@@ -170,6 +170,7 @@ public class UserService {
                 .productName(product.getProductName())
                 .price(product.getPrice())
                 .status(product.getStatus())
+                .hasDelivery(product.isHasDelivery())
                 .build());
 
         return new PageResponseDTO<>(dtoPage);
@@ -393,6 +394,16 @@ public class UserService {
         seller.updateReviewRate(averageScore);
         userRepository.save(seller);
     }
+
+    // 이미 작성된 후기인지 체크
+    @Transactional(readOnly = true)
+    public boolean checkReviewExists(String orderId) {
+        Orders order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다."));
+
+        return reviewRepository.existsByProduct(order.getProduct());
+    }
+
 
     //후기 조회
     @Transactional(readOnly = true)

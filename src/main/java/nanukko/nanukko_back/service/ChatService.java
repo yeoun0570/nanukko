@@ -281,4 +281,15 @@ public class ChatService {
 //        return ChatMessageDTO.from(leaveMessage);
     }
 
+    @Transactional
+    public void markMessageAsRead(Long chatRoomId, String userId, Long messageId) {
+        ChatMessages message = chatMessageRepository.findById(messageId)
+                .orElseThrow(() -> new EntityNotFoundException("메시지를 찾을 수 없습니다."));
+
+        if (!message.getSender().getUserId().equals(userId)) {
+            message.UnreadToRead(userId);
+            chatMessageRepository.save(message);
+        }
+    }
+
 }

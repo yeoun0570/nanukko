@@ -2,7 +2,14 @@
 import axios from "axios";
 import WishlistGrid from "~/components/my-store/wishlist/WishlistGrid.vue";
 import Pagination from "~/components/Pagination.vue";
+import { useApi } from "~/composables/useApi";
 
+definePageMeta({
+  layout: 'mystore'
+});
+
+
+const { baseURL } = useApi();
 const userWishlist = ref([]);
 const userId = "buyer2";
 const currentPage = ref(0);
@@ -12,7 +19,7 @@ const pageSize = ref(5);
 const loadUserWishlist = async (page = 0) => {
   try {
     const response = await axios.get(
-      `http://localhost:8080/api/my-store/wishlist`,
+      `${baseURL}/my-store/wishlist`,
       {
         params: {
           userId,

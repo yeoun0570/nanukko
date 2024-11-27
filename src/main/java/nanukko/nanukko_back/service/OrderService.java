@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import nanukko.nanukko_back.config.RestTemplateConfig;
 import nanukko.nanukko_back.config.TossPaymentsConfig;
+import nanukko.nanukko_back.domain.order.Delivery;
+import nanukko.nanukko_back.domain.order.DeliveryStatus;
 import nanukko.nanukko_back.domain.order.Orders;
 import nanukko.nanukko_back.domain.order.PaymentStatus;
 import nanukko.nanukko_back.domain.product.Product;
@@ -12,10 +14,12 @@ import nanukko.nanukko_back.domain.user.User;
 import nanukko.nanukko_back.dto.order.OrderConfirmDTO;
 import nanukko.nanukko_back.dto.order.OrderPageDTO;
 import nanukko.nanukko_back.dto.order.OrderResponseDTO;
+import nanukko.nanukko_back.repository.DeliveryRepository;
 import nanukko.nanukko_back.repository.OrderRepository;
 import nanukko.nanukko_back.repository.ProductRepository;
 import nanukko.nanukko_back.repository.UserRepository;
 import org.modelmapper.ModelMapper;
+import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.http.*;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -37,10 +41,12 @@ public class OrderService {
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
     private final OrderRepository orderRepository;
+    private final DeliveryRepository deliveryRepository;
     //RestTemplate : REST API를 호출하고 응답할 때까지 기다리는 동기 방식
     private final RestTemplateConfig restTemplate;
     private final NotificationService notificationService;
     private final TossPaymentsConfig tossPaymentsConfig;
+    private final MailService mailService;
 
     //결제창 페이지에 출력할 데이터 정의
     @Transactional(readOnly = true)
@@ -110,6 +116,19 @@ public class OrderService {
                     confirmDTO.getBuyerId()
             );
 
+
+            // 결제완료 했을 시 판매자에게 메일 전송
+            // 비동기로 알림과 메일 전송
+            CompletableFuture.runAsync(() -> {
+                try {
+                    mailService.sendMailConfirmPaymentToSeller(
+                            result.getSellerId(),
+                            result.getProductId()
+                    );
+                } catch (Exception e) {
+                    log.error("메일 전송 실패", e);
+                }
+            });
 
             return result;
         } catch (Exception e) {
@@ -198,9 +217,19 @@ public class OrderService {
         //결제만 하면 결제 상태가 IN_PROGRESS 로 변경되고, 결제 승인하면 DONE 으로 변경됨
         //즉, IN_PROGRESS 과정에서 바로 DONE 으로 만들어주는 메서드
 
+        //비관적 락으로 상품 조회
+        //이 시점에서 다른 트랜잭션은 이 상품에 접근할 수 없음
+        Product product = productRepository.findByIdWithPessimisticLock(request.getProductId())
+                .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
+
         log.info("결제 승인 시작 - paymentKey: {}, productId: {}, buyerId: {}",
                 request.getPaymentKey(), request.getProductId(), request.getBuyerId());
 
+        // 상품 상태 검증
+        // 락이 걸려있어 다른 트랜잭션에서 상태를 변경할 수 없으므로 안전하게 상태 검증 가능
+        if (product.getStatus() != ProductStatus.SELLING) {
+            throw new IllegalStateException("이미 판매된 상품입니다.");
+        }
 
         try {
             // 토스페이먼츠 API 요청용 데이터 생성
@@ -230,11 +259,20 @@ public class OrderService {
             //결제 승인이 완료되면 에스크로 처리진행
             //위에 결제승인 API로 응답받은 body 가 null 값이 아니고 결제상태가 DONE 이면 진행
             if (response.getBody() != null && response.getBody().getStatus() == PaymentStatus.DONE) {
+                // 여전히 락이 유지된 상태에서 결제 처리
+                // 다른 사용자의 결제 시도는 여전히 블로킹됨
                 return processPayment(request);
             } else {
                 throw new RuntimeException("결제 승인 실패");
             }
+
+            // 메서드 종료 시 트랜잭셔닝 커밋되면서 락이 해제됨
+
+        } catch (PessimisticLockingFailureException e) {
+            log.error("락 타임아웃 발생", e);
+            throw e;
         } catch (Exception e) {
+            //예외 발생 시 트랜잭션이 롤백되면서 락이 해제됨
             log.error("결제 승인 실패", e);
             throw new RuntimeException("결제 승인 실패", e);
         }
@@ -247,6 +285,10 @@ public class OrderService {
         //주문했던 주문 찾기
         Orders order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다."));
+
+        if (order.getStatus() == PaymentStatus.ESCROW_RELEASED) {
+            throw new IllegalArgumentException("이미 거래 완료된 상품입니다.");
+        }
 
         if (order.getStatus() != PaymentStatus.ESCROW_HOLDING) {
             throw new IllegalArgumentException("에스크로 상태가 아닙니다.");
@@ -271,6 +313,19 @@ public class OrderService {
         // 판매자에게 구매확정 알림 전송
         notificationService.sendConfirmPurchaseToSeller(
                 order.getProduct().getSeller().getUserId(), order.getProduct().getProductId());
+
+        // 구매확정 됐을 시 판매자에게 메일 전송
+        // 비동기로 알림과 메일 전송
+        CompletableFuture.runAsync(() -> {
+            try {
+                mailService.sendMailConfirmPurchaseToSeller(
+                        order.getProduct().getSeller().getUserId(),
+                        order.getProduct().getProductId()
+                );
+            } catch (Exception e) {
+                log.error("메일 전송 실패", e);
+            }
+        });
 
         return modelMapper.map(order, OrderResponseDTO.class);
     }
@@ -345,9 +400,21 @@ public class OrderService {
         Orders order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다."));
 
+        Delivery delivery = deliveryRepository.findByOrderOrderId(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다."));
+
+        // 배송이 시작되었으면 취소 불가
+        if (delivery != null &&
+                (delivery.getStatus() == DeliveryStatus.IN_TRANSIT ||
+                        delivery.getStatus() == DeliveryStatus.DELIVERED)) {
+            throw new IllegalStateException("배송이 시작된 주문은 취소가 불가능합니다.");
+        }
+
+        // 에스크로 상태 확인
         if (order.getStatus() != PaymentStatus.ESCROW_HOLDING) {
             throw new IllegalStateException("에스크로 상태에서만 취소가 가능합니다.");
         }
+
         // 환불 처리
         processRefund(order);
 
@@ -361,6 +428,19 @@ public class OrderService {
         notificationService.sendCancelPaymentToSeller(
                 order.getProduct().getSeller().getUserId(), order.getProduct().getProductId()
         );
+
+        // 결제취소 했을 시 판매자에게 메일 전송
+        // 비동기로 알림과 메일 전송
+        CompletableFuture.runAsync(() -> {
+            try {
+                mailService.sendMailCancelPaymentToSeller(
+                        order.getProduct().getSeller().getUserId(),
+                        order.getProduct().getProductId()
+                );
+            } catch (Exception e) {
+                log.error("메일 전송 실패", e);
+            }
+        });
 
         return modelMapper.map(order, OrderResponseDTO.class);
     }
@@ -394,48 +474,42 @@ public class OrderService {
 
 
     // 매일 자정에 실행되는 스케줄러
-    // 에스크로 상태가 되고 10일 지나면 자동으로 구매확정 시켜주는 메서드
+    // 배송 완료되고 3일이 지나면 자동으로 구매확정 시켜주는 메서드
     @Scheduled(cron = "0 0 0 * * *")
     @Transactional
     public void autoConfirmExpiredEscrow() {
-        LocalDateTime tenDaysAgo = LocalDateTime.now().minusDays(10);
+        List<Orders> expiredOrders = orderRepository.findByStatusAndEscrowDeadlineBefore(
+                PaymentStatus.DELIVERED,
+                LocalDateTime.now()
+        );
 
-        try {
-            // 14일이 지난 에스크로 주문들 조회
-            List<Orders> expiredOrders = orderRepository.findByStatusAndEscrowDeadlineBefore(
-                    PaymentStatus.ESCROW_HOLDING,
-                    tenDaysAgo
-            );
+        log.info("자동 구매확정 대상 주문 수: {}", expiredOrders.size());
 
-            log.info("자동 구매확정 대상 주문 수: {}", expiredOrders.size());
+        for (Orders order : expiredOrders) {
+            try {
+                //구매 확정 처리
+                confirmPurchase(order.getOrderId());
 
-            for (Orders order : expiredOrders) {
-                try {
-                    // 판매자에게 금액 지급
-                    User seller = order.getProduct().getSeller();
-                    seller.addBalance(order.getProductAmount());
-                    userRepository.save(seller);
-
-                    log.info("자동 구매확정 판매자 정산 완료 - orderId: {}, sellerId: {}, amount: {}",
-                            order.getOrderId(), seller.getUserId(), order.getProductAmount());
-
-                    // 주문 상태 업데이트
-                    order.updateReleased(PaymentStatus.ESCROW_RELEASED, LocalDateTime.now());
-
-                    // 상품 상태 변경
-                    Product product = order.getProduct();
-                    product.updateStatus(ProductStatus.SOLD_OUT);
-                    productRepository.save(product);
-
-                    log.info("자동 구매확정 완료 - orderId: {}", order.getOrderId());
-
-                } catch (Exception e) {
-                    log.error("자동 구매확정 처리 실패 - orderId: {}", order.getOrderId(), e);
-                    // 개별 주문 실패 시 다음 주문 처리를 위해 계속 진행
-                }
+                log.info("배송완료 후 3일 경과로 자동 구매확정 처리 - orderId: {}", order.getOrderId());
+            } catch (Exception e) {
+                log.error("자동 구매확정 처리 실패 - orderId: {}", order.getOrderId(), e);
+                // 개별 주문 실패 시 다음 주문 처리를 위해 계속 진행
             }
-        } catch (Exception e) {
-            log.error("자동 구매확정 배치 처리 실패", e);
         }
     }
+
+    /////////////////동시성 락 테스트용
+    @Transactional
+    public void holdLockForTest(Long productId) {
+        Product product = productRepository.findByIdWithPessimisticLock(productId)
+                .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
+        try {
+            log.info("락 유지 시작 - productId: {}", productId);
+            Thread.sleep(8000); // 트랜잭션 유지
+            log.info("락 유지 종료 - productId: {}", productId);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+    }
+
 }

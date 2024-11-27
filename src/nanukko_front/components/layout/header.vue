@@ -1,198 +1,175 @@
-// components/layout/header.vue
 <template>
-    <header class="header">
-        <div class="header-container">
-            <!-- 로고 -->
-            <div class="logo">
-                <img src="../../public/image/나누고_Logo_blue.png" alt="nanukko Logo" width="150" height="80" />
-            </div>
+  <header class="header">
+    <!-- 로고, 검색창, action 을 포함하는 Flex 컨테이너 -->
+    <div class="header-container">
+      <!-- 로고 -->
+      <div class="logo">
+        <img
+          src="../../public/image/나누고_Logo_blue.png"
+          alt="nanukko Logo"
+          width="150"
+          height="80"
+        />
+      </div>
+      <!-- 검색창 -->
+      <div class="search-bar">
+        <input
+          type="text"
+          placeholder="검색어를 입력해주세요"
+          v-model="searchQuery"
+          @keyup.enter="onSearch"
+        />
+        <button @click="onSearch">🔍</button>
+      </div>
 
-            <!-- 검색창 -->
-            <div class="search-bar">
-                <input type="text" placeholder="검색어를 입력해주세요" v-model="searchQuery" @keyup.enter="onSearch" />
-                <button @click="onSearch">🔍</button>
-            </div>
-
-            <!-- actions 채팅, 알림, 로그인, 마이페이지 -->
-            <ul class="header-actions">
-                <li>
-                    <NuxtLink to="/chatting">채팅</NuxtLink>
-                </li>
-                <li class="notification-container">
-                    <Notification />
-                </li>
-                <li>
-                    <NuxtLink to="/Login">로그인</NuxtLink>
-                </li>
-                <li>
-                    <NuxtLink to="/mypage">마이페이지</NuxtLink>
-                </li>
-            </ul>
-        </div>
-    </header>
+      <!-- actions 채팅, 알림, 로그인, 마이페이지 -->
+      <ul class="header-actions">
+        <li><NuxtLink to="/chatting">채팅</NuxtLink></li>
+        <li class="notification-cotainer"><Notification /></li>
+        <li><NuxtLink to="/Login">로그인</NuxtLink></li>
+        <li><NuxtLink to="/mypage">마이페이지</NuxtLink></li>
+      </ul>
+    </div>
+  </header>
 </template>
 
 <script setup>
 import { ref } from "vue";
-import { useRouter } from 'vue-router';
 import Notification from "../notification/Notification.vue";
 
-const router = useRouter();
+/* 검색창의 입력값을 관리하기 위한 상태 */
 const searchQuery = ref("");
 
-// 검색 실행
+/* 검색 동작 */
 const onSearch = () => {
-    if (!searchQuery.value.trim()) return;
-
-    // 검색 결과 페이지로 이동
-    router.push({
-        path: '/search',
-        query: { q: searchQuery.value.trim() }
-    });
-
-    // 검색 후 검색어 초기화 (선택사항)
-    // searchQuery.value = "";
+  if (searchQuery.value.trim()) {
+    console.log("검색어:", searchQuery.value); // 실제로는 API 호출 또는 페이지 이동 처리
+    alert(`You searched for: ${searchQuery.value}`); // 임시 알림 처리
+  }
 };
 </script>
-
 <style scoped>
 /* 헤더 전체 레이아웃 */
 .header {
-    position: relative;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    padding: 0.5rem 1rem;
-    background-color: white;
-    border-bottom: 1px solid #e0e0e0;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  background-color: white; /* 흰색 배경 */
+  border-bottom: 1px solid #e0e0e0; /*하단 경계선 */
+  /* box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); 약간의 그림자 효과 */
 }
 
 .header-container {
-    padding-left: 30px;
-    display: flex;
-    align-items: center;
-    width: 100%;
-    max-width: fit-content;
-    margin: 0px 15rem;
+  padding-left: 30px;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  max-width: fit-content;
+  margin: 0px 15rem;
 }
-
 /* 로고 */
 .logo {
-    flex: 0 0 auto;
-    display: block;
+  flex: 0 0 auto; /* 너비 고정 */
+  display: block;
 }
 
 /* 검색창 스타일 */
 .search-bar {
-    min-width: 400px;
-    max-width: 400px;
-    height: 40px;
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    border-radius: 15px;
-    border: 1px solid #333;
-    position: relative;
+  min-width: 400px;
+  max-width: 400px;
+  height: 40px;
+  flex: 1;
+  display: flex;
+  /* justify-content: center; */
+  align-items: center;
+  justify-content: space-between;
+  border-radius: 15px;
+  border: 1px solid #333;
 }
 
 .search-bar input {
-    width: 100%;
-    padding: 0.5rem 1rem;
-    border: none;
-    border-radius: 15px;
-    outline: none;
-    font-size: 1rem;
-    color: #333;
-    background-color: white;
+  width: 100%;
+  max-width: 400px; /*검색창 최대 너비*/
+  padding: 0.5rem 1rem;
+  border: none; /* 회색 테두리 */
+  border-radius: 20px; /* 둥근 모서리 */
+  outline: none;
+  font-size: 1rem;
+  color: #333;
+  background-color: white; /* 연한 배경 */
 }
 
 .search-bar input::placeholder {
-    color: #aaa;
+  color: #aaa; /* 플레이스홀더 색상 */
 }
 
 .search-bar button {
-    margin: 0 0.5rem;
-    padding: 0.5rem;
-    border: none;
-    background: none;
-    cursor: pointer;
-    transition: opacity 0.2s;
+  margin-left: 0.5rem;
+  margin-right: 0.5rem;
+  padding: 0.5rem 1rem;
+  border: none;
+  background-color: white;
+  cursor: pointer;
+  transition: color 0.3s ease;
 }
 
 .search-bar button:hover {
-    opacity: 0.7;
+  color: #4c6ef5;
 }
 
-/* 헤더 액션 버튼 */
 .header-actions {
-    display: flex;
-    flex-direction: row;
-    width: 400px;
-    justify-content: space-around;
+  display: flex;
+  flex-direction: row;
+  width: 400px;
+  justify-content: space-around;
 }
 
 .header-actions li {
-    list-style: none;
+  list-style: none;
 }
 
-.header-actions a {
-    text-decoration: none;
-    color: #333;
-    font-size: 0.9rem;
-    padding: 0.5rem;
-    transition: color 0.2s;
+.header-actions button {
+  margin-right: 0.5rem;
+  padding: 0.5rem 1rem;
+  border: none;
+  background-color: #4c6ef5;
+  color: white;
+  border-radius: 20px;
+  cursor: pointer;
+}
+/* 알림 섹션 */
+.notifications {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+  color: #4c6ef5; /* 파란색 */
 }
 
-.header-actions a:hover {
-    color: #4c6ef5;
+.notifications .badge {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  width: 20px;
+  height: 20px;
+  background-color: #ffa500; /* 오렌지색 */
+  color: white;
+  font-size: 0.75rem;
+  font-weight: bold;
+  border-radius: 50%;
 }
 
-/* 알림 컨테이너 */
+/* 이 아래 윤여운이 추가함 */
 .notification-container {
-    position: relative;
-    display: flex;
-    align-items: center;
+  position: relative;
+  display: flex;
+  align-items: center;
 }
 
-/* 반응형 스타일 */
-@media (max-width: 1200px) {
-    .header-container {
-        margin: 0px 5rem;
-    }
-}
-
-@media (max-width: 900px) {
-    .header-container {
-        margin: 0px 2rem;
-    }
-
-    .search-bar {
-        min-width: 300px;
-    }
-
-    .header-actions {
-        width: 300px;
-    }
-}
-
-@media (max-width: 768px) {
-    .header-container {
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 1rem;
-        padding: 1rem;
-    }
-
-    .search-bar {
-        order: 2;
-        min-width: 100%;
-    }
-
-    .header-actions {
-        order: 3;
-        width: 100%;
-        justify-content: space-evenly;
-    }
+/* 알림 아이콘이 있는 li 태그에 대한 스타일 */
+.header-actions li.notification-container {
+  padding: 0;
+  margin: 0 1.2rem;
 }
 </style>

@@ -3,6 +3,14 @@ import axios from "axios";
 import ProductsGrid from "~/components/my-store/sale-products/ProductsGrid.vue";
 import StatusFilter from "~/components/my-store/sale-products/StatusFilter.vue";
 import Pageination from "~/components/Pagination.vue";
+import { useApi } from "~/composables/useApi";
+
+definePageMeta({
+  layout: 'mystore'
+});
+
+
+const { baseURL } = useApi();
 
 const userProducts = ref([]);
 const userId = "seller1"; //추후에 로그인 한 유저로 변경
@@ -16,7 +24,7 @@ const loadUserProducts = async (page = 0) => {
   try {
     //params 객체를 사용하면 Axios가 파라미터들을 자동으로 인코딩해줌
     const response = await axios.get(
-      `http://localhost:8080/api/my-store/sale-products`,
+      `${baseURL}/my-store/sale-products`,
       {
         params: {
           userId: userId,

@@ -48,16 +48,25 @@ dependencies {
     runtimeOnly 'com.mysql:mysql-connector-j'
 
     //jwt
-    implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
-    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
-    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
-    testImplementation 'io.jsonwebtoken:jjwt-api:0.11.5'
-    testRuntimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
-    testRuntimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
+//    implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
+//    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
+//    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
+//    testImplementation 'io.jsonwebtoken:jjwt-api:0.11.5'
+//    testRuntimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
+//    testRuntimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
 
     //security
-//    implementation 'org.springframework.boot:spring-boot-starter-security'
-//    testImplementation 'org.springframework.security:spring-security-test'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    testImplementation 'org.springframework.security:spring-security-test'
+
+    // jwt
+        implementation 'io.jsonwebtoken:jjwt-api:0.12.3'
+        implementation 'io.jsonwebtoken:jjwt-impl:0.12.3'
+        implementation 'io.jsonwebtoken:jjwt-jackson:0.12.3'
+        testImplementation 'io.jsonwebtoken:jjwt-api:0.12.3'
+        testRuntimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.3'
+        testRuntimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.3'
+
 
     implementation 'org.apache.httpcomponents:httpclient:4.5.13'
 
@@ -68,7 +77,10 @@ dependencies {
     //json
     implementation group: 'org.json', name: 'json', version: '20231013'
 
-    //AWS cloud storage
+    //mail
+    implementation 'org.springframework.boot:spring-boot-starter-mail'
+
+    // NCP Object Storage SDK
     implementation 'org.springframework.cloud:spring-cloud-starter-aws:2.2.6.RELEASE'
 
     //Thumbnailator는 이미지 처리 라이브러리로, Java에서 간단하게 썸네일을 생성

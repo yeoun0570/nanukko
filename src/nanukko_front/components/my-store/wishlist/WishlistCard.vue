@@ -1,5 +1,8 @@
 <script setup>
 import axios from "axios";
+import { useApi } from "~/composables/useApi";
+
+const { baseURL } = useApi();
 
 const props = defineProps({
   product: {
@@ -19,7 +22,7 @@ const router = useRouter();
 const removeWishlist = async () => {
   try {
     await axios.post(
-      "http://localhost:8080/api/my-store/wishlist/remove",
+      `${baseURL}/my-store/wishlist/remove`,
       props.product,
       {
         params: {
