@@ -46,15 +46,19 @@ const goToSlide = (index) => {
 <style scoped>
 .image-slider {
     position: relative;
-    width: 100%;
-    height: 100%;
+    width: 500px;
+    /* 너비 500px로 설정 */
+    height: 500px;
+    /* 높이 500px로 설정 */
     overflow: hidden;
 }
 
 .image-slide {
     display: none;
-    width: 100%;
-    height: 100%;
+    width: 500px;
+    /* 너비 500px로 설정 */
+    height: 500px;
+    /* 높이 500px로 설정 */
 }
 
 .image-slide.active {
@@ -62,9 +66,12 @@ const goToSlide = (index) => {
 }
 
 .image-slide img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+    width: 500px;
+    /* 너비 500px로 설정 */
+    height: 500px;
+    /* 높이 500px로 설정 */
+    object-fit: contain;
+    /* cover 대신 contain으로 변경하여 이미지 비율 유지 */
 }
 
 .slider-navigation {

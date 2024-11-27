@@ -1,5 +1,7 @@
 package nanukko.nanukko_back.config;
 
+import nanukko.nanukko_back.domain.product.Product;
+import nanukko.nanukko_back.dto.product.ProductRequestDto;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.convention.MatchingStrategies;
 import org.springframework.context.annotation.Bean;
@@ -20,6 +22,8 @@ public class ModelMapperConfig {
                 .setFieldMatchingEnabled(true)
                 .setFieldAccessLevel(org.modelmapper.config.Configuration.AccessLevel.PRIVATE)
                 .setMatchingStrategy(MatchingStrategies.STRICT);
+        modelMapper.typeMap(Product.class, ProductRequestDto.class)
+                .addMappings(mapper -> mapper.map(Product::getProductId, ProductRequestDto::setId));
         return  modelMapper;
     }
 }

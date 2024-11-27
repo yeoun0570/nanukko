@@ -13,55 +13,90 @@ const emit = defineEmits(["update:options"]);
 const handleInput = (field, value) => {
     emit("update:options", field, value);
 };
+
+const handleGenderChange = (value) => {
+    // true = 남자, false = 여자로 변환
+    emit("update:options", "gender", value === 'male');
+};
+
+const ageGroups = [
+    { value: '10S', label: '10대' },
+    { value: '20S', label: '20대' },
+    { value: '30S', label: '30대' },
+    { value: '40S', label: '40대' },
+    { value: '50S', label: '50대' },
+    { value: '60S', label: '60대 이상' }
+];
 </script>
 
 <template>
     <div class="trade-options">
-        <div class="option-group">
-            <label class="option-label">동행인 동반</label>
-            <div class="radio-group">
-                <label class="radio-label">
-                    <input type="radio" :checked="productInfo.companion === true"
-                        @change="handleInput('companion', true)" name="companion" />
-                    <span class="radio-text">예</span>
-                </label>
-                <label class="radio-label">
-                    <input type="radio" :checked="productInfo.companion === false"
-                        @change="handleInput('companion', false)" name="companion" />
-                    <span class="radio-text">아니오</span>
-                </label>
-            </div>
-        </div>
+        <div class="options-grid">
+            <!-- 왼쪽 컬럼: 동행인/대리인 선택 -->
+            <div class="left-column">
+                <div class="option-group">
+                    <label class="option-label">동행인 동반</label>
+                    <div class="radio-group">
+                        <label class="radio-label">
+                            <input type="radio" :checked="productInfo.isCompanion === true"
+                                @change="handleInput('isCompanion', true)" name="companion" />
+                            <span class="radio-text">예</span>
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" :checked="productInfo.isCompanion === false"
+                                @change="handleInput('isCompanion', false)" name="companion" />
+                            <span class="radio-text">아니오</span>
+                        </label>
+                    </div>
+                </div>
 
-        <div class="option-group">
-            <label class="option-label">대리인 거래</label>
-            <div class="radio-group">
-                <label class="radio-label">
-                    <input type="radio" :checked="productInfo.deputy === true" @change="handleInput('deputy', true)"
-                        name="deputy" />
-                    <span class="radio-text">예</span>
-                </label>
-                <label class="radio-label">
-                    <input type="radio" :checked="productInfo.deputy === false" @change="handleInput('deputy', false)"
-                        name="deputy" />
-                    <span class="radio-text">아니오</span>
-                </label>
+                <div class="option-group">
+                    <label class="option-label">대리인 거래</label>
+                    <div class="radio-group">
+                        <label class="radio-label">
+                            <input type="radio" :checked="productInfo.isDeputy === true"
+                                @change="handleInput('isDeputy', true)" name="deputy" />
+                            <span class="radio-text">예</span>
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" :checked="productInfo.isDeputy === false"
+                                @change="handleInput('isDeputy', false)" name="deputy" />
+                            <span class="radio-text">아니오</span>
+                        </label>
+                    </div>
+                </div>
             </div>
-        </div>
 
-        <div class="option-group" v-if="productInfo.companion || productInfo.deputy">
-            <label class="option-label">성별</label>
-            <div class="radio-group">
-                <label class="radio-label">
-                    <input type="radio" :checked="productInfo.gender === 'male'" @change="handleInput('gender', 'male')"
-                        name="gender" />
-                    <span class="radio-text">남성</span>
-                </label>
-                <label class="radio-label">
-                    <input type="radio" :checked="productInfo.gender === 'female'"
-                        @change="handleInput('gender', 'female')" name="gender" />
-                    <span class="radio-text">여성</span>
-                </label>
+            <!-- 오른쪽 컬럼: 성별 선택 -->
+            <div class="right-column" v-if="productInfo.isCompanion || productInfo.isDeputy">
+                <div class="option-group">
+                    <label class="option-label">동행인 또는 대리인의 성별</label>
+                    <div class="radio-group">
+                        <label class="radio-label">
+                            <input type="radio" :checked="productInfo.gender === true"
+                                @change="handleGenderChange('male')" name="gender" />
+                            <span class="radio-text">남성</span>
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" :checked="productInfo.gender === false"
+                                @change="handleGenderChange('female')" name="gender" />
+                            <span class="radio-text">여성</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="option-group">
+                    <label class="option-label">동행인 또는 대리인의 연령대</label>
+                    <div class="select-wrapper">
+                        <select class="age-select" :value="productInfo.ageGroup"
+                            @change="handleInput('ageGroup', $event.target.value)">
+                            <option value="">연령대 선택</option>
+                            <option v-for="group in ageGroups" :key="group.value" :value="group.value">
+                                {{ group.label }}
+                            </option>
+                        </select>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -69,105 +104,78 @@ const handleInput = (field, value) => {
 
 <style scoped>
 .trade-options {
-    background-color: #f8f9fa;
-    border-radius: 0.5rem;
-    padding: 1.5rem;
-    margin-top: 1rem;
+    width: 100%;
+}
+
+.options-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    align-items: start;
+}
+
+.left-column,
+.right-column {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
 }
 
 .option-group {
-    margin-bottom: 1.25rem;
-}
-
-.option-group:last-child {
-    margin-bottom: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
 }
 
 .option-label {
-    display: block;
-    font-weight: 600;
-    color: #495057;
-    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: #333;
 }
 
 .radio-group {
     display: flex;
-    gap: 2rem;
+    gap: 1rem;
 }
 
 .radio-label {
     display: flex;
     align-items: center;
+    gap: 0.25rem;
     cursor: pointer;
-    user-select: none;
-}
-
-.radio-label input[type="radio"] {
-    appearance: none;
-    width: 1.25rem;
-    height: 1.25rem;
-    border: 2px solid #007bff;
-    border-radius: 50%;
-    margin-right: 0.5rem;
-    position: relative;
-    cursor: pointer;
-}
-
-.radio-label input[type="radio"]:checked {
-    background-color: #007bff;
-    border-color: #007bff;
-}
-
-.radio-label input[type="radio"]:checked::after {
-    content: "";
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 0.5rem;
-    height: 0.5rem;
-    background-color: white;
-    border-radius: 50%;
 }
 
 .radio-text {
-    font-size: 0.95rem;
-    color: #495057;
+    font-size: 0.875rem;
 }
 
-.notice {
-    margin-top: 1rem;
-    padding: 1rem;
-    background-color: #fff3cd;
-    border-radius: 0.375rem;
-    border: 1px solid #ffeeba;
+.select-wrapper {
+    width: 100%;
+    position: relative;
 }
 
-.notice p {
-    margin: 0;
-    color: #856404;
-    display: flex;
-    align-items: center;
-    font-size: 0.9rem;
+.age-select {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #dee2e6;
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+    background-color: white;
+    cursor: pointer;
 }
 
-.notice p+p {
-    margin-top: 0.5rem;
+.age-select:focus {
+    outline: none;
+    border-color: #007bff;
 }
 
-.notice-icon {
-    margin-right: 0.5rem;
-    font-size: 1.25rem;
+.age-select:hover {
+    border-color: #007bff;
 }
 
-/* 호버 효과 */
-.radio-label:hover input[type="radio"]:not(:checked) {
-    background-color: rgba(0, 123, 255, 0.1);
-}
-
-/* 포커스 효과 */
-.radio-label input[type="radio"]:focus {
-    outline: 2px solid rgba(0, 123, 255, 0.25);
-    outline-offset: 2px;
+@media (max-width: 768px) {
+    .options-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
 }
 </style>

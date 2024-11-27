@@ -1,7 +1,7 @@
 // ProductDetail.vue
 <script setup>
 import { computed } from 'vue';
-import { ProductData } from '../assets/productDetail';
+// import { ProductData } from '../assets/productDetail';
 import ProductImage from '~/components/products/products-detail/ProductImage.vue';
 import ProductInfo from '~/components/products/products-detail/ProductInfo.vue';
 import ProductActions from '~/components/products/products-detail/ProductActions.vue';
