@@ -67,6 +67,13 @@ export default defineNuxtConfig({
     }
   },
 
+  // 런타임 설정
+  runtimeConfig: {
+    public: {
+      apiBase: process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:8080'
+    }
+  },
+
   // 프록시 설정 (Nitro)
   nitro: {
     devProxy: {
