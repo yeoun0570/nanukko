@@ -1,9 +1,4 @@
 <script setup>
-import axios from "axios";
-import { useApi } from "~/composables/useApi";
-
-const { baseURL } = useApi();
-
 const props = defineProps({
   productId: {
     type: Number,
@@ -44,8 +39,8 @@ const handleSubmit = async () => {
       trackingNumber: formData.value.trackingNumber,
     });
 
-    const response = await axios.post(
-      `${baseURL}/delivery/register`,
+    const response = await post(
+      `/delivery/register`,
       {
         productId: props.productId,
         carrierId: formData.value.carrierId,

@@ -1,17 +1,9 @@
 <script setup>
-import axios from "axios";
-import { useApi } from "~/composables/useApi";
-
-const { baseURL } = useApi();
 const hasReview = ref(false);
 
 const props = defineProps({
   order: {
     type: Object,
-    required: true,
-  },
-  userId: {
-    type: String,
     required: true,
   },
 });
@@ -21,7 +13,7 @@ const emit = defineEmits(["order-updated"]);
 // 해당 주문에 대한 리뷰 존재 여부 확인
 const checkReviewExists = async () => {
   try {
-    const response = await axios.get(`${baseURL}/review/check`, {
+    const response = await get(`/review/check`, {
       params: {
         orderId: props.order.orderId,
       },
@@ -42,8 +34,8 @@ const confirmPurchase = async () => {
   try {
     console.log("구매확정 요청 시작 - orderId:", props.order.orderId);
 
-    const response = await axios.post(
-      `${baseURL}/payments/${props.order.orderId}/confirm`
+    const response = await post(
+      `/payments/${props.order.orderId}/confirm`
     );
 
     console.log("구매확정 응답:", response.data);
@@ -74,8 +66,8 @@ const cancelOrder = async () => {
 
     console.log("결제 취소 시작 - orderId:", props.order.orderId);
 
-    const response = await axios.post(
-      `${baseURL}/payments/${props.order.orderId}/cancel`
+    const response = await post(
+      `/payments/${props.order.orderId}/cancel`
     );
 
     console.log("결제 취소 완료:", response.data);
@@ -97,7 +89,6 @@ const goToWriteReview = async () => {
     path: "/my-store/buy-products/write-review",
     query: {
       orderId: props.order.orderId,
-      userId: props.userId,
       productName: props.order.productName,
       thumbnailImage: props.order.thumbnailImage,
     },
