@@ -88,6 +88,10 @@ export default defineNuxtConfig({
   compatibilityDate: "2024-11-17",
 
   //css
-  css: ['vuetify/styles'], // Vuetify 스타일 로드
+  css: [
+    'vuetify/styles', // Vuetify 스타일 로드
+    '@mdi/font/css/materialdesignicons.min.css', // MDI 아이콘 스타일
+  ], 
+  
   
 });
