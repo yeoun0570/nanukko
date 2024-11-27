@@ -1,5 +1,4 @@
 <script setup>
-import axios from "axios";
 import PaymentProductSection from "~/components/payments/PaymentProductSection.vue";
 import DeliverySection from "~/components/payments/DeliverySection.vue";
 import PaymentAmountSection from "~/components/payments/PaymentAmountSection.vue";

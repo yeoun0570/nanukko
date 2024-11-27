@@ -1,5 +1,4 @@
 <script setup>
-import axios from "axios";
 import WishlistGrid from "~/components/my-store/wishlist/WishlistGrid.vue";
 import Pagination from "~/components/Pagination.vue";
 import { useApi } from '@/composables/useApi';
