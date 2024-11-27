@@ -1,17 +1,15 @@
 <script setup>
-import axios from "axios";
 import ReadOnlyStarRating from "~/components/my-store/reviews/ReadOnlyStarRating.vue";
 import StoreScore from "~/components/my-store/reviews/StoreScore.vue";
-import { useApi } from "~/composables/useApi";
+import { useApi } from '@/composables/useApi';
+
+const api = useApi();
 
 definePageMeta({
   layout: 'mystore'
 });
 
-
-const { baseURL } = useApi();
 const reviewInfo = ref([]);
-const userId = "seller1";
 const currentPage = ref(0);
 const totalPages = ref(0);
 const pageSize = ref(5);
@@ -19,19 +17,18 @@ const reviewRate = ref(0);
 
 const loadReviews = async (page = 0) => {
   try {
-    const response = await axios.get(
-      `${baseURL}/my-store/reviews`,
+    const response = await api.get(
+      `/my-store/reviews`,
       {
         params: {
-          userId: userId,
           page: page,
           size: pageSize.value,
         },
       }
     );
-    reviewInfo.value = response.data.content;
-    totalPages.value = response.data.totalPages;
-    currentPage.value = response.data.currentPage;
+    reviewInfo.value = response.content;
+    totalPages.value = response.totalPages;
+    currentPage.value = response.currentPage;
     reviewRate.value = reviewInfo.value[0]?.reviewRate || 0;
   } catch (error) {
     console.log("로딩 중 에러: ", error);

@@ -1,8 +1,7 @@
 <script setup>
-import axios from "axios";
-import { useApi } from "~/composables/useApi";
+import { useApi } from '@/composables/useApi';
 
-const { baseURL } = useApi();
+const api = useApi();
 
 const props = defineProps({
   productInfo: {
@@ -25,8 +24,8 @@ const selectedCategories = ref({
 
 const loadCategories = async () => {
   try {
-    const response = await axios.get(
-      `${baseURL}/categories/major`
+    const response = await api.get(
+      `/categories/major`
     );
     categories.value.majorCategories = response.data;
     if (props.productInfo.majorId) {
@@ -52,7 +51,7 @@ const handleMajorSelect = async (majorId) => {
 const loadMiddleCategories = async (majorId) => {
   try {
     const response = await axios.get(
-      `${baseURL}/categories/middle/${majorId}`
+      `/categories/middle/${majorId}`
     );
     categories.value.middleCategories = response.data;
   } catch (error) {

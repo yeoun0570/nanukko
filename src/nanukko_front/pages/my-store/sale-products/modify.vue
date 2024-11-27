@@ -1,35 +1,33 @@
 <script setup>
-import axios from "axios";
 import CategorySelect from "~/components/my-store/CategorySelect.vue";
 import BasicInfoFrom from "~/components/my-store/sale-products/modify/BasicInfoFrom.vue";
 import ButtonGroup from "~/components/my-store/sale-products/modify/ButtonGroup.vue";
 import TransactionForm from "~/components/my-store/sale-products/modify/TransactionForm.vue";
-import { useApi } from "~/composables/useApi";
+import { useApi } from '@/composables/useApi';
+
+const api = useApi();
+
 
 definePageMeta({
   layout: 'mystore'
 });
 
-const { baseURL } = useApi();
-
 const route = useRoute();
-const { productId, userId } = route.query;
+const productId = route.query;
 const productInfo = ref(route.state?.productInfo || {});
 
 // 디버깅을 위한 로그
 console.log('Initial productInfo:', productInfo.value);
 console.log('ProductId:', productId);
-console.log('UserId:', userId);
 
 // 상품 정보 수정
 const updateProduct = async () => {
   try {
-    await axios.post(
-      `${baseURL}/my-store/sale-products/modify`,
+    await api.post(
+      `/my-store/sale-products/modify`,
       productInfo.value,
       {
         params: {
-          userId: userId,
           productId: productId,
         },
       }

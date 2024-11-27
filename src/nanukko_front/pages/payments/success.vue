@@ -1,24 +1,24 @@
 <script setup>
-import axios from "axios";
-import { useApi } from "~/composables/useApi";
+import { useApi } from '@/composables/useApi';
+import { useAuth } from '~/composables/auth/useAuth';
 
-const { baseURL } = useApi();
+const api = useApi();
 const route = useRoute();
 const loading = ref(true);
 const error = ref(null);
-const buyerId = "buyer1";
+const auth = useAuth();
 
 onMounted(async () => {
   try {
     const { orderId, paymentKey, amount, productId } = route.query;
 
     if (!localStorage.getItem(`payment_${orderId}`)) {
-      await axios.post(`${baseURL}/payments/confirm`, {
+      await api.post(`/payments/confirm`, {
         paymentKey,
         orderId,
         amount: parseInt(amount),
         productId: parseInt(productId),
-        buyerId: buyerId,
+        buyerId: auth.userId.value,
       });
 
       localStorage.setItem(`payment_${orderId}`, "true");

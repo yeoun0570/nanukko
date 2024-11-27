@@ -1,6 +1,9 @@
 <script setup>
 import StarRating from "~/components/my-store/buy-products/StarRating.vue";
 import { useAuth } from "~/composables/auth/useAuth";
+import { useApi } from '@/composables/useApi';
+
+const api = useApi();
 
 definePageMeta({
   layout: "mystore",
@@ -43,7 +46,7 @@ const writeReview = async () => {
       rate: reviewInfo.value.rate,
     };
 
-    await post(`/review/write`, reviewData);
+    await api.post(`/review/write`, reviewData);
     alert("리뷰가 작성되었습니다.");
     navigateTo("/my-store/buy-products");
   } catch (error) {

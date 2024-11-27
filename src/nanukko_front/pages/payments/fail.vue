@@ -1,6 +1,5 @@
 <script setup>
 const route = useRoute();
-const router = useRouter();
 const loading = ref(true);
 const error = ref(null);
 
@@ -12,12 +11,6 @@ onMounted(() => {
   loading.value = false;
 });
 
-// const goBack = () => {
-//   router.push({
-//     path: "/payments",
-//     query: { productId: route.query.productId },
-//   }); // 또는 이전 결제 페이지 경로
-// };
 //위의 주석 처리된 부분을 Nuxt의 navigateTo 사용해서 변형
 const goBack = () => {
   navigateTo(`/payments?productId=${route.query.productId}`);

@@ -1,36 +1,33 @@
 <script setup>
-import axios from "axios";
 import WishlistGrid from "~/components/my-store/wishlist/WishlistGrid.vue";
 import Pagination from "~/components/Pagination.vue";
-import { useApi } from "~/composables/useApi";
+import { useApi } from '@/composables/useApi';
+
+const api = useApi();
 
 definePageMeta({
   layout: 'mystore'
 });
 
-
-const { baseURL } = useApi();
 const userWishlist = ref([]);
-const userId = "buyer2";
 const currentPage = ref(0);
 const totalPages = ref(0);
 const pageSize = ref(5);
 
 const loadUserWishlist = async (page = 0) => {
   try {
-    const response = await axios.get(
-      `${baseURL}/my-store/wishlist`,
+    const response = await api.get(
+      `/my-store/wishlist`,
       {
         params: {
-          userId,
           page,
           size: pageSize.value,
         },
       }
     );
-    userWishlist.value = response.data.content;
-    totalPages.value = response.data.totalPages;
-    currentPage.value = response.data.currentPage;
+    userWishlist.value = response.content;
+    totalPages.value = response.totalPages;
+    currentPage.value = response.currentPage;
   } catch (error) {
     console.error("로딩 중 에러:", error);
   }
@@ -52,7 +49,6 @@ onMounted(() => {
 
     <WishlistGrid
       :products="userWishlist"
-      :userId="userId"
       @wishlist-updated="loadUserWishlist"
     />
 
