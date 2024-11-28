@@ -3,6 +3,7 @@ import { ref } from "vue";
 import Notification from "../notification/Notification.vue";
 import { useAuth } from "~/composables/auth/useAuth";
 import { useRouter } from 'vue-router';
+import { useToast } from "vue-toastification";
 
 const router = useRouter();
 const { userId, nickname, isAuthenticted } = useAuth();
@@ -95,7 +96,7 @@ const onSearch = () => {
         <button v-if="!isAuthenticted"><NuxtLink to="/mypage">마이페이지</NuxtLink></button>
         <button v-if="!isAuthenticted" @click="doLogout">로그아웃</button>
       <!-- 판매 글 작성을 위한 페이지로 이동하는 링크 -->
-        <sell-button class="sell-button">판매하기</sell-button>
+        <button class="sell-button">판매하기</button>
       </ul>
     </div>
   </header>
