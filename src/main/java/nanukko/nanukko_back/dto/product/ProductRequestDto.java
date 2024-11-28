@@ -17,7 +17,7 @@ public class ProductRequestDto {
     private String productName;
     private int price;
     private String content;
-    private Condition condition; // Condition의 String 값
+    private String condition; // Condition의 String 값
 
     // 이미지 정보
     private String image1;
@@ -51,7 +51,7 @@ public class ProductRequestDto {
     private Double longitude;
 
     // 찜 여부
-    private boolean isWished;
+    private Boolean isWished;
 
     //좋아요 수
     private Integer favorite_count;

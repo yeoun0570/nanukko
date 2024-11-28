@@ -1,66 +1,55 @@
-<script setup>//new.vue
+<script setup>
 import { ref } from 'vue';
-import axios from 'axios';
+import { useToast } from 'vue-toastification';
+import { useRouter } from 'vue-router';
+import { useApi } from '~/composables/useApi';
 import ImageUploader from '~/components/products/products-new/ImageUploader.vue';
 import ProductForm from '~/components/products/products-new/ProductForm.vue';
-import { useRoute } from 'vue-router'; //추가
 
-//추가
-const route = useRoute();
-const token = route.query.authToken;
+const toast = useToast();
+const router = useRouter();
+const api = useApi();
 
 const product = ref({
-    // 기본 정보 필드
-    productName: '',           // 상품명 (필수)
-    price: 0,                 // 가격 (필수)
-    content: '',              // 상품 설명 (필수)
-    condition: 'NEW',         // 상품 사용감 (필수, Enum)
-    images: [],               // 이미지 배열
+  // 기본 정보 필드
+    productName: '',
+    price: 0,
+    content: '',
+    condition: 'NEW',
+    images: [],
 
-    // 카테고리 정보
+  // 카테고리 정보
     middleCategory: {
-        majorId: '',
-        middleId: ''
+        majorId: null,
+        middleId: null
     },
 
-    // 배송 관련 정보
-    isPerson: false,          // 직거래 여부
-    isShipping: false,        // 배송 여부
-    freeShipping: false,      // 배송비 포함 여부
-    shippingFee: 0,          // 배송비 (기본값 0)
+  // 배송 관련 정보
+    isShipping: false,
+    isPerson: false,
+    freeShipping: false,
+    shippingFee: 0,
 
-    // 거래 관련 정보
-    isCompanion: false,       // 동행인 여부
-    isDeputy: false,         // 대리인 여부
-    gender: true,            // 동행인/대리인 성별 (true=남자, false=여자)
-    ageGroup: '20S',         // 동행인/대리인 연령대
+  // 거래 장소 정보
+    zipCode: '',
+    address: '',
+    detailAddress: '',
+    latitude: null,
+    longitude: null,
 
-    // 거래 장소 정보
-    zipCode: '',             // 우편번호
-    address: '',             // 주소
-    detailAddress: '',       // 상세주소
-    latitude: null,          // 위도
-    longitude: null,         // 경도
-
-    // UI 표시용 필드 (백엔드로 전송하지 않음)
-    majorId: '',             // 대분류 ID (UI용)
-    majorName: '',           // 대분류 이름 (UI용)
-    middleName: '',          // 중분류 이름 (UI용)
+  // 거래 관련 정보
+    isCompanion: false,
+    isDeputy: false,
+    gender: null,
+    ageGroup: ''
 });
 
-//추가
-const fetchProductData = async () => {
-    const response = await $fetch('/api/products', {
-        headers: {
-            Authorization: `Bearer ${token}`,
-        },
-    });
-    return response;
-};
-
-// 상품 등록
 const submitProduct = async () => {
     try {
+
+
+
+
         // 필수 필드 검증
         if (!product.value.productName || !product.value.middleCategory.middleId ||
             !product.value.price || !product.value.content ||
@@ -95,11 +84,6 @@ const submitProduct = async () => {
         // FormData 생성
         const formData = new FormData();
 
-        // 이미지 파일 추가
-        product.value.images.forEach((image, index) => {
-            formData.append(`images`, image.file);
-        });
-
         // 백엔드로 전송할 데이터 구조 생성
         const productData = {
             // 기본 정보
@@ -108,11 +92,9 @@ const submitProduct = async () => {
             content: product.value.content,
             condition: product.value.condition,
 
-            // 카테고리 정보
-            middleCategory: {
-                majorId: product.value.middleCategory.majorId,
-                middleId: product.value.middleCategory.middleId
-            },
+            // 카테고리 ID들 직접 전달
+            majorId: product.value.middleCategory.majorId,
+            middleId: product.value.middleCategory.middleId,
 
             // 배송 관련 정보
             isPerson: product.value.isPerson,
@@ -124,7 +106,7 @@ const submitProduct = async () => {
             isCompanion: product.value.isCompanion,
             isDeputy: product.value.isDeputy,
             gender: product.value.gender,
-            ageGroup: product.value.ageGroup,
+            ageGroup: product.value.ageGroup
         };
 
         // 직거래인 경우 거래 장소 정보 추가
@@ -136,32 +118,95 @@ const submitProduct = async () => {
             productData.longitude = product.value.longitude;
         }
 
-        // productData 객체를 BLOB 객체로 변환해서 FormData에 추가
+        // productData 로깅
+        console.log('===== 전송할 데이터 확인 =====');
+        console.log('productData:', productData);
+
+        // FormData에 데이터 추가
         formData.append('productInfo', new Blob([JSON.stringify(productData)], {
             type: 'application/json'
         }));
 
-        // API 호출
-        await axios.post('http://localhost:8080/api/products/new', formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data'
+        // 토큰 확인
+        const token = checkAuthToken();
+        if (!token) return;
+
+        console.log('토큰 확인:', token); // 토큰 값 확인
+
+
+        // 이미지 파일 추가
+        if (product.value.images?.length > 0) {
+            product.value.images.forEach((image, index) => {
+                if (image.file) {
+                    formData.append('images', image.file);
+                    console.log(`이미지 ${index + 1}:`, image.file.name, image.file.size);
+                }
+            });
+        }
+
+        // 실제 API 요청 전 FormData 내용 확인
+        console.log('===== FormData 내용 확인 =====');
+        for (let pair of formData.entries()) {
+            if (pair[0] === 'productInfo') {
+                const text = await pair[1].text();
+                console.log('productInfo 내용:', text);
+            } else {
+                console.log(pair[0], pair[1]);
             }
-        });
+        }
 
-        alert('상품이 등록되었습니다.');
-        navigateTo('/products');
+        // API 요청 직전 로깅
+        console.log('===== API 요청 시작 =====');
+        console.log('요청 URL:', '/products/new');
+        console.log('Authorization:', `Bearer ${localStorage.getItem('access_token')}`);
+
+        const response = await api.post(
+            `/products/new`,
+            formData,
+            {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                    'Authorization': `Bearer ${token}`
+                }
+            }
+        );
+
+        // 요청 완료 후 로깅
+        console.log('===== API 응답 =====');
+        console.log('응답 상태:', response.status);
+        console.log('응답 데이터:', response.data);
+
     } catch (error) {
-        console.error('상품 등록 실패:', error);
-        alert('상품 등록에 실패했습니다.');
+        // 에러 상세 정보 출력
+        console.error('===== API 에러 =====');
+        console.error('에러:', error);
+        if (error.response) {
+            console.error('응답 상태:', error.response.status);
+            console.error('응답 데이터:', error.response.data);
+            console.error('응답 헤더:', error.response.headers);
+        }
+        toast.error('상품 등록에 실패했습니다.');
     }
 };
 
-// 취소 처리
+const checkAuthToken = () => {
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+        toast.error('로그인이 필요합니다.');
+        router.push('/login');
+        return false;
+    }
+    return token;
+};
+
+
 const handleCancel = () => {
-    if (confirm('상품 등록을 취소하시겠습니까?')) {
-        navigateTo('/products');
+    const confirmCancel = confirm('작성중인 내용이 모두 삭제됩니다. 취소하시겠습니까?');
+    if (confirmCancel) {
+        router.push('/products');
     }
 };
+
 </script>
 
 <template>

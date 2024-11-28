@@ -4,10 +4,13 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import nanukko.nanukko_back.domain.product.Condition;
 import nanukko.nanukko_back.domain.product.Image;
 import nanukko.nanukko_back.domain.product.Product;
 import nanukko.nanukko_back.domain.product.category.MiddleCategory;
 import nanukko.nanukko_back.domain.user.User;
+import nanukko.nanukko_back.dto.file.FileDTO;
+import nanukko.nanukko_back.dto.file.FileDirectoryType;
 import nanukko.nanukko_back.dto.page.PageResponseDTO;
 import nanukko.nanukko_back.dto.product.ProductRequestDto;
 import nanukko.nanukko_back.dto.user.UserProductDTO;
@@ -36,16 +39,18 @@ public class ProductService {
     private final FileService fileService;
     private final ProductRepository productRepository;
     private final WishlistRepository wishlistRepository;
+    private final ImageService imageService;
 
-    public Product createProduct(ProductRequestDto dto, List<MultipartFile> images) {
+    public Product createProduct(ProductRequestDto dto, List<MultipartFile> images, String userId) {
         // 현재 로그인한 사용자 조회
-        User seller = userRepository.findById("123").orElseThrow(() -> new IllegalArgumentException("사용자 찾기 실패"));
+        User seller = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("사용자 찾기 실패"));
 
         // 중분류 카테고리 조회
         MiddleCategory middleCategory = middleCategoryRepository.findById(dto.getMiddleId()).orElseThrow(() -> new IllegalArgumentException("카테고리 찾기 실패"));
 
         //이미지 업로드, URL 리스트
-        List<String> imgUrls = fileService.uploadProductImages(images, "products", 500);
+        List<FileDTO> imgUrls = imageService.uploadMultipleFiles(images, FileDirectoryType.SELL, seller.getUserId());
+//        List<String> imgUrls = fileService.uploadProductImages(images, "products", 500);
         Image image = new Image(imgUrls);
 
         //상품 엔티티 생성
@@ -58,7 +63,7 @@ public class ProductService {
                 .content(dto.getContent())
                 .images(image)
                 .thumbnailImage(image.getImage1())
-                .condition(dto.getCondition())
+                .condition(Condition.valueOf(dto.getCondition()))
                 .middleCategory(middleCategory)
                 .isPerson(dto.getIsPerson())
                 .isShipping(dto.getIsShipping())
@@ -90,7 +95,7 @@ public class ProductService {
             isWished = wishlistRepository.existsByUserAndProduct(user, product);
         }
         ProductRequestDto productRequestDto = modelMapper.map(product, ProductRequestDto.class);
-        productRequestDto.setWished(isWished);
+        productRequestDto.setIsWished(isWished);
         return productRequestDto;
     }
 

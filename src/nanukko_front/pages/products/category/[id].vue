@@ -32,10 +32,19 @@ const categoryName = computed(() => categoryNames[route.params.majorId] || '카�
 const fetchMiddleCategories = async () => {
     try {
         const response = await fetch(`http://localhost:8080/api/categories/middle/${route.params.majorId}`);
-        const data = await response.json();
-        middleCategories.value = data;
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const text = await response.text(); // 먼저 텍스트로 받음
+        if (!text) {
+            middleCategories.value = [];
+            return;
+        }
+        const data = JSON.parse(text); // 텍스트를 JSON으로 파싱
+        middleCategories.value = Array.isArray(data) ? data : [];
     } catch (error) {
         console.error('중분류 카테고리 로드 실패:', error);
+        middleCategories.value = [];
     }
 };
 
@@ -45,11 +54,33 @@ const fetchProducts = async () => {
         const url = selectedMiddleId.value
             ? `http://localhost:8080/api/products/middle?middleId=${selectedMiddleId.value}&page=${pageNumber.value}&size=${pageSize}`
             : `http://localhost:8080/api/products/major?majorId=${route.params.majorId}&page=${pageNumber.value}&size=${pageSize}`;
+
         const response = await fetch(url);
-        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const text = await response.text(); // 먼저 텍스트로 받음
+        if (!text) {
+            products.value = {
+                content: [],
+                totalElements: 0,
+                totalPages: 0,
+                first: true,
+                last: true
+            };
+            return;
+        }
+        const data = JSON.parse(text); // 텍스트를 JSON으로 파싱
         products.value = data;
     } catch (error) {
         console.error('상품 로드 실패:', error);
+        products.value = {
+            content: [],
+            totalElements: 0,
+            totalPages: 0,
+            first: true,
+            last: true
+        };
     } finally {
         loading.value = false;
     }
@@ -74,19 +105,24 @@ const changePage = (newPage) => {
     window.scrollTo(0, 0);
 };
 
-watch(() => route.params.majorId, () => {
-    selectedMiddleId.value = null;
-    pageNumber.value = 0;
-    fetchMiddleCategories();
-    fetchProducts();
+// route.params.majorId가 변경될 때마다 데이터를 새로 불러옴
+watch(() => route.params.majorId, (newVal) => {
+    if (newVal) {
+        selectedMiddleId.value = null;
+        pageNumber.value = 0;
+        fetchMiddleCategories();
+        fetchProducts();
+    }
 }, { immediate: true });
 
+// pageNumber가 변경될 때마다 상품 목록을 새로 불러옴
 watch(pageNumber, () => {
     fetchProducts();
 });
 </script>
 
 <template>
+    <!-- 템플릿 부분은 동일하게 유지 -->
     <div class="card-container mx-auto">
         <!-- 중분류 카테고리 목록 -->
         <div class="middle-categories">
@@ -152,6 +188,7 @@ watch(pageNumber, () => {
         </div>
     </div>
 </template>
+
 
 <style scoped>
 .card-container {

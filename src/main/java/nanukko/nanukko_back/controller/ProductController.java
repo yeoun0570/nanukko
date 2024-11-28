@@ -1,8 +1,8 @@
 package nanukko.nanukko_back.controller;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
@@ -35,26 +35,48 @@ import java.util.Map;
 public class ProductController {
     private final UserRepository userRepository;
     private final ProductService productService;
+    private final ObjectMapper objectMapper;
 
     @PostMapping("/new")
     public ResponseEntity<Map> createProduct(
-            @RequestPart(value = "productInfo") @Valid ProductRequestDto productRequestDto,
-            @RequestPart(value = "images") List<MultipartFile> images)
-    //@AuthenticationPrincipal UserDetails userDetails 로그인 유저 정보 받아오기*** 서비스 로직 수정 필***
-    {
+            @RequestBody @Valid ProductRequestDto productRequestDto,
+            @RequestParam("images") List<MultipartFile> images,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            HttpServletRequest request) {
+
         try {
-            Product newProduct = productService.createProduct(productRequestDto, images);
+            log.info("=== 상품 등록 요청 시작 ===");
+            log.info("Content-Type: {}", request.getContentType());
+            log.info("Authorization: {}", request.getHeader("Authorization"));
 
-            //알림, 이메일 전송 등 추가 로직 구현 가능
+            // RequestDto 전체 내용 로깅
+            log.info("ProductRequestDto: {}", objectMapper.writeValueAsString(productRequestDto));
 
-            return ResponseEntity.ok(
-                    Map.of(
-                            "productId", newProduct.getProductId(),
-                            "productName", newProduct.getProductName()
-                    )
+            // 이미지 정보 로깅
+            log.info("이미지 개수: {}", images.size());
+            images.forEach(image -> {
+                log.info("이미지 정보: fileName={}, contentType={}, size={}",
+                        image.getOriginalFilename(),
+                        image.getContentType(),
+                        image.getSize());
+            });
+
+            String userId = userDetails.getUsername();
+            log.info("인증된 사용자 ID: {}", userId);
+
+            Product newProduct = productService.createProduct(productRequestDto, images, userId);
+            log.info("생성된 상품: {}", newProduct);
+
+            Map<String, Object> response = Map.of(
+                    "productId", newProduct.getProductId(),
+                    "productName", newProduct.getProductName()
             );
+
+            log.info("응답 데이터: {}", response);
+            return ResponseEntity.ok(response);
+
         } catch (Exception e) {
-            log.error("상품 등록 에러: ", e);
+            log.error("상품 등록 에러", e);
             return ResponseEntity.internalServerError().build();
         }
     }
