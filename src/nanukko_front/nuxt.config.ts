@@ -83,8 +83,11 @@ export default defineNuxtConfig({
 
   // 플러그인
   plugins: [
-    { src: '~/plugins/socket', mode: 'client' }
+    { src: '~/plugins/socket', mode: 'client' },
   ],
 
-  compatibilityDate: '2024-11-17'
+  compatibilityDate: '2024-11-17',
+
+  css: ['~/assets/theme.css'], // CSS 파일 등록
+
 })
