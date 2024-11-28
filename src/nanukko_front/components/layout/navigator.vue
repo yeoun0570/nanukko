@@ -44,8 +44,31 @@ const goToNewProduct = async () => {
     //     return;
     // }
 
-    // 로그인된 경우 상품 등록 페이지로 이동
-    await navigateTo('/products/new');
+    // 인증 상태 확인 (예: JWT 또는 토큰 기반 인증)
+    // const token = $auth.getToken(); // 사용하는 인증 모듈에 맞게 변경 필요
+    // if (!token) {
+    //     // 인증되지 않은 경우 로그인 페이지로 이동
+    //     if (confirm('로그인이 필요한 서비스입니다. 로그인 페이지로 이동하시겠습니까?')) {
+    //         // 로그인 후 복귀할 수 있도록 현재 페이지 정보 전달
+    //         await navigateTo({
+    //             path: '/login',
+    //             query: {
+    //                 redirect: '/products/new',
+    //             },
+    //         });
+    //     }
+    //     return;
+    // }
+
+
+    const token = localStorage.getItem('authToken');
+
+
+    // 인증된 경우 상품 등록 페이지로 이동
+    await navigateTo({
+        path: '/products/new',
+        query: { authToken: token },
+    });
 }
 </script>
 
