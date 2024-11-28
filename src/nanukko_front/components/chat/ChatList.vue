@@ -135,26 +135,46 @@ const hasUnreadMessages = (room) => {
 
 // 마지막 메시지 표시
 const getLastMessage = (room) => {
-  const lastMessage = room.messages?.[room.messages.length - 1]
-  if (!lastMessage) return '새로운 채팅방입니다'
-
-  // 메시지 타입에 따른 표시
-  switch (lastMessage.type) {
-    case 'SYSTEM':
-      return '시스템 메시지'
-    case 'IMAGE':
-      return '🖼️ 사진'
-    case 'LOCATION':
-      return '📍 위치 공유'
-    default:
-      return lastMessage.content
+  // chatMessages 배열이 있고 길이가 0보다 큰지 확인
+  if (room.chatMessages && room.chatMessages.length > 0) {
+    // 마지막 메시지 가져오기
+    const lastMessage = room.chatMessages[room.chatMessages.length - 1]
+    
+    // 메시지 타입에 따른 표시
+    switch (lastMessage.type) {
+      case 'SYSTEM':
+        return '시스템 메시지'
+      case 'IMAGE':
+        return '🖼️ 사진'
+      case 'LOCATION':
+        return '📍 위치 공유'
+      default:
+        return lastMessage.chatMessage || '메시지 없음'
+    }
   }
+  
+  return '새로운 채팅방입니다'
 }
 
 // 메시지 시간 포맷팅
 const formatMessageTime = (timestamp) => {
   if (!timestamp) return ''
-  return formatTime(timestamp)
+  
+  const date = new Date(timestamp)
+  const now = new Date()
+  const diffHours = Math.abs(now - date) / 36e5 // 시간 차이
+
+  if (diffHours < 24) {
+    // 24시간 이내면 시:분
+    return date.toLocaleTimeString('ko-KR', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    })
+  } else {
+    // 24시간 이상이면 월/일
+    return `${date.getMonth() + 1}/${date.getDate()}`
+  }
 }
 </script>
 
