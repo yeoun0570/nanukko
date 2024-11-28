@@ -5,11 +5,13 @@ import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
+import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
+@Getter
 public class NcpConfig {
     @Value("${spring.s3.accessKey}")
     private String accessKey;
@@ -22,6 +24,9 @@ public class NcpConfig {
 
     @Value("${spring.s3.region}")
     private String region;
+
+    @Value("${spring.s3.bucket}")
+    private String bucket;
 
 
     @Bean

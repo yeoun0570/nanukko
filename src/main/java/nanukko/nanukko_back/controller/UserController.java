@@ -36,9 +36,11 @@ public class UserController {
     //사용자가 자신의 정보 수정
     @PostMapping("/modify")
     public ResponseEntity<UserInfoDTO> modifyUserInfo(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestBody UserInfoDTO userInfoDTO
     ) {
         try {
+            userInfoDTO.setUserId(userDetails.getUsername());
             log.info("Received data: {}", userInfoDTO);  // 로깅 추가
             UserInfoDTO modifiedUser = userService.modifyUserInfo(userInfoDTO);
             return ResponseEntity.ok(modifiedUser);
