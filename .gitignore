@@ -59,7 +59,7 @@ pnpm-lock.yaml
 build/
 target/
 coverage/
-public/
+#public/
 
 # Test outputs
 jest-test-results.json
