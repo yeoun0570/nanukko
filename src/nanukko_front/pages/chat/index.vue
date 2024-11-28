@@ -132,27 +132,4 @@ watch(error, (newError) => {
 <style scoped>
 @import '~/assets/chat/chat-index.css';
 
-.auth-required {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  padding: 2rem;
-  text-align: center;
-}
-
-.login-link {
-  margin-top: 1rem;
-  padding: 0.5rem 1rem;
-  background-color: #3b82f6;
-  color: white;
-  border-radius: 0.375rem;
-  text-decoration: none;
-  transition: background-color 0.2s;
-}
-
-.login-link:hover {
-  background-color: #2563eb;
-}
 </style>
