@@ -19,7 +19,7 @@
   .profile-image {
     width: 100px; /* 가로 크기 100px */
     height: 100px; /* 세로 크기 100px */
-    margin: 30 40 50 60; /* 상하 여백 자동, 아래 여백 40px */
+    margin: 30px 40px 50px 60px;
     border-radius: 50%; /* 원형으로 표현 */
     margin-bottom: 100px; /*아래 여백 100px*/
   }

@@ -19,7 +19,6 @@
     font-family: 'CustomFont', sans-serif;
   } */
 
-  @color {
       /*컬러사용*/
   /*primary-color*/
   /* Color Theme Swatches in Hex */
@@ -79,7 +78,7 @@
 
 .info-color-hex { color: #33b5e5; }
 .info-color-hover-hex { color: #0099CC; }
-}
+
 
 
 
