@@ -1,6 +1,5 @@
 package nanukko.nanukko_back.config;
 
-import jakarta.servlet.http.HttpServletRequest;
 import nanukko.nanukko_back.jwt.CustomLogoutFilter;
 import nanukko.nanukko_back.jwt.JWTFilter;
 import nanukko.nanukko_back.jwt.JWTUtil;
