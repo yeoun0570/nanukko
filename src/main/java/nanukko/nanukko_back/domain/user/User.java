@@ -24,6 +24,7 @@ public class User {
     private String userId; //사용자 아이디
 
     @Enumerated(EnumType.STRING)
+    @Column(length = 20) // 컬럼 길이를 충분히 설정
     @NotNull
     private Role role; //사용자 권한
 
@@ -118,7 +119,7 @@ public class User {
     public void updateReviewRate(double reviewRate) {
         this.reviewRate = reviewRate;
     }
-    
+
     //탈퇴를 위한 메서드
     public void cancelUser(){
         this.isCanceled = true;

@@ -1,19 +1,3 @@
-<script setup>
-import { ref } from "vue";
-import Notification from "../notification/Notification.vue"; // 알림 컴포넌트 임포트
-
-/* 검색창의 입력값을 관리하기 위한 상태 */
-const searchQuery = ref(""); // 검색어를 저장하는 반응형 변수
-
-/* 검색 동작을 처리하는 함수 */
-const onSearch = () => {
-  if (searchQuery.value.trim()) { // 검색어가 공백이 아닐 경우 실행
-    console.log("검색어:", searchQuery.value); // 검색어를 콘솔에 출력
-    alert(`You searched for: ${searchQuery.value}`); // 검색어를 알림창에 표시 (임시 처리)
-  }
-};
-</script>
-
 <template>
   <header class="header">
     <!-- 로고, 검색창, 액션 항목을 포함하는 컨테이너 -->
@@ -22,9 +6,9 @@ const onSearch = () => {
       <div class="logo">
         <img
           src="../../public/image/나누고_Logo_blue.png"
-          alt="nanukko Logo" 
+          alt="nanukko Logo"
           width="150"
-          height="80" 
+          height="80"
         />
       </div>
 
@@ -32,10 +16,10 @@ const onSearch = () => {
       <div class="search-bar">
         <!-- 검색어 입력 필드 -->
         <input
-          type="text" 
-          placeholder="검색어를 입력해주세요" 
-          v-model="searchQuery" 
-          @keyup.enter="onSearch" 
+          type="text"
+          placeholder="검색어를 입력해주세요"
+          v-model="searchQuery"
+          @keyup.enter="onSearch"
         />
         <!-- 검색 버튼 -->
         <button @click="onSearch">🔍</button> <!-- 클릭 시 검색 실행 -->
@@ -43,21 +27,57 @@ const onSearch = () => {
 
       <!-- 액션 섹션 (채팅, 알림, 로그인, 마이페이지 링크) -->
       <ul class="header-actions">
-        <!-- 채팅 페이지로 이동하는 링크 -->
-        <button @click="onClick">채팅</button>
-        <!-- 알림 아이콘과 알림 컴포넌트 -->
-        <li class="notification-container">알림<Notification /></li>
-        <!-- 로그인 페이지로 이동하는 링크 -->
-        <button @click="onClick">로그인</button>
-        <!-- 마이페이지로 이동하는 링크 -->
-        <button @click="onClick">마이페이지</button>
-        <!-- 판매 글 작성을 위한 페이지로 이동하는 링크 -->
-        <sell-button class="sell-button">판매하기</sell-button>
+        <li>
+        <button
+          v-if="isAuthenticted"
+          @click="navigateToChat"
+        >
+          채팅
+        </button>
+        <button
+          v-else
+          @click="showLoginAlert"
+        >
+          채팅
+        </button>
+      </li>
+        <li class="notification-cotainer"><Notification /></li>
+        <li><NuxtLink to="/auth/login">로그인</NuxtLink></li>
+        <li v-if="isAuthenticted"><NuxtLink to="/mypage">마이페이지</NuxtLink></li>
       </ul>
     </div>
   </header>
 </template>
 
+<script setup>
+import { ref } from "vue";
+import Notification from "../notification/Notification.vue";
+import { useAuth } from "~/composables/auth/useAuth";
+import { useRouter } from 'vue-router';
+
+const router = useRouter();
+const { userId, nickname, isAuthenticted } = useAuth();
+const showLoginAlert = () => {
+  alert('채팅을 이용하려면 로그인이 필요합니다.');
+  router.push('/auth/login');
+}
+
+const navigateToChat = () => {
+  router.push('/chat');
+}
+
+
+/* 검색창의 입력값을 관리하기 위한 상태 */
+const searchQuery = ref("");
+
+/* 검색 동작 */
+const onSearch = () => {
+  if (searchQuery.value.trim()) {
+    console.log("검색어:", searchQuery.value); // 실제로는 API 호출 또는 페이지 이동 처리
+    alert(`You searched for: ${searchQuery.value}`); // 임시 알림 처리
+  }
+};
+</script>
 <style scoped>
 /* 헤더 전체 레이아웃 */
 .header {

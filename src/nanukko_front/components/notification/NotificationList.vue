@@ -1,9 +1,8 @@
 <script setup>
-import axios from "axios";
 import NotificationItem from "./NotificationItem.vue";
-import { useApi } from "../../composables/useApi";
+import { useApi } from '@/composables/useApi';
 
-const { baseURL } = useApi();
+const api = useApi();
 
 const props = defineProps({
   notifications: {
@@ -61,7 +60,7 @@ const removeAllNotifications = async (type) => {
       data: { notificationIds },
     });
 
-    await axios.post(`${baseURL}/notice/removeAll`, notificationIds);
+    await api.post(`/notice/removeAll`, notificationIds);
 
     // 부모 컴포넌트에 삭제된 알림 ID 목록 전달
     emit("removeAll", notificationIds);

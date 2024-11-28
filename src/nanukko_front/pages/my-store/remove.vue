@@ -1,8 +1,7 @@
 <script setup>
-import axios from "axios";
-import { useApi } from "~/composables/useApi";
+import { useApi } from '@/composables/useApi';
 
-const { baseURL } = useApi();
+const api = useApi();
 
 const route = useRoute();
 
@@ -21,8 +20,8 @@ const removeUser = async () => {
   }
 
   try {
-    const response = await axios.post(
-      `${baseURL}/my-store/remove`,
+    const response = await api.post(
+      `/my-store/remove`,
       null,
       {
         params: {
@@ -30,11 +29,11 @@ const removeUser = async () => {
         },
       }
     );
-    userInfo.value = response.data;
+    userInfo.value = response;
 
-    console.log("Response:", response.data);
+    console.log("Response:", response);
     console.log("userInfo: ", userInfo.value);
-    if (response.data.canceled) {
+    if (response.canceled) {
       alert("회원 탈퇴가 완료되었습니다.");
       await navigateTo("/login");
     }

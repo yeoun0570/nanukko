@@ -6,10 +6,6 @@ const props = defineProps({
     type: Array,
     required: true,
   },
-  userId: {
-    type: String,
-    required: true,
-  },
 });
 
 const emit = defineEmits(["wishlist-updated"]);
@@ -21,7 +17,6 @@ const emit = defineEmits(["wishlist-updated"]);
       v-for="product in products"
       :key="product.productId"
       :product="product"
-      :userId="userId"
       @remove-success="$emit('wishlist-updated')"
     />
   </div>

@@ -1,138 +1,158 @@
-<script setup>
-import { ref, computed, onMounted, watch } from 'vue'
-import { useState } from 'nuxt/app'
-import { useChatRooms } from '~/composables/chat/useChatRooms'
-import { useStomp } from '~/composables/chat/useStomp'
-import ChatList from '~/components/chat/ChatList.vue'
-import ChatRoom from '~/components/chat/ChatRoom.vue'
-
-const route = useRoute()
-const userId = computed(() => route.query.userId)
-
-// useState를 사용하여 서버와 클라이언트 간의 상태 동기화
-const currentRoomId = useState('currentRoomId', () => null)
-const selectedProductId = useState('selectedProductId', () => null)
-
-// 채팅방 관련 상태와 함수들
-const {
-  chatRooms,
-  currentRoom,
-  loading,
-  error,
-  fetchChatRooms,
-  fetchChatRoom,
-  createOrEnterChatRoom
-} = useChatRooms()
-
-// STOMP 관련 상태와 함수들
-const { connected, connectChat, subscribeToChatRoom } = useStomp()
-
-
-// 채팅방 선택 처리
-
-const activeChatRoom = useState('activeChatRoom', () => null)  // 현재 활성화된 채팅방 정보
-
-// 채팅방 선택 처리
-const handleRoomSelect = async (roomData) => {
-  try {
-    const userIdValue = route.query.userId
-    console.log('채팅방 선택:', roomData, userIdValue)
-    
-    const { productId, chatRoomId } = roomData
-    
-    // 이전 채팅방 정보 초기화
-    activeChatRoom.value = null
-    currentRoomId.value = null
-    selectedProductId.value = null
-    
-    // 잠시 대기하여 컴포넌트가 완전히 언마운트되도록 함
-    await nextTick()
-    
-    // 새로운 채팅방 정보 설정
-    selectedProductId.value = productId?.toString()
-    currentRoomId.value = chatRoomId?.toString()
-
-    // 채팅방 생성 또는 입장
-    const chatRoomData = await createOrEnterChatRoom(productId, userIdValue)
-    console.log('채팅방 데이터 수신:', chatRoomData)
-    
-    // 채팅방 정보 저장
-    activeChatRoom.value = chatRoomData
-    
-  } catch (err) {
-    console.error('채팅방 선택 실패:', err)
-    currentRoomId.value = null
-    selectedProductId.value = null
-    activeChatRoom.value = null
-  }
-}
-
-// 컴포넌트 마운트 시 초기화
-onMounted(async () => {
-  if (!userId.value) return
-
-  try {
-    console.log('[Chat] 초기화 시작:', userId.value)
-    await fetchChatRooms(userId.value)
-    
-    // STOMP 연결
-    await connectChat(userId.value)
-    
-    // 실시간 업데이트 구독
-    subscribeToChatRoom('/topic/chat-updates', {
-      onMessage: async (message) => {
-        console.log('[Chat] 업데이트 수신:', message)
-        await fetchChatRooms(userId.value)
-        if (currentRoomId.value) {
-          await fetchChatRoom(currentRoomId.value)
-        }
-      }
-    })
-  } catch (err) {
-    console.error('[Chat] 초기화 실패:', err)
-  }
-})
-
-// URL 변경 감지
-watch(() => route.query.userId, async (newUserId) => {
-  if (newUserId) {
-    await fetchChatRooms(newUserId)
-  }
-}, { immediate: true })
-</script>
-
 <template>
   <div class="chat-layout">
     <ClientOnly>
-      <!-- 왼쪽: 채팅 목록 컴포넌트 -->
-      <ChatList
-        v-if="userId"
-        :chat-rooms="chatRooms"
-        :loading="loading"
-        :current-room-id="currentRoomId"
-        :user-id="userId"
-        :connected="connected"
-        @select-room="handleRoomSelect"
-      />
-      
-      <!-- 오른쪽: 채팅방 컴포넌트 -->
-      <div class="chat-room-section">
-        <ChatRoom
-          v-if="currentRoomId && activeChatRoom"
-          :key="currentRoomId"
-          :room-id="currentRoomId"
+      <template v-if="isAuthenticted">
+        <ChatList
+          :chat-rooms="chatRooms"
+          :loading="loading"
+          :current-room-id="currentRoomId"
           :user-id="userId"
-          :product-id="selectedProductId"
-          :current-room="activeChatRoom"
+          :connected="stompState.connected"
+          @select-room="handleRoomSelect"
         />
-        <div v-else class="empty-state">
-          <p>채팅방을 선택해주세요</p>
-        </div>
+        
+        <section class="chat-room-section">
+          <ChatRoom
+            v-if="currentRoomId && activeChatRoom && stompState.connected"
+            :key="currentRoomId"
+            :room-id="currentRoomId"
+            :user-id="userId"
+            :current-room="activeChatRoom"
+            :connected="stompState.connected"
+          />
+          <div v-else class="empty-state">
+            <p>채팅방을 선택해주세요</p>
+          </div>
+        </section>
+      </template>
+
+      <div v-else class="auth-required">
+        <p>채팅을 이용하려면 로그인이 필요합니다.</p>
+        <NuxtLink to="/auth/login" class="login-link">로그인하러 가기</NuxtLink>
       </div>
     </ClientOnly>
   </div>
 </template>
 
+<script setup>
+import { ref, onMounted, watch } from 'vue'
+import { useChatRooms } from '~/composables/chat/useChatRooms'
+import { useStomp } from '~/composables/chat/useStomp'
+import { useAuth } from '~/composables/auth/useAuth'
+
+// 상태 관리
+const currentRoomId = ref(null)
+const activeChatRoom = ref(null)
+const {isAuthenticted, userId} = useAuth()
+const stompState = useStomp()
+
+const { 
+  chatRooms, 
+  loading, 
+  error,
+  fetchChatRooms,
+  createOrEnterChatRoom 
+} = useChatRooms()
+
+// 초기화 함수
+const initializeChat = async () => {
+  console.log('채팅 초기화 중...로그인 상태', isAuthenticted)
+  
+  if (!isAuthenticted) {
+    console.log('Not authenticated')
+    return
+  }
+
+  try {
+    // STOMP 연결
+    await stompState.connectChat(userId)
+    
+    // 채팅방 목록 조회
+    await fetchChatRooms()
+  } catch (err) {
+    console.error('Chat initialization failed:', err)
+  }
+}
+
+// 채팅방 선택 처리
+const handleRoomSelect = async (roomData) => {
+  try {
+    // 현재 채팅방 상태 초기화
+    activeChatRoom.value = null
+    currentRoomId.value = null
+    
+    console.log('채팅방 선택:', roomData)
+    
+    const { productId, chatRoomId } = roomData
+    
+    // 채팅방 생성 또는 입장
+    const chatRoomData = await createOrEnterChatRoom(productId)
+    console.log('채팅방 생성/입장 결과:', chatRoomData)
+    
+    if (chatRoomData) {
+      activeChatRoom.value = chatRoomData
+      currentRoomId.value = chatRoomData.chatRoomId?.toString()
+    }
+  } catch (err) {
+    console.error('채팅방 선택 실패:', err)
+    currentRoomId.value = null
+    activeChatRoom.value = null
+  }
+}
+
+// 라이프사이클 훅
+onMounted(() => {
+  console.log('Chat component mounted')
+  initializeChat()
+})
+
+// 상태 변화 감지
+watch(() => isAuthenticted, (newValue) => {
+  console.log('Auth state changed:', newValue)
+  if (newValue) {
+    initializeChat()
+  }
+})
+
+watch(() => stompState.connected, (isConnected) => {
+  console.log('STOMP connection state changed:', isConnected)
+  if (isConnected && isAuthenticted) {
+    fetchChatRooms()
+  }
+})
+
+// 에러 감지
+watch(error, (newError) => {
+  if (newError) {
+    console.error('Chat error:', newError)
+  }
+})
+</script>
+
 <style scoped>
 @import '~/assets/chat/chat-index.css';
+
+.auth-required {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 2rem;
+  text-align: center;
+}
+
+.login-link {
+  margin-top: 1rem;
+  padding: 0.5rem 1rem;
+  background-color: #3b82f6;
+  color: white;
+  border-radius: 0.375rem;
+  text-decoration: none;
+  transition: background-color 0.2s;
+}
+
+.login-link:hover {
+  background-color: #2563eb;
+}
 </style>

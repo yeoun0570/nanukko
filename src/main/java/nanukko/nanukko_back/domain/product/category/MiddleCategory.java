@@ -13,7 +13,6 @@ import lombok.*;
 @Entity
 public class MiddleCategory {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "middle_id")
     private Long middleId; //중분류 카테고리 ID
 

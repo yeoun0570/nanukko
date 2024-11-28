@@ -19,6 +19,7 @@ import nanukko.nanukko_back.repository.OrderRepository;
 import nanukko.nanukko_back.repository.ProductRepository;
 import nanukko.nanukko_back.repository.UserRepository;
 import org.modelmapper.ModelMapper;
+import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.http.*;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -72,7 +73,7 @@ public class OrderService {
                 .addrDetail(buyer.getAddress().getAddrDetail())
                 .addrZipcode(buyer.getAddress().getAddrZipcode())
                 .mobile(buyer.getMobile())
-                .shippingFree(product.getShippingFree())
+                .shippingFree(product.getShippingFee())
                 .build();
     }
 
@@ -159,7 +160,7 @@ public class OrderService {
         //수수료 + 배송비 계산
         int productAmount = product.getPrice();
         int chargeAmount = (int) (productAmount * chargeRate);
-        int shippingFree = product.getShippingFree();
+        int shippingFree = product.getShippingFee();
         int totalAmount = productAmount + chargeAmount + shippingFree;
 
 
@@ -221,15 +222,14 @@ public class OrderService {
         Product product = productRepository.findByIdWithPessimisticLock(request.getProductId())
                 .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
 
+        log.info("결제 승인 시작 - paymentKey: {}, productId: {}, buyerId: {}",
+                request.getPaymentKey(), request.getProductId(), request.getBuyerId());
+
         // 상품 상태 검증
         // 락이 걸려있어 다른 트랜잭션에서 상태를 변경할 수 없으므로 안전하게 상태 검증 가능
         if (product.getStatus() != ProductStatus.SELLING) {
             throw new IllegalStateException("이미 판매된 상품입니다.");
         }
-
-        log.info("결제 승인 시작 - paymentKey: {}, productId: {}, buyerId: {}",
-                request.getPaymentKey(), request.getProductId(), request.getBuyerId());
-
 
         try {
             // 토스페이먼츠 API 요청용 데이터 생성
@@ -265,9 +265,12 @@ public class OrderService {
             } else {
                 throw new RuntimeException("결제 승인 실패");
             }
-            
+
             // 메서드 종료 시 트랜잭셔닝 커밋되면서 락이 해제됨
-            
+
+        } catch (PessimisticLockingFailureException e) {
+            log.error("락 타임아웃 발생", e);
+            throw e;
         } catch (Exception e) {
             //예외 발생 시 트랜잭션이 롤백되면서 락이 해제됨
             log.error("결제 승인 실패", e);
@@ -494,4 +497,19 @@ public class OrderService {
             }
         }
     }
+
+    /////////////////동시성 락 테스트용
+    @Transactional
+    public void holdLockForTest(Long productId) {
+        Product product = productRepository.findByIdWithPessimisticLock(productId)
+                .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
+        try {
+            log.info("락 유지 시작 - productId: {}", productId);
+            Thread.sleep(8000); // 트랜잭션 유지
+            log.info("락 유지 종료 - productId: {}", productId);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+    }
+
 }

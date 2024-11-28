@@ -5,9 +5,11 @@ import lombok.extern.log4j.Log4j2;
 import nanukko.nanukko_back.dto.order.OrderConfirmDTO;
 import nanukko.nanukko_back.dto.order.OrderPageDTO;
 import nanukko.nanukko_back.dto.order.OrderResponseDTO;
+import nanukko.nanukko_back.dto.user.CustomUserDetails;
 import nanukko.nanukko_back.exception.ErrorResponse;
 import nanukko.nanukko_back.service.OrderService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -17,15 +19,15 @@ import org.springframework.web.bind.annotation.*;
 public class OrderController {
     private final OrderService orderService;
 
+    //주문 구매내역
     @GetMapping("/page/{productId}")
     public ResponseEntity<OrderPageDTO> getOrderPage(
-            @PathVariable Long productId
-            //@AuthenticationPrincipal UserDetails userDetails  // 현재 로그인한 사용자(시큐리티)
-    ) {
-        OrderPageDTO dto = orderService.getOrder(productId, "buyer1"); //테스트를 위해 일단 사용자명을 임시로 정의
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long productId) {
+        String userId = userDetails.getUsername();
+        OrderPageDTO dto = orderService.getOrder(productId, userId); 
 
         return ResponseEntity.ok(dto);
-        // return ResponseEntity.ok(orderService.getOrderPage(productId, userDetails.getUsername())); //시큐리티로 사용자 가져와서 반환하기
     }
 
     //결제 상세정보 조회
