@@ -1,32 +1,24 @@
 <script setup>
-import axios from "axios";
-import { useApi } from "~/composables/useApi";
+import { useApi } from '@/composables/useApi';
 
-const { baseURL } = useApi();
+const api = useApi();
 
 const props = defineProps({
   product: {
     type: Object,
     required: true,
   },
-  userId: {
-    type: String,
-    required: true,
-  },
 });
 
 const emit = defineEmits(["remove-success"]);
 
-const router = useRouter();
-
 const removeWishlist = async () => {
   try {
-    await axios.post(
-      `${baseURL}/my-store/wishlist/remove`,
+    await api.post(
+      `/my-store/wishlist/remove`,
       props.product,
       {
         params: {
-          userId: props.userId,
           productId: props.product.productId,
         },
       }

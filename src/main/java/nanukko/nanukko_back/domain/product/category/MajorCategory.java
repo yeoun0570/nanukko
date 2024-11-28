@@ -14,7 +14,6 @@ import java.util.List;
 @Entity
 public class MajorCategory {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long majorId; // 대분류 카테고리 ID
 
     @NotNull

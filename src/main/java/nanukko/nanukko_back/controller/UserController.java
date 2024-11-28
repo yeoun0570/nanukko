@@ -12,6 +12,7 @@ import nanukko.nanukko_back.service.UserService;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -24,9 +25,10 @@ public class UserController {
     //사용자가 자신의 정보 조회
     @GetMapping("/info")
     public ResponseEntity<UserInfoDTO> getUserInfo(
-            //@AuthenticationPrincipal UserDetails userDetails  // 현재 로그인한 사용자(시큐리티)
-            @RequestParam String userId
+            @AuthenticationPrincipal CustomUserDetails userDetails  // 현재 로그인한 사용자(시큐리티)
     ) {
+        String userId = userDetails.getUsername();
+        log.info("userId: {}", userId);
         UserInfoDTO userInfoDTO = userService.getUserInfo(userId);
         return ResponseEntity.ok(userInfoDTO);
     }
@@ -34,7 +36,6 @@ public class UserController {
     //사용자가 자신의 정보 수정
     @PostMapping("/modify")
     public ResponseEntity<UserInfoDTO> modifyUserInfo(
-            //@AuthenticationPrincipal UserDetails userDetails  // 현재 로그인한 사용자(시큐리티)
             @RequestBody UserInfoDTO userInfoDTO
     ) {
         try {
@@ -50,12 +51,12 @@ public class UserController {
     //사용자가 판매중, 판매완료 상품 조회
     @GetMapping("/sale-products")
     public ResponseEntity<PageResponseDTO<UserProductDTO>> getSellProducts(
-            //@AuthenticationPrincipal UserDetails userDetails  // 현재 로그인한 사용자(시큐리티)
-            @RequestParam String userId,
+            @AuthenticationPrincipal CustomUserDetails userDetails,  // 현재 로그인한 사용자(시큐리티)
             @RequestParam(required = false, defaultValue = "SELLING") ProductStatus status,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int size
     ) {
+        String userId = userDetails.getUsername();
         Pageable pageable = PageRequest.of(page, size);
 
         PageResponseDTO<UserProductDTO> products = userService.getSellProducts(userId, status, pageable);
@@ -65,22 +66,22 @@ public class UserController {
     //사용자가 판매중인 상품 수정
     @PostMapping("/sale-products/modify")
     public ResponseEntity<UserSetProductDTO> modifyProduct(
-            //@AuthenticationPrincipal UserDetails userDetails  // 현재 로그인한 사용자(시큐리티)
-            @RequestParam String userId,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestParam Long productId,
             @RequestBody UserSetProductDTO productDTO
     ) {
+        String userId = userDetails.getUsername();
         UserSetProductDTO response = userService.modifyProduct(userId, productId, productDTO);
         return ResponseEntity.ok(response);
     }
 
     @PostMapping("/sale-products/remove")
     public ResponseEntity<?> removeProduct(
-            //@AuthenticationPrincipal UserDetails userDetails  // 현재 로그인한 사용자(시큐리티)
-            @RequestParam String userId,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestParam Long productId
     ) {
         try {
+            String userId = userDetails.getUsername();
             UserRemoveProductDTO response = userService.removeProduct(userId, productId);
             return ResponseEntity.ok(response);
         } catch (IllegalArgumentException | IllegalStateException e) {
@@ -93,12 +94,12 @@ public class UserController {
     //사용자가 구매중, 구매완료 상품 조회
     @GetMapping("/buy-products")
     public ResponseEntity<PageResponseDTO<UserOrderDTO>> getOrderProducts(
-            //@AuthenticationPrincipal UserDetails userDetails  // 현재 로그인한 사용자(시큐리티)
-            @RequestParam String userId,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestParam(required = false, defaultValue = "ESCROW_HOLDING") PaymentStatus status,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int size
     ) {
+        String userId = userDetails.getUsername();
         Pageable pageable = PageRequest.of(page, size);
 
         PageResponseDTO<UserOrderDTO> products = userService.getOrderProducts(userId, status, pageable);
@@ -108,11 +109,11 @@ public class UserController {
     //찜 목록 조회
     @GetMapping("/wishlist")
     public ResponseEntity<PageResponseDTO<UserWishlistDTO>> getWishlists(
-            //@AuthenticationPrincipal UserDetails userDetails  // 현재 로그인한 사용자(시큐리티)
-            @RequestParam String userId,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int size
     ) {
+        String userId = userDetails.getUsername();
         Pageable pageable = PageRequest.of(page, size);
 
         PageResponseDTO<UserWishlistDTO> wishlists = userService.getWishlists(userId, pageable);
@@ -122,10 +123,10 @@ public class UserController {
     //찜 목록에서 제거
     @PostMapping("/wishlist/remove")
     public ResponseEntity<Void> removeWishlist(
-            //@AuthenticationPrincipal UserDetails userDetails  // 현재 로그인한 사용자(시큐리티)
-            @RequestParam String userId,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestParam Long productId
     ) {
+        String userId = userDetails.getUsername();
         userService.removeWishlist(userId, productId);
         return ResponseEntity.ok().build();
     }
@@ -133,11 +134,11 @@ public class UserController {
     //후기 조회
     @GetMapping("/reviews")
     public ResponseEntity<PageResponseDTO<ReviewInMyStoreDTO>> getReview(
-            //@AuthenticationPrincipal UserDetails userDetails  // 현재 로그인한 사용자(시큐리티)
-            @RequestParam String userId,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "1") int size
     ) {
+        String userId = userDetails.getUsername();
         Pageable pageable = PageRequest.of(page, size);
 
         PageResponseDTO<ReviewInMyStoreDTO> reviews = userService.getReview(userId, pageable);
@@ -147,10 +148,10 @@ public class UserController {
     //탈퇴하기
     @PostMapping("/remove")
     public ResponseEntity<?> removeUser(
-            //@AuthenticationPrincipal UserDetails userDetails  // 현재 로그인한 사용자(시큐리티)
-            @RequestParam String userId
+            @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         try {
+            String userId = userDetails.getUsername();
             UserRemoveDTO result = userService.removeUser(userId);
             return ResponseEntity.ok(result);
         } catch (IllegalArgumentException | IllegalStateException e) {

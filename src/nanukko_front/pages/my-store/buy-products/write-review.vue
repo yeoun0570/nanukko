@@ -1,19 +1,19 @@
 <script setup>
-import axios from "axios";
 import StarRating from "~/components/my-store/buy-products/StarRating.vue";
-import { useApi } from "~/composables/useApi";
+import { useAuth } from "~/composables/auth/useAuth";
+import { useApi } from '@/composables/useApi';
+
+const api = useApi();
 
 definePageMeta({
-  layout: 'mystore'
+  layout: "mystore",
 });
 
-
-const { baseURL } = useApi();
-
+const userId = useAuth();
 const route = useRoute();
 
 const reviewInfo = ref({
-  authorId: route.query.userId,
+  authorId: userId,
   orderId: route.query.orderId,
   productName: route.query.productName,
   thumbnailImage: route.query.thumbnailImage,
@@ -46,7 +46,7 @@ const writeReview = async () => {
       rate: reviewInfo.value.rate,
     };
 
-    await axios.post(`${baseURL}/review/write`, reviewData);
+    await api.post(`/review/write`, reviewData);
     alert("리뷰가 작성되었습니다.");
     navigateTo("/my-store/buy-products");
   } catch (error) {

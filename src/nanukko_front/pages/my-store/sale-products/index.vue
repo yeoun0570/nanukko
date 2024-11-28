@@ -1,19 +1,13 @@
 <script setup>
-import axios from "axios";
 import ProductsGrid from "~/components/my-store/sale-products/ProductsGrid.vue";
 import StatusFilter from "~/components/my-store/sale-products/StatusFilter.vue";
 import Pageination from "~/components/Pagination.vue";
-import { useApi } from "~/composables/useApi";
 
 definePageMeta({
   layout: 'mystore'
 });
 
-
-const { baseURL } = useApi();
-
 const userProducts = ref([]);
-const userId = "seller1"; //추후에 로그인 한 유저로 변경
 const currentStatus = ref("SELLING"); //상태 기본값 설정
 const currentPage = ref(0);
 const totalPages = ref(0);
@@ -23,20 +17,19 @@ const pageSize = ref(5);
 const loadUserProducts = async (page = 0) => {
   try {
     //params 객체를 사용하면 Axios가 파라미터들을 자동으로 인코딩해줌
-    const response = await axios.get(
-      `${baseURL}/my-store/sale-products`,
+    const response = await get(
+      `/my-store/sale-products`,
       {
         params: {
-          userId: userId,
           status: currentStatus.value,
           page: page,
           size: pageSize.value,
         },
       }
     );
-    userProducts.value = response.data.content; //백의 PageResponseDTO의 실제 데이터를 가리키는 content
-    totalPages.value = response.data.totalPages; //백의 PageResponseDTO의 전체 페이지수 = totalPages
-    currentPage.value = response.data.currentPage; //백의 PageResponseDTO의 현재 페이지 = currentPage
+    userProducts.value = response.content; //백의 PageResponseDTO의 실제 데이터를 가리키는 content
+    totalPages.value = response.totalPages; //백의 PageResponseDTO의 전체 페이지수 = totalPages
+    currentPage.value = response.currentPage; //백의 PageResponseDTO의 현재 페이지 = currentPage
     console.log("데이터 로드됨: ", userProducts.value);
   } catch (error) {
     console.error("로딩중 에러: ", error);
@@ -73,7 +66,6 @@ onMounted(() => {
 
     <ProductsGrid
       :products="userProducts"
-      :userId="userId"
       @products-updated="loadUserProducts"
     />
 

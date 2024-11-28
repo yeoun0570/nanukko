@@ -1,72 +1,100 @@
 <template>
-    <!-- 네비게이션 바 -->
     <nav class="navbar">
-      <ul>
-        <!-- NuxtLink로 카테고리 페이지 이동  -->
-        <li><NuxtLink to="/first">0~3개월</NuxtLink></li> 
-        <li><NuxtLink to="/second">3~6개월</NuxtLink></li>
-        <li><NuxtLink to="/">6~12개월</NuxtLink></li>
-        <li><NuxtLink to="/">만 1세</NuxtLink></li>
-        <li><NuxtLink to="/">만 2세</NuxtLink></li>
-        <li><NuxtLink to="/">만 3세</NuxtLink></li>
-        <li><NuxtLink to="/">만 4세</NuxtLink></li>
-        <li><NuxtLink to="/" class="text">만 5세</NuxtLink></li>
-      </ul>
-      <button class="sell-button">판매하기</button>
+        <ul>
+            <li>
+                <NuxtLink to="/products/category/100000">0~3개월</NuxtLink>
+            </li>
+            <li>
+                <NuxtLink to="/products/category/200000">3~6개월</NuxtLink>
+            </li>
+            <li>
+                <NuxtLink to="/products/category/300000">6~12개월</NuxtLink>
+            </li>
+            <li>
+                <NuxtLink to="/products/category/400000">만1세</NuxtLink>
+            </li>
+            <li>
+                <NuxtLink to="/products/category/500000">만2세</NuxtLink>
+            </li>
+            <li>
+                <NuxtLink to="/products/category/600000">유아</NuxtLink>
+            </li>
+        </ul>
+        <button class="sell-button" @click="goToNewProduct">판매하기</button>
     </nav>
-    
-  </template>
-  
-  <style scoped>
-  /* 네비게이션 바 */
-  .navbar {
+</template>
 
+<script setup>
+const { $auth } = useNuxtApp(); // 인증 관련 플러그인이 있다고 가정
+const router = useRouter();
+
+const goToNewProduct = async () => {
+    // 로그인 상태 확인
+    // if (!$auth.loggedIn) {  // 실제 구현에서는 사용하는 인증 시스템에 맞게 수정 필요
+    //     // 로그인되지 않은 경우
+    //     if (confirm('로그인이 필요한 서비스입니다. 로그인 페이지로 이동하시겠습니까?')) {
+    //         // 현재 페이지 URL을 쿼리 파라미터로 전달하여 로그인 후 복귀할 수 있도록 함
+    //         await navigateTo({
+    //             path: '/login',
+    //             query: {
+    //                 redirect: '/products/new'
+    //             }
+    //         });
+    //     }
+    //     return;
+    // }
+
+    // 로그인된 경우 상품 등록 페이지로 이동
+    await navigateTo('/products/new');
+}
+</script>
+
+<style scoped>
+.navbar {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
-    background-color: white;/* 배경색 */
-    padding: 0.5rem; /* 상하좌우 여백 */
+    background-color: white;
+    padding: 0.5rem;
     margin: 0px 17rem;
-  }
-  
-  .navbar ul {
-    display: flex; /* 메뉴 항목을 가로로 정렬 */
-    list-style: none; /* 기본 리스트 스타일 제거 */
-    justify-content: center; /* 메뉴를 가운데 정렬 */
-    margin: 0; /* 외부 여백 제거 */
-    padding: 0; /* 내부 여백 제거 */
-  }
-  
-  .navbar li {
-    margin: 0 1.2rem; /* 각 메뉴 항목 사이에 여백 추가 */
-  }
-  
-  .navbar a {
-    color: black; /* 링크 텍스트를 흰색으로 설정 */
-    text-decoration: none; /* 기본 밑줄 제거 */
-  }
-  
-  .navbar a:hover {
-    text-decoration: underline; /* 링크에 마우스를 올리면 밑줄 표시 */
-  }
-
-  /* 판매하기 버튼 */
-.sell-button {
-    padding: 0.8rem 1.5rem;
-  border: none;
-  background-color: #4c6ef5;
-  color: white;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
 }
 
-
-.sell-button:hover {
-  background-color: #3b5bdb; /* 어두운 파란색 */
+.navbar ul {
+    display: flex;
+    list-style: none;
+    justify-content: center;
+    margin: 0;
+    padding: 0;
 }
-.text{
+
+.navbar li {
+    margin: 0 1.2rem;
+}
+
+.navbar a {
+    color: black;
     text-decoration: none;
 }
-  </style>
-  
+
+.navbar a:hover {
+    text-decoration: underline;
+}
+
+.sell-button {
+    padding: 0.8rem 1.5rem;
+    border: none;
+    background-color: #4c6ef5;
+    color: white;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.sell-button:hover {
+    background-color: #3b5bdb;
+}
+
+.text {
+    text-decoration: none;
+}
+</style>

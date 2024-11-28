@@ -17,22 +17,20 @@ public class NcpConfig {
     @Value("${spring.s3.secretKey}")
     private String secretKey;
 
-    @Value("${spring.s3.bucket}")
-    private String bucketName;
+    @Value("${spring.s3.endpoint}")
+    private String endpoint;
 
     @Value("${spring.s3.region}")
-    private String regionName;
+    private String region;
 
-    @Value("${spring.s3.endpoint}")
-    private String endPoint;
 
     @Bean
     public AmazonS3Client amazonS3Client() {
-        BasicAWSCredentials basicAWSCredentials = new BasicAWSCredentials(accessKey, secretKey);
         return (AmazonS3Client) AmazonS3ClientBuilder
                 .standard()
-                .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(endPoint, regionName))
-                .withCredentials(new AWSStaticCredentialsProvider(basicAWSCredentials))
+                .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(endpoint, region))
+                .withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials(accessKey, secretKey)))
+                .withPathStyleAccessEnabled(true)
                 .build();
     }
 }

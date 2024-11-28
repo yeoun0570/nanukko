@@ -1,22 +1,20 @@
 <script setup>
-import axios from "axios";
 import AddressInfo from "~/components/my-store/userInfo/AddressInfo.vue";
 import BasicInfo from "~/components/my-store/userInfo/BasicInfo.vue";
 import KidsInfo from "~/components/my-store/userInfo/KidsInfo.vue";
 import LoginInfo from "~/components/my-store/userInfo/LoginInfo.vue";
 import ProfileImage from "~/components/my-store/userInfo/ProfileImage.vue";
-import { useApi } from "~/composables/useApi";
+import { useApi } from "@/composables/useApi";
+
+const api = useApi();
 
 definePageMeta({
-  layout: 'mystore'
+  layout: "mystore",
 });
-
-const { baseURL } = useApi();
 
 const userInfo = ref({});
 const loading = ref(true);
 const error = ref(null);
-const userId = "buyer1"; //테스트를 위한 사용자 아이디 임의로 설정
 const isEditing = ref(false); //수정 모드
 
 // 원본 데이터 저장용 ref 추가
@@ -42,7 +40,6 @@ const updateUserInfo = async () => {
     error.value = null;
 
     const updateData = {
-      userId: userId,
       password: userInfo.value.password,
       nickname: userInfo.value.nickname,
       mobile: userInfo.value.mobile,
@@ -61,10 +58,7 @@ const updateUserInfo = async () => {
 
     console.log(updateData);
 
-    await axios.post(
-      `${baseURL}/my-store/modify`,
-      updateData
-    );
+    await api.post(`/my-store/modify`, updateData);
     alert("정보가 성공적으로 수정되었습니다.");
     isEditing.value = false; // 수정 모드 종료
     loadUserInfo(); // 새로운 정보 로드
@@ -81,17 +75,11 @@ const loadUserInfo = async () => {
   try {
     loading.value = true;
     error.value = null;
-    const response = await axios.get(
-      `${baseURL}/my-store/info`,
-      {
-        params: {
-          userId: userId,
-        },
-      }
-    );
-    console.log("받아온 데이터:", response.data); // 데이터 확인
-    userInfo.value = response.data;
-    originalUserInfo.value = JSON.parse(JSON.stringify(response.data));
+    const response = await api.get(`/my-store/info`);
+    
+    console.log("받아온 데이터:", response); // 데이터 확인
+    userInfo.value = response;
+    originalUserInfo.value = { ...response };
   } catch (err) {
     error.value = "사용자 정보를 불러오는데 실패했습니다.";
     console.error("Error loading user info:", err);
@@ -119,7 +107,7 @@ onMounted(() => {
           수정
         </button>
       </div>
-      <LoginInfo :userId="userId" :password="userInfo.password"></LoginInfo>
+      <LoginInfo :userId="userInfo.userId" :password="userInfo.password"></LoginInfo>
       <BasicInfo
         v-model:nickname="userInfo.nickname"
         v-model:email="userInfo.email"
@@ -148,7 +136,10 @@ onMounted(() => {
     </div>
     <br />
 
-    <NuxtLink v-if="!isEditing" :to="`/my-store/remove?userId=${userId}`" class="remove-user"
+    <NuxtLink
+      v-if="!isEditing"
+      :to="`/my-store/remove?userId=${userInfo.userId}`"
+      class="remove-user"
       >탈퇴하기</NuxtLink
     >
   </div>

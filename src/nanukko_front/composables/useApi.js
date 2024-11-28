@@ -81,51 +81,7 @@ export const useApi = () => {
       throw error
     }
   }
-  // const commonFetch = async (url, options = {}) => {
-    
-  //   try {
-  //     // 기본 옵션 설정
-  //     const baseOptions = {
-  //       credentials: 'include', //모든 요청에 쿠키 포함
-  //       headers:{
-  //         'Content-Type': 'application/json'
-  //       }
-  //     };
-  //     // 공개 API가 아닌 경우에만 Authorization 헤더 추가
-  //     if(!isPublicPath(url)){
-  //       baseOptions.headers.Authorization = `Bearer ${localStorage.getItem('access_token')}`;
-  //     }
 
-  //     //baseURL 자동 추가(http로 시작하면 입력 경로 그대로 쓰고 아니면 baseURL 추가해서 url 설정)
-  //     const fullUrl = url.startsWith('http') ? url : `${baseURL}${url}`;
-
-  //     // 옵션 병합 (사용자 정의 옵션 우선)
-  //     const finalOptions = {
-  //       ...baseOptions,
-  //       ...options,
-  //       headers: {
-  //         ...baseOptions.headers,
-  //         ...options.headers
-  //       }
-  //     };
-
-  //     const response = await fetch(fullUrl, finalOptions);
-
-  //      // 401 에러 처리 (공개 API 제외)
-  //     if (response.status === 401 && !isPublicPath(fullUrl)) {
-  //       // 인증 실패 처리 (로그인 페이지로 리다이렉트 등)
-  //       alert('로그인 후 이용해주세요.');// 추후 토스트 팝업 리팩토링하면 좋을 듯
-  //       window.location.href = '/auth/login';
-  //       throw new Error('인증이 필요합니다.');
-  //     }
-
-  //     return await response.json();
-
-  //   } catch (error) {
-  //     console.error('API 요청 실패:', error);
-  //     throw error;
-  //   }
-  // };
 
    /**
    * GET 요청 메서드

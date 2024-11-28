@@ -32,7 +32,7 @@ public class UserSetProductDTO {
     private boolean isCompanion; //동행인 여부 -> true면 동행인 동행, false면 동행X
     private boolean companionGender;
     private boolean freeShipping; //배송비 포함 여부 -> true면 판매상품 가격에 배송비 포함, false면 포함X
-    private int shippingFree; //배송비
+    private int shippingFee; //배송비
 
 
 

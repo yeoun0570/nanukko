@@ -6,10 +6,6 @@ const props = defineProps({
     type: Array,
     required: true,
   },
-  userId: {
-    type: String,
-    required: true,
-  },
 });
 
 const emit = defineEmits(["orders-updated"]);
@@ -21,7 +17,6 @@ const emit = defineEmits(["orders-updated"]);
       v-for="order in orders"
       :key="order.orderId"
       :order="order"
-      :userId="userId"
       @order-updated="$emit('orders-updated')"
     />
   </div>
