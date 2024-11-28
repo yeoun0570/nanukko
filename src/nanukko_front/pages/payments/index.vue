@@ -4,8 +4,10 @@ import DeliverySection from "~/components/payments/DeliverySection.vue";
 import PaymentAmountSection from "~/components/payments/PaymentAmountSection.vue";
 import PaymentButton from "~/components/payments/PaymentButton.vue";
 import { useApi } from '@/composables/useApi';
+import { useAuth } from "~/composables/auth/useAuth";
 
 const api = useApi();
+const auth = useAuth();
 
 //추후에 상세페이지에서 라우팅 받으면 받아야 될 값
 const route = useRoute();
@@ -54,7 +56,7 @@ const startPayment = async () => {
 
     const paymentInfo = {
       productId: productId,
-      buyerId: "buyer1", // 추후에 로그인한 사용자로 변경
+      buyerId: auth.userId.value, // 추후에 로그인한 사용자로 변경
       amount: orderData.value.totalAmount,
       productName: orderData.value.productName,
     };

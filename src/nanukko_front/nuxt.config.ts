@@ -85,7 +85,7 @@ export default defineNuxtConfig({
   // 플러그인
   plugins: [
     { src: '~/plugins/socket', mode: 'client' },
-    { src: '~/plugins/toastification.js'}//토스트 팝업
+    { src: '~/plugins/toastification.js'},//토스트 팝업
   ],
 
 
@@ -96,6 +96,7 @@ export default defineNuxtConfig({
     'vuetify/styles', // Vuetify 스타일 로드
     '@mdi/font/css/materialdesignicons.min.css', // MDI 아이콘 스타일
     'vue-toastification/dist/index.css', // 토스트 팝업
+      '~/assets/theme.css',
   ],
 
 });

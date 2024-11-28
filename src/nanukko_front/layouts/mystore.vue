@@ -34,6 +34,7 @@ import Sidebar from "~/components/layout/sidebar.vue";
   margin: 0 auto;
   width: 100%;
   padding: 20px;
+
 }
 
 .sidebar {
