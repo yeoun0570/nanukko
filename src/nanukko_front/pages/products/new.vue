@@ -3,6 +3,11 @@ import { ref } from 'vue';
 import axios from 'axios';
 import ImageUploader from '~/components/products/products-new/ImageUploader.vue';
 import ProductForm from '~/components/products/products-new/ProductForm.vue';
+import { useRoute } from 'vue-router'; //추가
+
+//추가
+const route = useRoute();
+const token = route.query.authToken;
 
 const product = ref({
     // 기본 정보 필드
@@ -42,6 +47,16 @@ const product = ref({
     majorName: '',           // 대분류 이름 (UI용)
     middleName: '',          // 중분류 이름 (UI용)
 });
+
+//추가
+const fetchProductData = async () => {
+    const response = await $fetch('/api/products', {
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+    });
+    return response;
+};
 
 // 상품 등록
 const submitProduct = async () => {
