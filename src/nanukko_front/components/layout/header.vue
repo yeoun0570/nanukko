@@ -4,12 +4,14 @@
     <div class="header-container">
       <!-- 로고 -->
       <div class="logo">
+        <NuxtLink to="/">
         <img
           src="../../public/image/나누고_Logo_blue.png"
           alt="nanukko Logo"
           width="150"
           height="80"
         />
+      </NuxtLink>
       </div>
       <!-- 검색창 -->
       <div class="search-bar">
@@ -39,8 +41,9 @@
         </button>
       </li>
         <li class="notification-cotainer"><Notification /></li>
-        <li><NuxtLink to="/auth/login">로그인</NuxtLink></li>
+        <li v-if="!isAuthenticted"><NuxtLink to="/auth/login">로그인</NuxtLink></li>
         <li v-if="isAuthenticted"><NuxtLink to="/mypage">마이페이지</NuxtLink></li>
+        <li v-if="isAuthenticted"><button @click="doLogout">로그아웃</button></li>
       </ul>
     </div>
   </header>
@@ -51,17 +54,38 @@ import { ref } from "vue";
 import Notification from "../notification/Notification.vue";
 import { useAuth } from "~/composables/auth/useAuth";
 import { useRouter } from 'vue-router';
+import { useToast } from "vue-toastification";
 
 const router = useRouter();
-const { userId, nickname, isAuthenticted } = useAuth();
+const { userId, nickname, isAuthenticted, logout } = useAuth();
 const showLoginAlert = () => {
   alert('채팅을 이용하려면 로그인이 필요합니다.');
   router.push('/auth/login');
 }
 
+
 const navigateToChat = () => {
   router.push('/chat');
 }
+
+const toast = useToast();
+
+// 로그아웃
+const doLogout = ()=>{
+  
+  logout();
+  //알림 팝업
+  toast.info("로그아웃되었습니다.", {
+  timeout: 3000, // 3초 동안 유지
+  position: "bottom-center", // 화면 중앙 하단
+  icon: "🔒", // 커스텀 아이콘
+  hideProgressBar: true, // 진행 바 숨기기
+});
+
+
+  router.push('/auth/login');
+};
+
 
 
 /* 검색창의 입력값을 관리하기 위한 상태 */

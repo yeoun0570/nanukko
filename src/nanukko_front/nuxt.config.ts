@@ -84,8 +84,14 @@ export default defineNuxtConfig({
 
   // 플러그인
   plugins: [
-    { src: '~/plugins/socket', mode: 'client' }
+    { src: '~/plugins/socket', mode: 'client' },
+    { src: '~/plugins/toastification.js'}//토스트 팝업
   ],
+
+  
+
+  //토스트 팝업 css
+  css: ["vue-toastification/dist/index.css"],
 
   compatibilityDate: '2024-11-17'
 })

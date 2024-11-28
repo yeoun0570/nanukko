@@ -70,7 +70,7 @@ const initializeChat = async () => {
     // 채팅방 목록 조회
     await fetchChatRooms()
   } catch (err) {
-    console.error('Chat initialization failed:', err)
+    console.error('채팅방 초기화 실패:', err)
   }
 }
 
