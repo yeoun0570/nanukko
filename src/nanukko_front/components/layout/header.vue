@@ -28,7 +28,7 @@
       <ul class="header-actions">
         <li>
         <button
-          v-if="isAuthenticted"
+          v-if="!isAuthenticted"
           @click="navigateToChat"
         >
           채팅
@@ -41,9 +41,9 @@
         </button>
       </li>
         <li class="notification-cotainer"><Notification /></li>
-        <li v-if="!isAuthenticted"><NuxtLink to="/auth/login">로그인</NuxtLink></li>
-        <li v-if="isAuthenticted"><NuxtLink to="/mypage">마이페이지</NuxtLink></li>
-        <li v-if="isAuthenticted"><button @click="doLogout">로그아웃</button></li>
+        <li v-if="isAuthenticted"><NuxtLink to="/auth/login">로그인</NuxtLink></li>
+        <li v-if="!isAuthenticted"><NuxtLink to="/mypage">마이페이지</NuxtLink></li>
+        <li v-if="!isAuthenticted"><button @click="doLogout">로그아웃</button></li>
       </ul>
     </div>
   </header>
