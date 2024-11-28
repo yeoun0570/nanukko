@@ -7,7 +7,7 @@ import { useApi } from '@/composables/useApi';
 import { useAuth } from "~/composables/auth/useAuth";
 
 const api = useApi();
-const auth = useApi();
+const auth = useAuth();
 
 //추후에 상세페이지에서 라우팅 받으면 받아야 될 값
 const route = useRoute();
