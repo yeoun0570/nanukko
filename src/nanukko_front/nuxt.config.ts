@@ -79,7 +79,7 @@ export default defineNuxtConfig({
 
   // 빌드 설정
   build: {
-    transpile: ['@stomp/stompjs']
+    transpile: ["@stomp/stompjs", "vuetify"],
   },
 
   // 플러그인
@@ -87,5 +87,12 @@ export default defineNuxtConfig({
     { src: '~/plugins/socket', mode: 'client' }
   ],
 
-  compatibilityDate: '2024-11-17'
-})
+  compatibilityDate: "2024-11-17",
+
+  //css
+  css: [
+    'vuetify/styles', // Vuetify 스타일 로드
+    '@mdi/font/css/materialdesignicons.min.css', // MDI 아이콘 스타일
+  ],
+
+});
