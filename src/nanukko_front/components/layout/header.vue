@@ -15,6 +15,23 @@ const navigateToChat = () => {
   router.push('/chat');
 }
 
+const toast = useToast();
+
+// 로그아웃
+const doLogout = ()=>{
+
+  logout();
+  //알림 팝업
+  toast.info("로그아웃되었습니다.", {
+    timeout: 3000, // 3초 동안 유지
+    position: "bottom-center", // 화면 중앙 하단
+    icon: "🔒", // 커스텀 아이콘
+    hideProgressBar: true, // 진행 바 숨기기
+  });
+
+
+  router.push('/auth/login');
+};
 
 /* 검색창의 입력값을 관리하기 위한 상태 */
 const searchQuery = ref("");
@@ -34,12 +51,14 @@ const onSearch = () => {
     <div class="header-container">
       <!-- 로고 섹션 -->
       <div class="logo">
+        <NuxtLink to="/">
         <img
           src="../../public/image/나누고_Logo_blue.png"
           alt="nanukko Logo"
           width="150"
           height="80"
         />
+      </NuxtLink>
       </div>
 
       <!-- 검색창 섹션 -->
@@ -59,7 +78,7 @@ const onSearch = () => {
       <ul class="header-actions">
         <li>
         <button
-          v-if="isAuthenticted"
+          v-if="!isAuthenticted"
           @click="navigateToChat"
         >
           채팅
@@ -72,8 +91,9 @@ const onSearch = () => {
         </button>
       </li>
         <li class="notification-cotainer"><Notification /></li>
-        <button><NuxtLink to="/auth/login">로그인</NuxtLink></button>
-        <button v-if="isAuthenticted"><NuxtLink to="/mypage">마이페이지</NuxtLink></button>
+        <button v-if="isAuthenticted"><NuxtLink to="/auth/login">로그인</NuxtLink></button>
+        <button v-if="!isAuthenticted"><NuxtLink to="/mypage">마이페이지</NuxtLink></button>
+        <button v-if="!isAuthenticted" @click="doLogout">로그아웃</button>
       <!-- 판매 글 작성을 위한 페이지로 이동하는 링크 -->
         <sell-button class="sell-button">판매하기</sell-button>
       </ul>
@@ -250,4 +270,3 @@ const onSearch = () => {
   white-space: nowrap;
 }
 </style>
-

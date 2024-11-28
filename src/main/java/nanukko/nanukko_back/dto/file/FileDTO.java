@@ -10,7 +10,6 @@ import lombok.ToString;
 @ToString
 @Builder
 public class FileDTO {
-    private String userId;
     private String originalFileName;
     private String uploadFileName;
     private String uploadFilePath;

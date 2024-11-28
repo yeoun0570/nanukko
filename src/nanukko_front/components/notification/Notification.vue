@@ -3,10 +3,11 @@ import NotificationIcon from "./NotificationIcon.vue";
 import NotificationList from "./NotificationList.vue";
 import { useApi } from "@/composables/useApi";
 import { useAuth } from "~/composables/auth/useAuth";
+import { useURL } from "~/composables/useURL";
 
 const api = useApi();
 const auth = useAuth();
-const baseURL = "http://localhost:8080/api";
+const { baseURL } = useURL();
 
 // 알림 목록을 저장할 배열
 const notifications = ref([]);
