@@ -59,6 +59,7 @@ public class UserController {
             @RequestParam(defaultValue = "5") int size
     ) {
         String userId = userDetails.getUsername();
+        log.info("Authenticated user: {}, page: {}, size: {}", userDetails.getUsername(), page, size);  // 인증된 사용자 정보 로깅
         Pageable pageable = PageRequest.of(page, size);
 
         PageResponseDTO<UserProductDTO> products = userService.getSellProducts(userId, status, pageable);

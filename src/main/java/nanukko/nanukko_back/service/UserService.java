@@ -159,10 +159,20 @@ public class UserService {
     //사용자의 판매 상품(판매중, 판매완료) 조회
     @Transactional(readOnly = true)
     public PageResponseDTO<UserProductDTO> getSellProducts(String userId, ProductStatus status, Pageable pageable) {
+        log.info("Fetching products - userId: {}, status: {}", userId, status);
+        log.info("Pageable info - page: {}, size: {}, offset: {}",
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                pageable.getOffset());  // offset 로깅 추가
+
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
         Page<Product> products = productRepository.findBySellerAndStatusAndIsDeletedFalseOrderByCreatedAtDesc(user, status, pageable);
+        log.info("Query result - total elements: {}, total pages: {}, current page: {}",
+                products.getTotalElements(),
+                products.getTotalPages(),
+                products.getNumber());
 
         Page<UserProductDTO> dtoPage = products.map(product -> UserProductDTO.builder()
                 .productId(product.getProductId())
@@ -272,8 +282,8 @@ public class UserService {
                 .content(product.getContent())
                 .condition(product.getCondition())
                 .isPerson(product.isPerson())
-                .isDeputy(product.isDeputy())
-                .isCompanion(product.isCompanion())
+                .isDeputy(product.getIsDeputy())
+                .isCompanion(product.getIsCompanion())
                 .freeShipping(product.isFreeShipping())
                 .build();
     }
@@ -378,7 +388,7 @@ public class UserService {
                 .createdAt(LocalDateTime.now())
                 .review(reviewDTO.getReview())
                 .build();
-        
+
         //판매자에게 리뷰 작성 알림 전송
         notificationService.sendConfirmReview(
                 order.getProduct().getSeller().getUserId(), user.getNickname()
