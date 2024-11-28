@@ -24,7 +24,7 @@ import java.util.Optional;
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Long> {
     //마이페이지 판매 상품을 페이징처리하여 조회하기 위해 사용될 메서드
-    Page<Product> findBySellerAndStatusAndIsDeletedFalseOrderByCreatedAtDesc(User seller, ProductStatus status, Pageable pageable);
+    Page<Product> findBySellerAndStatusAndIsDeletedFalseOrderByCreatedAtDesc (User seller, ProductStatus status, Pageable pageable);
 
     //비관적 락을 사용한 상품 조회 메서드
     @Lock(LockModeType.PESSIMISTIC_WRITE)
@@ -37,12 +37,12 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     // 락 획득 시도 시 대기할 시간을 설정합니다.
     // 3000ms(3초) 동안 락 획득을 시도하고, 실패하면 예외를 발생시킵니다.
     // 이는 무한정 대기하는 것을 방지하기 위한 설정입니다.
-    @Query("select p from Product p where p.productId = :id")
+    @Query("select p from Product p where p.productId = :productId")
     // 실제 실행될 JPQL 쿼리를 정의합니다.
     // 일반 select 쿼리지만 @Lock 애노테이션으로 인해 FOR UPDATE가 추가됩니다.
     // 실제 실행되는 SQL은 다음과 같습니다:
     // SELECT * FROM product WHERE id = ? FOR UPDATE
-    Optional<Product> findByIdWithPessimisticLock(@Param("id") Long productId);
+    Optional<Product> findByIdWithPessimisticLock(@Param("productId") Long productId);
 
 
     //상품명 조회
