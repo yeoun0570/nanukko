@@ -1,0 +1,92 @@
+:root {
+    --primary-color: #618EFF;
+    --secondary-color: #FF9D14;
+  }
+
+  @font-face {
+    font-family: 'CustomFont';
+    src: url('../public/fonts/omyu pretty.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+  }
+
+  * {
+    font-family: 'CustomFont', sans-serif;
+  }
+  
+  
+  /* body {
+    font-family: 'CustomFont', sans-serif;
+  } */
+
+  @color {
+      /*컬러사용*/
+  /*primary-color*/
+  /* Color Theme Swatches in Hex */
+.primary-color-1-hex { color: #618EFF; }
+.primary-color-2-hex { color: #356FDC; }
+.primary-color-3-hex { color: #0052B9; }
+.primary-color-4-hex { color: #003798; }
+.primary-color-5-hex { color: #001F78; }
+.primary-color-6-hex { color: #3b5bdb; }
+
+/* Color Theme Swatches in RGBA */
+.primary-color-1-rgba { color: rgba(97, 142, 255, 1); }
+.primary-color-2-rgba { color: rgba(53, 111, 220, 1); }
+.primary-color-3-rgba { color: rgba(0, 82, 185, 1); }
+.primary-color-4-rgba { color: rgba(0, 55, 152, 1); }
+.primary-color-5-rgba { color: rgba(0, 31, 120, 1); }
+
+/*secondary-color*/
+/* Color Theme Swatches in Hex */
+.secondary-color-1-hex { color: #FFC755; }
+.secondary-color-2-hex { color: #FFAD30; }
+.secondary-color-3-hex { color: #FF9D14; }
+.secondary-color-4-hex { color: #F57F13; }
+.secondary-color-5-hex { color: #DE5E09; }
+
+/* Color Theme Swatches in RGBA */
+.secondary-color-1-rgba { color: rgba(255, 199, 85, 1); }
+.secondary-color-2-rgba { color: rgba(255, 173, 48, 1); }
+.secondary-color-3-rgba { color: rgba(255, 157, 20, 1); }
+.secondary-color-4-rgba { color: rgba(245, 127, 19, 1); }
+.secondary-color-5-rgba { color: rgba(222, 94, 9, 1); }
+
+/*gray color*/
+/* Color Theme Swatches in Hex */
+.gray-theme-1-hex { color: #5F5F5F; }
+.gray-theme-2-hex { color: #858585; }
+.gray-theme-3-hex { color: #ABABAB; }
+.gray-theme-4-hex { color: #D1D1D1; }
+.gray-theme-5-hex { color: #F7F7F7; }
+
+/* Color Theme Swatches in RGBA */
+.gray-theme-1-rgba { color: rgba(95, 95, 95, 1); }
+.gray-theme-2-rgba { color: rgba(133, 133, 133, 1); }
+.gray-theme-3-rgba { color: rgba(171, 171, 171, 1); }
+.gray-theme-4-rgba { color: rgba(209, 209, 209, 1); }
+.gray-theme-5-rgba { color: rgba(247, 247, 247, 1); }
+
+/*alert color*/
+.error-color-hex { color: #ff4444; }
+.error-color-hover-hex { color: #CC0000; }
+
+.success-color-hex { color: #00C851; }
+.success-color-hover-hex { color: #007E33; }
+
+.warning-color-hex { color: #ffbb33; }
+.warning-color-hover-hex { color: #ff8800; }
+
+.info-color-hex { color: #33b5e5; }
+.info-color-hover-hex { color: #0099CC; }
+}
+
+
+
+
+/* button */
+/* modal */
+/* alert*/
+/* dropdownbar*/
+/*line*/
+/*font*/
