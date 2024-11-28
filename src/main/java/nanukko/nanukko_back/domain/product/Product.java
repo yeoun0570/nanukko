@@ -2,10 +2,7 @@ package nanukko.nanukko_back.domain.product;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import nanukko.nanukko_back.domain.product.category.MiddleCategory;
 import nanukko.nanukko_back.domain.user.User;
 import org.hibernate.annotations.ColumnDefault;
@@ -13,6 +10,7 @@ import org.hibernate.annotations.ColumnDefault;
 import java.time.LocalDateTime;
 
 @Getter
+@Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder

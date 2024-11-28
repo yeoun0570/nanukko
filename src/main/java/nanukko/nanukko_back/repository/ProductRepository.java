@@ -24,7 +24,7 @@ import java.util.Optional;
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Long> {
     //마이페이지 판매 상품을 페이징처리하여 조회하기 위해 사용될 메서드
-    Page<Product> findBySellerAndStatusAndIsDeletedFalseOrderByCreatedAtDesc(User seller, ProductStatus status, Pageable pageable);
+    Page<Product> findBySellerAndStatusAndIsDeletedFalseOrderByCreatedAtDesc (User seller, ProductStatus status, Pageable pageable);
 
     //비관적 락을 사용한 상품 조회 메서드
     @Lock(LockModeType.PESSIMISTIC_WRITE)

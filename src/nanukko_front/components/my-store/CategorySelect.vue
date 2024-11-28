@@ -25,7 +25,7 @@ const selectedCategories = ref({
 const loadCategories = async () => {
   try {
     const response = await api.get(
-      `/categories/major`
+      `api/categories/major`
     );
     categories.value.majorCategories = response.data;
     if (props.productInfo.majorId) {
@@ -51,7 +51,7 @@ const handleMajorSelect = async (majorId) => {
 const loadMiddleCategories = async (majorId) => {
   try {
     const response = await axios.get(
-      `/categories/middle/${majorId}`
+      `api/categories/middle/${majorId}`
     );
     categories.value.middleCategories = response.data;
   } catch (error) {
