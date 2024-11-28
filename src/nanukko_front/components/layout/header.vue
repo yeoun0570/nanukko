@@ -1,3 +1,33 @@
+<script setup>
+import { ref } from "vue";
+import Notification from "../notification/Notification.vue";
+import { useAuth } from "~/composables/auth/useAuth";
+import { useRouter } from 'vue-router';
+
+const router = useRouter();
+const { userId, nickname, isAuthenticted } = useAuth();
+const showLoginAlert = () => {
+  alert('채팅을 이용하려면 로그인이 필요합니다.');
+  router.push('/auth/login');
+}
+
+const navigateToChat = () => {
+  router.push('/chat');
+}
+
+
+/* 검색창의 입력값을 관리하기 위한 상태 */
+const searchQuery = ref("");
+
+/* 검색 동작 */
+const onSearch = () => {
+  if (searchQuery.value.trim()) {
+    console.log("검색어:", searchQuery.value); // 실제로는 API 호출 또는 페이지 이동 처리
+    alert(`You searched for: ${searchQuery.value}`); // 임시 알림 처리
+  }
+};
+</script>
+
 <template>
   <header class="header">
     <!-- 로고, 검색창, 액션 항목을 포함하는 컨테이너 -->
@@ -42,43 +72,16 @@
         </button>
       </li>
         <li class="notification-cotainer"><Notification /></li>
-        <li><NuxtLink to="/auth/login">로그인</NuxtLink></li>
-        <li v-if="isAuthenticted"><NuxtLink to="/mypage">마이페이지</NuxtLink></li>
+        <button><NuxtLink to="/auth/login">로그인</NuxtLink></button>
+        <button v-if="isAuthenticted"><NuxtLink to="/mypage">마이페이지</NuxtLink></button>
+      <!-- 판매 글 작성을 위한 페이지로 이동하는 링크 -->
+        <sell-button class="sell-button">판매하기</sell-button>
       </ul>
     </div>
   </header>
 </template>
 
-<script setup>
-import { ref } from "vue";
-import Notification from "../notification/Notification.vue";
-import { useAuth } from "~/composables/auth/useAuth";
-import { useRouter } from 'vue-router';
-
-const router = useRouter();
-const { userId, nickname, isAuthenticted } = useAuth();
-const showLoginAlert = () => {
-  alert('채팅을 이용하려면 로그인이 필요합니다.');
-  router.push('/auth/login');
-}
-
-const navigateToChat = () => {
-  router.push('/chat');
-}
-
-
-/* 검색창의 입력값을 관리하기 위한 상태 */
-const searchQuery = ref("");
-
-/* 검색 동작 */
-const onSearch = () => {
-  if (searchQuery.value.trim()) {
-    console.log("검색어:", searchQuery.value); // 실제로는 API 호출 또는 페이지 이동 처리
-    alert(`You searched for: ${searchQuery.value}`); // 임시 알림 처리
-  }
-};
-</script>
-<style scoped>
+<style>
 /* 헤더 전체 레이아웃 */
 .header {
   display: flex; /* 가로로 정렬 */
@@ -150,7 +153,7 @@ const onSearch = () => {
 .search-bar button {
   margin-left: 0.5rem; /* 왼쪽 여백 */
   margin-right: 0.5rem; /* 오른쪽 여백 */
-  padding: 0.5rem 1rem; /* 상하 0.5rem, 좌우 1rem 패딩 */
+  padding: 0.3rem 0.5rem 0.4rem 0.5rem;
   border: none; /* 테두리 제거 */
   background-color: white;  /* 배경 흰색 */
   cursor: pointer; /* 포인터 커서 표시 */
