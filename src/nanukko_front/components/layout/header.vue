@@ -3,6 +3,7 @@ import { ref } from "vue";
 import Notification from "../notification/Notification.vue";
 import { useAuth } from "~/composables/auth/useAuth";
 import { useRouter } from 'vue-router';
+import { useToast } from "vue-toastification";
 
 const router = useRouter();
 const { userId, nickname, isAuthenticted } = useAuth();
