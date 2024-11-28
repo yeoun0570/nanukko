@@ -137,7 +137,9 @@
   
   <!-- 자녀 유무 선택 -->
   <div class="form-group">
-    <label>자녀 유무 <span class="required">*</span></label>
+    <label>자녀 유무 <span class="required">*</span>
+      <p>출산 예정이면 출산 예정일을 입력해주세요:)</p>
+    </label>
     <div class="radio-group">
       <label class="radio-label">
         <input
@@ -342,7 +344,7 @@
         <span class="toggle-icon" :class="{ 'is-open': termsVisible.tos }">▼</span>
       </div>
       <div v-show="termsVisible.tos" class="terms-content">
-        서비스 이용약관 내용...
+        서비스 이용약관 내용...효승이가 여기서 작성하기~~~~
       </div>
     </div>
 
@@ -523,7 +525,7 @@ const checkDuplicateId = async () => {
     // 아이디 중복 검사 
     const response = await api.post('/register/duplicatedIdCheck', { 
       userId: formData.userId 
-    })
+    }, { rawResponse: true })
     
     // 응답 처리
     if (response.ok) {
@@ -665,7 +667,7 @@ const handleSubmit = async () => {
     isSubmitting.value = true
     
     // API 요청 수행
-    const response = await api.post('/register/', formData)
+    const response = await api.post('/register/', formData, { rawResponse: true })
     
     // 응답 확인
     if (!response.ok) {
