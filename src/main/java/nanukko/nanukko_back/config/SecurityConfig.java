@@ -1,6 +1,5 @@
 package nanukko.nanukko_back.config;
 
-import jakarta.servlet.http.HttpServletRequest;
 import nanukko.nanukko_back.jwt.CustomLogoutFilter;
 import nanukko.nanukko_back.jwt.JWTFilter;
 import nanukko.nanukko_back.jwt.JWTUtil;
@@ -69,7 +68,7 @@ public class SecurityConfig {
 
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With",
-                "Accept", "Origin", "Access-Control-Request-Method", "Access-Control-Request-Headers", "Cookie"));
+                "Accept", "Origin", "Access-Control-Request-Method", "Access-Control-Request-Headers", "Cookie", "x-amz-acl"));
 
 
         configuration.setExposedHeaders(List.of("Authorization", "Set-Cookie"));// 프론트 전송 시 Authorization 헤더에 JWT를 담아 보낼 것이기 때문에 허용
@@ -113,7 +112,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/reissue").permitAll() // access 토큰 만료된 상태로 요청하므로 permit all
                         .requestMatchers("/ws-stomp/**").permitAll()  // WebSocket 엔드포인트 허용
                         .requestMatchers("/api/chat/**").authenticated()
-                        .requestMatchers("api/notice/connect/**").permitAll()
+                        .requestMatchers("/api/notice/connect/**").permitAll()
+                        .requestMatchers("/api/files/**").authenticated()
                         .anyRequest().authenticated()//나머지 요청에 대해서는 로그인 한 사용자들만 접근 가능함
                 );
 

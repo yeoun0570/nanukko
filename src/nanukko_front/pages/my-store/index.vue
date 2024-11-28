@@ -56,7 +56,7 @@ const updateUserInfo = async () => {
       })),
     };
 
-    console.log(updateData);
+    console.log("수정된 정보: ", updateData);
 
     await api.post(`/my-store/modify`, updateData);
     alert("정보가 성공적으로 수정되었습니다.");
@@ -76,7 +76,7 @@ const loadUserInfo = async () => {
     loading.value = true;
     error.value = null;
     const response = await api.get(`/my-store/info`);
-    
+
     console.log("받아온 데이터:", response); // 데이터 확인
     userInfo.value = response;
     originalUserInfo.value = { ...response };
@@ -86,6 +86,16 @@ const loadUserInfo = async () => {
   } finally {
     loading.value = false;
   }
+};
+
+//프로필 정보 업데이트 받아서 수정하기 위한 메서드
+const handleProfileUpdate = (newProfileUrl) => {
+  userInfo.value = {
+    ...userInfo.value,
+    profile: newProfileUrl,
+  };
+  console.log("프로필 업데이트 후 사용자 정보: ", userInfo.value);
+  // 필요한 경우 여기서 추가적인 처리
 };
 
 onMounted(() => {
@@ -100,14 +110,21 @@ onMounted(() => {
     <hr color="black" />
     <br />
     <div class="info-container">
-      <ProfileImage v-model:profile="userInfo.profile"></ProfileImage>
+      <ProfileImage
+        v-model:profile="userInfo.profile"
+        v-model:isEditing="isEditing"
+        @update:profile="handleProfileUpdate"
+      ></ProfileImage>
       <div class="section-header">
         <p class="section-title">우리 부모님은요</p>
         <button v-if="!isEditing" @click="toggleEdit" class="edit-button">
           수정
         </button>
       </div>
-      <LoginInfo :userId="userInfo.userId" :password="userInfo.password"></LoginInfo>
+      <LoginInfo
+        :userId="userInfo.userId"
+        :password="userInfo.password"
+      ></LoginInfo>
       <BasicInfo
         v-model:nickname="userInfo.nickname"
         v-model:email="userInfo.email"
