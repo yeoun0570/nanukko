@@ -22,7 +22,7 @@ export const useChatMessages = (initialMessages = []) => {
     }
 
     subscription.value = await subscribeToChatRoom(
-      `/topic/${roomId}/message`,
+      `/queue/${roomId}/message`,
       {
         onMessage: (message) => {
           if (message) {

@@ -1,6 +1,3 @@
-//useAuth.js
-
-
 import { ref, onMounted } from 'vue'
 import { jwtDecode } from 'jwt-decode'
 
