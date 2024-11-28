@@ -456,7 +456,27 @@ hr {
   transition: transform 0.3s ease;
 }
 
-.profile-image img:hover {
+.image-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.image-overlay i {
+  font-size: 2rem;
+  color: white;
+}
+
+.hidden-input {
+  display: none;
+}
+
+.profile-image:hover img {
   transform: scale(1.05);
 }
 
@@ -559,7 +579,7 @@ hr {
   .section-title::before {
     height: 20px;
   }
-  
+
   .search-address-btn {
     width: 100%;
   }
