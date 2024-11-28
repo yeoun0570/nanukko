@@ -97,13 +97,13 @@ public class Product {
 
     ////////////////거래 관련 정보 //////////////
     @Column(name = "is_companion")
-    private boolean isCompanion; //동행인 여부 -> true면 동행인 동행, false면 동행X
+    private Boolean isCompanion; //동행인 여부 -> true면 동행인 동행, false면 동행X
 
     @Column(name = "is_deputy")
-    private boolean isDeputy; //대리인 여부 -> true면 대리인 사용, false면 사용X
+    private Boolean isDeputy; //대리인 여부 -> true면 대리인 사용, false면 사용X
 
     @Column(name = "companion_gender")
-    private boolean gender; //동행인/대리인 성별 -> true면 남자, false면 여자
+    private Boolean gender; //동행인/대리인 성별 -> true면 남자, false면 여자
 
     @Column(name = "age_group")
     private String ageGroup; //동행인/대리인 나이
