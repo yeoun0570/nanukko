@@ -134,11 +134,15 @@ const handleIncludeShippingChange = (value) => {
 
 // 주소 업데이트 핸들러
 const handleAddressUpdate = (addressInfo) => {
-    updateField('zipCode', addressInfo.zipCode);
-    updateField('address', addressInfo.address);
-    updateField('detailAddress', addressInfo.detailAddress);
-    updateField('latitude', addressInfo.latitude);
-    updateField('longitude', addressInfo.longitude);
+    const updatedProduct = {
+        ...props.modelValue,
+        zipCode: addressInfo.zipCode,
+        address: addressInfo.address,
+        detailAddress: addressInfo.detailAddress,
+        latitude: addressInfo.latitude,
+        longitude: addressInfo.longitude
+    };
+    emit('update:modelValue', updatedProduct);
 };
 
 // 거래 옵션 업데이트 핸들러
@@ -226,8 +230,9 @@ const productConditions = [
                 <label>거래 장소</label>
                 <AddressSearch :initial-address="modelValue.address" @update:address="handleAddressUpdate" />
 
+                <!-- Map 컴포넌트 사용 부분 수정 -->
                 <div v-if="modelValue.latitude && modelValue.longitude">
-                    <Map :lat="Number(modelValue.latitude)" :lon="Number(modelValue.longitude)"></Map>
+                    <Map :lat="Number(modelValue.latitude)" :lon="Number(modelValue.longitude)" />
                 </div>
             </div>
 
