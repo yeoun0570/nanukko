@@ -377,11 +377,10 @@ public class UserService {
 
     //후기 작성
     @Transactional
-    public ReviewRegisterDTO writeReview(ReviewRegisterDTO reviewDTO) {
-        Review savedReview = saveReview(reviewDTO);
+    public ReviewRegisterDTO writeReview(String userId, ReviewRegisterDTO reviewDTO) {
+        Review savedReview = saveReview(userId, reviewDTO);
         updateSellerRating(savedReview.getProduct().getSeller());
         return ReviewRegisterDTO.builder()
-                .authorId(savedReview.getUser().getUserId())
                 .rate(savedReview.getRate())
                 .review(savedReview.getReview())
                 .build();
@@ -389,8 +388,8 @@ public class UserService {
 
     //거래 후기 저장 별도의 트랜잭션으로 관리(커넥션 풀 최적화)
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    protected Review saveReview(ReviewRegisterDTO reviewDTO) {
-        User user = userRepository.findById(reviewDTO.getAuthorId())
+    protected Review saveReview(String userId, ReviewRegisterDTO reviewDTO) {
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
         Orders order = orderRepository.findById(reviewDTO.getOrderId())
