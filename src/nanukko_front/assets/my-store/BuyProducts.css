@@ -107,6 +107,16 @@
   color: white;
 }
 
+.status.in_delivery {
+  background-color: #2196f3;
+  color: white;
+}
+
+.status.delivered {
+  background-color: #f0831e;
+  color: white;
+}
+
 .status.escrow_released {
   background-color: gray;
   color: #000;
