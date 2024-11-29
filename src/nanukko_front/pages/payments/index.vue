@@ -18,7 +18,7 @@ const loading = ref(false);
 const error = ref(null);
 const tossPayments = ref(null);
 const orderId = ref(null);
-const productId = 3;
+const productId = 11;
 
 const loadOrderPage = async () => {
   try {
@@ -27,7 +27,7 @@ const loadOrderPage = async () => {
     );
     orderData.value = response;
     console.log(orderData.value.status);
-    if (response.data.status !== "SELLING") {
+    if (response.status !== "SELLING") {
       alert("판매중인 상품이 아닙니다.");
       // 이전 페이지로 돌아가기
       navigateTo('/');
