@@ -6,8 +6,10 @@ import nanukko.nanukko_back.dto.order.OrderConfirmDTO;
 import nanukko.nanukko_back.dto.order.OrderPageDTO;
 import nanukko.nanukko_back.dto.order.OrderResponseDTO;
 import nanukko.nanukko_back.dto.user.CustomUserDetails;
+import nanukko.nanukko_back.dto.user.UserAddrDTO;
 import nanukko.nanukko_back.exception.ErrorResponse;
 import nanukko.nanukko_back.service.OrderService;
+import nanukko.nanukko_back.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -18,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/payments")
 public class OrderController {
     private final OrderService orderService;
+    private final UserService userService;
 
     //주문 구매내역
     @GetMapping("/page/{productId}")
@@ -59,5 +62,16 @@ public class OrderController {
             return ResponseEntity.badRequest()
                     .body(new ErrorResponse(e.getMessage()));
         }
+    }
+
+    //사용자 배송지 수정
+    @PostMapping("/modify-address")
+    public ResponseEntity<UserAddrDTO> modifyUserAddr(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestBody UserAddrDTO addrDTO
+    ) {
+        String userId = userDetails.getUsername();
+        UserAddrDTO response = userService.modifyUserAddr(userId, addrDTO);
+        return ResponseEntity.ok(response);
     }
 }
