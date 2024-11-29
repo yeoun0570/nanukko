@@ -156,6 +156,22 @@ public class UserService {
         return String.format("%s_KID_%d", user.getUserId(), nextNum);
     }
 
+    //사용자 배송지 정보 수정
+    @Transactional
+    public UserAddrDTO modifyUserAddr(String userId, UserAddrDTO addrDTO) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        user.updateUserAddr(UserAddress.builder()
+                        .addrMain(addrDTO.getAddrMain())
+                        .addrDetail(addrDTO.getAddrDetail())
+                        .addrZipcode(addrDTO.getAddrZipcode())
+                .build());
+        userRepository.save(user);
+
+        return modelMapper.map(user, UserAddrDTO.class);
+    }
+
     //사용자의 판매 상품(판매중, 판매완료) 조회
     @Transactional(readOnly = true)
     public PageResponseDTO<UserProductDTO> getSellProducts(String userId, ProductStatus status, Pageable pageable) {
