@@ -114,6 +114,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/chat/**").authenticated()
                         .requestMatchers("/api/notice/connect/**").permitAll()
                         .requestMatchers("/api/files/**").authenticated()
+                        .requestMatchers("/api/review/**").authenticated()
                         .anyRequest().authenticated()//나머지 요청에 대해서는 로그인 한 사용자들만 접근 가능함
                 );
 
