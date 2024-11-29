@@ -1,6 +1,5 @@
 <script setup>
 import StarRating from "~/components/my-store/buy-products/StarRating.vue";
-import { useAuth } from "~/composables/auth/useAuth";
 import { useApi } from '@/composables/useApi';
 
 const api = useApi();
