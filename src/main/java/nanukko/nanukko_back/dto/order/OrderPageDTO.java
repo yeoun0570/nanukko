@@ -18,6 +18,7 @@ public class OrderPageDTO {
     private double chargeAmount;
     private int totalAmount;
     //구매자 정보
+    private String sellerId;
     private String nickname;
     private String addrMain; 
     private String addrDetail;
