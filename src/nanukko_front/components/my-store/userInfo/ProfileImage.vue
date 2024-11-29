@@ -103,6 +103,18 @@ const handleFileSelect = async (event) => {
     alert("이미지 업로드에 실패했습니다.");
   }
 };
+
+// 프로필 이미지 삭제
+const removeProfileImage = async () => {
+  try {
+    // 프로필 이미지 URL을 null로 업데이트
+    previewUrl.value = null;
+    emit("update:profile", null);
+  } catch (error) {
+    console.error("프로필 이미지 삭제 실패: ", error);
+    alert("이미지 삭제에 실패했습니다.");
+  }
+};
 </script>
 
 <template>
@@ -113,11 +125,25 @@ const handleFileSelect = async (event) => {
       @mouseleave="isHovered = false"
       @click="triggerFileInput"
     >
-      <img :src="previewUrl" alt="프로필 이미지" />
+      <!-- 기본 프로필 이미지 또는 업로드된 이미지 표시 -->
+      <img
+        :src="previewUrl || '/image/default-profile.png'"
+        alt="프로필 이미지"
+      />
 
+      <!-- 수정 모드일 때 오버레이 표시 -->
       <div v-if="isEditing && isHovered" class="image-overlay">
         <i class="fas fa-camera"></i>
       </div>
+
+      <!-- 삭제 버튼 (수정 모드이고 프로필 이미지가 있을 때만 표시) -->
+      <button
+        v-if="isEditing && previewUrl"
+        class="remove-button"
+        @click.stop="removeProfileImage"
+      >
+        <i class="fas fa-times"></i>
+      </button>
 
       <input
         ref="fileInput"
