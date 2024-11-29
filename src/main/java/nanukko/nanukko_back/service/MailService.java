@@ -190,7 +190,7 @@ public class MailService {
                 case START_DELIVERY -> {
                     helper.setSubject(String.format("%s님! '%s' 상품의 배송이 출발했어요!",
                             user.getNickname(), order.getProduct().getProductName()));
-                    helper.setText(String.format("%s님이 구매한 상품이 판매되었어요! " +
+                    helper.setText(String.format("%s님이 구매한 상품의 배송이 출발했어요! " +
                                     "확인하러 가볼까요?\n%s/my-store/buy-products",
                             user.getNickname(), frontendURL.getUrl()));
                 }
