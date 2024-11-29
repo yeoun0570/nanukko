@@ -447,7 +447,7 @@ public class UserService {
                 .authorNickName(review.getUser().getNickname()) // 후기 작성자 이름
                 .rate(review.getRate())
                 .productName(review.getProduct().getProductName())
-                .profile(review.getUser().getProfile()) // 후기 작성자 프로필 사진
+                .thumbnail(review.getProduct().getThumbnailImage()) // 후기 작성된 썸네일 이미지
                 .review(review.getReview())
                 .reviewRate(seller.getReviewRate())  // 판매자의 전체 평점
                 .build());
