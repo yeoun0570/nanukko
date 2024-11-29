@@ -12,7 +12,7 @@ const emit = defineEmits(["update:kids"]);
 // 년/월/일 선택을 위한 데이터
 const years = computed(() => {
   const currentYear = new Date().getFullYear();
-  return Array.from({ length: 7 }, (_, i) => currentYear - 6 + i);
+  return Array.from({ length: 3 }, (_, i) => currentYear - 2 + i);
 });
 
 const months = Array.from({ length: 12 }, (_, i) => i + 1);
