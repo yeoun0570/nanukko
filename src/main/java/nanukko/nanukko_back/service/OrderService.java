@@ -4,8 +4,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import nanukko.nanukko_back.config.RestTemplateConfig;
 import nanukko.nanukko_back.config.TossPaymentsConfig;
-import nanukko.nanukko_back.domain.order.Delivery;
-import nanukko.nanukko_back.domain.order.DeliveryStatus;
 import nanukko.nanukko_back.domain.order.Orders;
 import nanukko.nanukko_back.domain.order.PaymentStatus;
 import nanukko.nanukko_back.domain.product.Product;
