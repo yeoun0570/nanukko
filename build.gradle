@@ -84,7 +84,8 @@ dependencies {
     implementation 'org.springframework.cloud:spring-cloud-starter-aws:2.2.6.RELEASE'
 
     //Thumbnailator는 이미지 처리 라이브러리로, Java에서 간단하게 썸네일을 생성
-    implementation 'net.coobird:thumbnailator:0.4.14'
+    //이미지 리사이징용
+    implementation 'net.coobird:thumbnailator:0.4.20'
 
 }
 
