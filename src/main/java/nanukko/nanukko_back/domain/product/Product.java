@@ -51,6 +51,7 @@ public class Product {
     private int price; //상품 가격
 
     @NotNull
+    @Column(columnDefinition = "TEXT")
     private String content; //상품 설명
 
     @Embedded
