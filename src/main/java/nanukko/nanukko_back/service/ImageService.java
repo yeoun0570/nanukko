@@ -22,6 +22,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -55,8 +56,12 @@ public class ImageService {
     // MultipartFile을 받아서 NCP에 업로드하고 파일 정보를 담은 DTO 반환
     public FileDTO uploadSingleFile(MultipartFile file, FileDirectoryType directoryType, String userId) {
         try {
+            log.info("=== 업로드 싱글 파일 시작 ===");
             // 원본 파일명 추출
             String originalFileName = file.getOriginalFilename();
+
+            log.info("원본 파일명 추출 : {}", originalFileName);
+
             // UUID를 이용해 중복 없는 파일명 생성
             String uploadFileName = UUID.randomUUID().toString();
             // 버킷 내 저장 경로 설정 (예: 기본경로/아이디/년월일 폴더 구조)
@@ -72,6 +77,8 @@ public class ImageService {
                     Math.max(targetSize.width(), targetSize.height()),
                     imageQuality
             );
+
+            log.info("resizedImageBytes : " + Arrays.toString(resizedImageBytes));
 
             // ByteArrayInputStream 생성
             ByteArrayInputStream inputStream = new ByteArrayInputStream(resizedImageBytes);
@@ -100,6 +107,8 @@ public class ImageService {
 
             // 업로드된 파일의 접근 URL 생성
             String uploadFileUrl = amazonS3Client.getUrl(ncpConfig.getBucket(), keyName).toString();
+
+            log.info("업로드 url : " + uploadFileUrl);
 
             // 파일 정보를 DTO에 담아서 반환
             return FileDTO.builder()
@@ -170,7 +179,7 @@ public class ImageService {
             throw new IllegalArgumentException("잘못된 이미지 URL 형식입니다.", e);
         }
     }
-    
+
     //===================== 위는 공통으로 사용할만한 것들 이 아래는 내가 사용하기 위해 작성
 
     //프로필 이미지 삭제 메서드

@@ -1,55 +1,76 @@
 <script setup>
-import { ref } from 'vue';
+import axios from "axios";
 import { useToast } from 'vue-toastification';
 import { useRouter } from 'vue-router';
-import { useApi } from '~/composables/useApi';
+import { useURL } from "~/composables/useURL";
+import { useAuth } from "~/composables/auth/useAuth";
 import ImageUploader from '~/components/products/products-new/ImageUploader.vue';
 import ProductForm from '~/components/products/products-new/ProductForm.vue';
 
 const toast = useToast();
 const router = useRouter();
-const api = useApi();
+const auth = useAuth();
+const { baseURL } = useURL();
+
+const axiosInstance = axios.create({
+    baseURL: baseURL, // 토큰을 사용한 axios 인스턴스 생성
+});
+
+onMounted(() => {
+    axiosInstance.interceptors.request.use((config) => {
+        const token = auth.getToken();
+
+        console.log("Current token:", token);
+        console.log("Request URL:", config.url);
+        console.log("Request Headers:", config.headers);
+        console.log("Token exists:", !!token);
+
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+        }
+        if (!config.headers['Content-Type']) {
+            config.headers['Content-Type'] = 'multipart/form-data';
+        }
+        return config;
+    });
+});
 
 const product = ref({
-  // 기본 정보 필드
+    // 기본 정보 필드
     productName: '',
     price: 0,
     content: '',
     condition: 'NEW',
     images: [],
 
-  // 카테고리 정보
+    // 카테고리 정보
     middleCategory: {
         majorId: null,
         middleId: null
     },
 
-  // 배송 관련 정보
+    // 배송 관련 정보
     isShipping: false,
     isPerson: false,
     freeShipping: false,
     shippingFee: 0,
 
-  // 거래 장소 정보
+    // 거래 장소 정보
     zipCode: '',
     address: '',
     detailAddress: '',
     latitude: null,
     longitude: null,
 
-  // 거래 관련 정보
+    // 거래 관련 정보
     isCompanion: false,
     isDeputy: false,
     gender: null,
-    ageGroup: ''
+    ageGroup: null
 });
 
 const submitProduct = async () => {
     try {
-
-
-
-
         // 필수 필드 검증
         if (!product.value.productName || !product.value.middleCategory.middleId ||
             !product.value.price || !product.value.content ||
@@ -122,18 +143,6 @@ const submitProduct = async () => {
         console.log('===== 전송할 데이터 확인 =====');
         console.log('productData:', productData);
 
-        // FormData에 데이터 추가
-        formData.append('productInfo', new Blob([JSON.stringify(productData)], {
-            type: 'application/json'
-        }));
-
-        // 토큰 확인
-        const token = checkAuthToken();
-        if (!token) return;
-
-        console.log('토큰 확인:', token); // 토큰 값 확인
-
-
         // 이미지 파일 추가
         if (product.value.images?.length > 0) {
             product.value.images.forEach((image, index) => {
@@ -144,36 +153,36 @@ const submitProduct = async () => {
             });
         }
 
+        // FormData에 데이터 추가
+        formData.append('productInfo', JSON.stringify(productData));
+
         // 실제 API 요청 전 FormData 내용 확인
         console.log('===== FormData 내용 확인 =====');
         for (let pair of formData.entries()) {
-            if (pair[0] === 'productInfo') {
-                const text = await pair[1].text();
-                console.log('productInfo 내용:', text);
-            } else {
-                console.log(pair[0], pair[1]);
-            }
+            console.log(pair[0], pair[1]);
         }
+
+        // API 요청 전 formData 내용 로깅
+        console.log('===== FormData 내용 확인 =====');
+        formData.forEach((value, key) => {
+            console.log(`${key}:`, value);
+        });
 
         // API 요청 직전 로깅
         console.log('===== API 요청 시작 =====');
-        console.log('요청 URL:', '/products/new');
-        console.log('Authorization:', `Bearer ${localStorage.getItem('access_token')}`);
 
-        const response = await api.post(
-            `/products/new`,
-            formData,
-            {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                    'Authorization': `Bearer ${token}`
-                }
+        //Content-Type만 config에서 설정하고 Authorization은 인터셉터가 처리
+        const config = {
+            headers: {
+                'Content-Type': 'multipart/form-data; boundary=' + Math.random().toString().substr(2)
             }
-        );
+        };
+
+        const response = await axiosInstance.post(`${baseURL}/products/new`, formData, config);
 
         // 요청 완료 후 로깅
         console.log('===== API 응답 =====');
-        console.log('응답 상태:', response.status);
+        console.log('응답 상태:', response.data.status);
         console.log('응답 데이터:', response.data);
 
     } catch (error) {
@@ -189,21 +198,11 @@ const submitProduct = async () => {
     }
 };
 
-const checkAuthToken = () => {
-    const token = localStorage.getItem('access_token');
-    if (!token) {
-        toast.error('로그인이 필요합니다.');
-        router.push('/login');
-        return false;
-    }
-    return token;
-};
-
 
 const handleCancel = () => {
-    const confirmCancel = confirm('작성중인 내용이 모두 삭제됩니다. 취소하시겠습니까?');
+    toast.confirmCancel('작성중인 내용이 모두 삭제됩니다. 취소하시겠습니까?');
     if (confirmCancel) {
-        router.push('/products');
+        router.push('/');
     }
 };
 
