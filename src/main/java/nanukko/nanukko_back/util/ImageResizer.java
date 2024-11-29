@@ -1,5 +1,6 @@
 package nanukko.nanukko_back.util;
 
+import lombok.extern.log4j.Log4j2;
 import net.coobird.thumbnailator.Thumbnails;
 
 import javax.imageio.ImageIO;
@@ -8,12 +9,19 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
+@Log4j2
 public class ImageResizer {
 
     public static byte[] resizeAndCompressImage(byte[] imageBytes, int targetSize, float quality) throws IOException {
+        log.info("=== 여기가 문제인가?? ImageResizer 시작 ===");
         // 원본 이미지 읽기
         ByteArrayInputStream inputStream = new ByteArrayInputStream(imageBytes);
+
+        log.info("inputStream 입니다: "  + inputStream);
+
         BufferedImage originalImage = ImageIO.read(inputStream);
+
+        log.info("originalImage 입니다: "  + originalImage);
 
         // 원본 이미지의 비율을 유지하면서 크기 조정
         int originalWidth = originalImage.getWidth();
