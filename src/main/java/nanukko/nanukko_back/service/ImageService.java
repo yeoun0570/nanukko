@@ -64,6 +64,7 @@ public class ImageService {
 
             // UUID를 이용해 중복 없는 파일명 생성
             String uploadFileName = UUID.randomUUID().toString();
+
             // 버킷 내 저장 경로 설정 (예: 기본경로/아이디/년월일 폴더 구조)
             String uploadFilePath = directoryType.getDirectory() + "/" +
                     userId + "/" +
@@ -71,17 +72,33 @@ public class ImageService {
 
             // 이미지 리사이징 및 압축
             ImageSize targetSize = IMAGE_SIZES.get(directoryType);
-            byte[] resizedImageBytes = ImageResizer.resizeAndCompressImage(
-                    file.getBytes(),
-                    // 더 큰 값을 targetSize로 사용 => 긴쪽을 해당 크기에 맞추고 짧은 쪽은 비율에 맞게 자동 조정
-                    Math.max(targetSize.width(), targetSize.height()),
-                    imageQuality
-            );
 
-            log.info("resizedImageBytes : " + Arrays.toString(resizedImageBytes));
+            // 파일 확장자 확인
+            String fileExtension = originalFileName.substring(originalFileName.lastIndexOf(".") + 1).toLowerCase();
 
-            // ByteArrayInputStream 생성
-            ByteArrayInputStream inputStream = new ByteArrayInputStream(resizedImageBytes);
+
+            ByteArrayInputStream inputStream;
+            byte[] resizedImageBytes;
+            
+            if (fileExtension.equals("jpg")) {
+                resizedImageBytes = ImageResizer.resizeAndCompressImage(
+                        file.getBytes(),
+                        // 더 큰 값을 targetSize로 사용 => 긴쪽을 해당 크기에 맞추고 짧은 쪽은 비율에 맞게 자동 조정
+                        Math.max(targetSize.width(), targetSize.height()),
+                        imageQuality
+                );
+                inputStream = new ByteArrayInputStream(resizedImageBytes); // ByteArrayInputStream 생성
+            } else if (fileExtension.equals("webp")) {
+                resizedImageBytes = ImageResizer.resizeAndCompressImageWebp(
+                        file.getBytes(),
+                        // 더 큰 값을 targetSize로 사용 => 긴쪽을 해당 크기에 맞추고 짧은 쪽은 비율에 맞게 자동 조정
+                        Math.max(targetSize.width(), targetSize.height()),
+                        imageQuality
+                );
+                inputStream = new ByteArrayInputStream(resizedImageBytes);
+            } else {
+                throw new IllegalArgumentException("Unsupported file format: " + fileExtension);
+            }
 
             // 파일 메타데이터 설정
             ObjectMetadata metadata = new ObjectMetadata();
