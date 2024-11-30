@@ -6,7 +6,7 @@ import { useRouter } from "vue-router";
 import { useToast } from "vue-toastification";
 
 const router = useRouter();
-const { userId, nickname, isAuthenticted } = useAuth();
+const { userId, nickname, isAuthenticated } = useAuth();
 const showLoginAlert = () => {
   alert("채팅을 이용하려면 로그인이 필요합니다.");
   router.push("/auth/login");
@@ -51,24 +51,14 @@ const onSearch = () => {
       <!-- 로고 섹션 -->
       <div class="logo">
         <NuxtLink to="/">
-          <img
-            src="../../public/image/나누고_Logo_blue.png"
-            alt="nanukko Logo"
-            width="150"
-            height="80"
-          />
+          <img src="../../public/image/나누고_Logo_blue.png" alt="nanukko Logo" width="150" height="80" />
         </NuxtLink>
       </div>
 
       <!-- 검색창 섹션 -->
       <div class="search-bar">
         <!-- 검색어 입력 필드 -->
-        <input
-          type="text"
-          placeholder="검색어를 입력해주세요"
-          v-model="searchQuery"
-          @keyup.enter="onSearch"
-        />
+        <input type="text" placeholder="검색어를 입력해주세요" v-model="searchQuery" @keyup.enter="onSearch" />
         <!-- 검색 버튼 -->
         <button @click="onSearch">🔍</button>
         <!-- 클릭 시 검색 실행 -->
@@ -77,19 +67,21 @@ const onSearch = () => {
       <!-- 액션 섹션 (채팅, 알림, 로그인, 마이페이지 링크) -->
       <ul class="header-actions">
         <li>
-          <button v-if="!isAuthenticted" @click="navigateToChat">채팅</button>
+          <button v-if="!isAuthenticated" @click="navigateToChat">채팅</button>
           <button v-else @click="showLoginAlert">채팅</button>
         </li>
-        <li class="notification-cotainer"><Notification /></li>
-        <button v-if="!isAuthenticted">
+        <li class="notification-cotainer">
+          <Notification />
+        </li>
+        <button v-if="!isAuthenticated">
           <NuxtLink to="/auth/login">로그인</NuxtLink>
         </button>
-        <button v-if="isAuthenticted">
+        <button v-if="isAuthenticated">
           <NuxtLink to="/my-store">마이페이지</NuxtLink>
         </button>
-        <button v-if="isAuthenticted" @click="doLogout">로그아웃</button>
+        <button v-if="isAuthenticated" @click="doLogout">로그아웃</button>
         <!-- 판매 글 작성을 위한 페이지로 이동하는 링크 -->
-        <button v-if="isAuthenticted" class="sell-button">판매하기</button>
+        <button v-if="isAuthenticated" class="sell-button">판매하기</button>
       </ul>
     </div>
   </header>
@@ -98,114 +90,171 @@ const onSearch = () => {
 <style>
 /* 헤더 전체 레이아웃 */
 .header {
-  display: flex; /* 가로로 정렬 */
-  width: 100%; /* 헤더를 창 너비에 맞춤 */
-  flex-direction: row; /* 기본 행 방향 설정 */
-  align-items: center; /* 수직 중앙 정렬 */
-  justify-content: center; /* 수평 중앙 정렬 */
-  background-color: #ffffff; /* 헤더 배경색 설정 */
-  padding: 0.5rem 1rem; /* 상하 0.5rem, 좌우 1rem 패딩 */
-  box-sizing: border-box; /* 패딩 포함 크기 계산 */
+  display: flex;
+  /* 가로로 정렬 */
+  width: 100%;
+  /* 헤더를 창 너비에 맞춤 */
+  flex-direction: row;
+  /* 기본 행 방향 설정 */
+  align-items: center;
+  /* 수직 중앙 정렬 */
+  justify-content: center;
+  /* 수평 중앙 정렬 */
+  background-color: #ffffff;
+  /* 헤더 배경색 설정 */
+  padding: 0.5rem 1rem;
+  /* 상하 0.5rem, 좌우 1rem 패딩 */
+  box-sizing: border-box;
+  /* 패딩 포함 크기 계산 */
 }
 
 .header-container {
   background-color: white;
-  display: flex; /* 가로로 정렬 */
-  align-items: center; /* 수직 중앙 정렬 */
+  display: flex;
+  /* 가로로 정렬 */
+  align-items: center;
+  /* 수직 중앙 정렬 */
   justify-content: space-between;
-  width: 100%; /* 컨테이너 너비를 100%로 설정 */
-  max-width: 1050px; /* 최대 너비를 제한 */
-  margin: 0 auto; /* 좌우 중앙 정렬 */
+  width: 100%;
+  /* 컨테이너 너비를 100%로 설정 */
+  max-width: 1050px;
+  /* 최대 너비를 제한 */
+  margin: 0 auto;
+  /* 좌우 중앙 정렬 */
 }
 
 /* 반응형 디자인 */
 @media (max-width: 768px) {
   .header-container {
-    padding-left: 10px; /* 좁은 화면에서는 패딩을 줄임 */
+    padding-left: 10px;
+    /* 좁은 화면에서는 패딩을 줄임 */
   }
 }
 
 /* 로고 스타일 */
 .logo {
-  flex: 0 0 auto; /* 고정 크기 */
-  display: block; /* 블록 요소로 설정 */
+  flex: 0 0 auto;
+  /* 고정 크기 */
+  display: block;
+  /* 블록 요소로 설정 */
 }
 
 /* 검색창 컨테이너 스타일 */
 .search-bar {
-  min-width: 400px; /* 검색창 최소 너비 */
-  max-width: 400px; /* 검색창 최대 너비 */
-  height: 40px; /* 검색창 높이 */
-  flex: 1; /* 남는 공간을 차지하도록 설정 */
-  display: flex; /* 가로로 정렬 */
-  align-items: center; /* 수직 중앙 정렬 */
-  justify-content: space-between; /* 입력 필드와 버튼 간격 조정 */
-  border-radius: 15px; /* 둥근 모서리 */
-  border: 1px solid #333; /* 테두리를 진한 회색으로 설정 */
+  min-width: 400px;
+  /* 검색창 최소 너비 */
+  max-width: 400px;
+  /* 검색창 최대 너비 */
+  height: 40px;
+  /* 검색창 높이 */
+  flex: 1;
+  /* 남는 공간을 차지하도록 설정 */
+  display: flex;
+  /* 가로로 정렬 */
+  align-items: center;
+  /* 수직 중앙 정렬 */
+  justify-content: space-between;
+  /* 입력 필드와 버튼 간격 조정 */
+  border-radius: 15px;
+  /* 둥근 모서리 */
+  border: 1px solid #333;
+  /* 테두리를 진한 회색으로 설정 */
 }
 
 /* 검색창 입력 필드 스타일 */
 .search-bar input {
-  width: 100%; /* 입력 필드 너비를 검색창에 맞춤 */
-  max-width: 400px; /* 최대 너비 제한 */
-  padding: 0.5rem 1rem; /* 상하 0.5rem, 좌우 1rem 패딩 */
-  border: none; /* 테두리 제거 */
-  border-radius: 20px; /* 둥근 모서리 */
-  outline: none; /* 포커스 시 파란 테두리 제거 */
-  font-size: 1rem; /* 글자 크기 */
-  color: #333; /* 글자 색을 진한 회색으로 설정 */
-  background-color: white; /* 배경색 흰색 */
+  width: 100%;
+  /* 입력 필드 너비를 검색창에 맞춤 */
+  max-width: 400px;
+  /* 최대 너비 제한 */
+  padding: 0.5rem 1rem;
+  /* 상하 0.5rem, 좌우 1rem 패딩 */
+  border: none;
+  /* 테두리 제거 */
+  border-radius: 20px;
+  /* 둥근 모서리 */
+  outline: none;
+  /* 포커스 시 파란 테두리 제거 */
+  font-size: 1rem;
+  /* 글자 크기 */
+  color: #333;
+  /* 글자 색을 진한 회색으로 설정 */
+  background-color: white;
+  /* 배경색 흰색 */
 }
 
 /* 입력 필드의 플레이스홀더 스타일 */
 .search-bar input::placeholder {
-  color: #aaa; /* 플레이스홀더 색상 연한 회색 */
+  color: #aaa;
+  /* 플레이스홀더 색상 연한 회색 */
 }
 
 /* 검색 버튼 스타일 */
 .search-bar button {
-  margin-left: 0.5rem; /* 왼쪽 여백 */
-  margin-right: 0.5rem; /* 오른쪽 여백 */
+  margin-left: 0.5rem;
+  /* 왼쪽 여백 */
+  margin-right: 0.5rem;
+  /* 오른쪽 여백 */
   padding: 0.3rem 0.5rem 0.4rem 0.5rem;
-  border: none; /* 테두리 제거 */
-  background-color: white; /* 배경 흰색 */
-  cursor: pointer; /* 포인터 커서 표시 */
-  transition: color 0.3s ease; /* 색상 전환 효과 */
+  border: none;
+  /* 테두리 제거 */
+  background-color: white;
+  /* 배경 흰색 */
+  cursor: pointer;
+  /* 포인터 커서 표시 */
+  transition: color 0.3s ease;
+  /* 색상 전환 효과 */
 }
 
 /* 검색 버튼 호버 효과 */
 .search-bar button:hover {
-  color: #4c6ef5; /* 파란색으로 변경 */
+  color: #4c6ef5;
+  /* 파란색으로 변경 */
 }
 
 /* 헤더 액션 버튼들 스타일 */
 .header-actions {
-  display: flex; /* 가로로 정렬 */
-  flex-direction: row; /* 기본 행 방향 설정 */
-  width: 400px; /* 너비 */
-  justify-content: space-around; /* 항목 간 간격 균등하게 */
+  display: flex;
+  /* 가로로 정렬 */
+  flex-direction: row;
+  /* 기본 행 방향 설정 */
+  width: 400px;
+  /* 너비 */
+  justify-content: space-around;
+  /* 항목 간 간격 균등하게 */
 }
 
 /* 액션 버튼 리스트 스타일 */
 .header-actions li {
-  list-style: none; /* 기본 리스트 스타일 제거 */
+  list-style: none;
+  /* 기본 리스트 스타일 제거 */
 }
 
 /* 액션 버튼 스타일 */
 .header-actions button {
   /* webkit-box는 webkit 엔진에서 사용하는 css 속성으로 block으로 처리돼서 한줄로 표시 */
   display: -webkit-box;
-  -webkit-line-clamp: 1; /* 줄 수를 설정할 수 있으며 넘치는 텍스트는 ...로 대체 */
-  -webkit-box-orient: vertical; /* 다중으로 줄이 설정될 때 세로로 표시하도록 설정 */
-  overflow: hidden; /* 넘치는 내용들을 숨김처리 */
-  margin-right: 0.5rem; /* 오른쪽 여백 */
-  padding: 0.5rem 0.5rem; /* 상하 0.5rem, 좌우 1rem 패딩 */
-  border: none; /* 테두리 제거 */
-  background-color: #ffffff; /* 파란색 배경 */
-  color: #000000; /* 글자 색을 흰색으로 설정 */
+  -webkit-line-clamp: 1;
+  /* 줄 수를 설정할 수 있으며 넘치는 텍스트는 ...로 대체 */
+  -webkit-box-orient: vertical;
+  /* 다중으로 줄이 설정될 때 세로로 표시하도록 설정 */
+  overflow: hidden;
+  /* 넘치는 내용들을 숨김처리 */
+  margin-right: 0.5rem;
+  /* 오른쪽 여백 */
+  padding: 0.5rem 0.5rem;
+  /* 상하 0.5rem, 좌우 1rem 패딩 */
+  border: none;
+  /* 테두리 제거 */
+  background-color: #ffffff;
+  /* 파란색 배경 */
+  color: #000000;
+  /* 글자 색을 흰색으로 설정 */
   font-size: 1rem;
-  border-radius: 20px; /* 둥근 모서리 */
-  cursor: pointer; /* 포인터 커서 표시 */
+  border-radius: 20px;
+  /* 둥근 모서리 */
+  cursor: pointer;
+  /* 포인터 커서 표시 */
   white-space: nowrap;
 }
 
@@ -222,43 +271,65 @@ const onSearch = () => {
 }
 
 .sell-button:hover {
-  background-color: #4c6ef5; /* 어두운 파란색 */
+  background-color: #4c6ef5;
+  /* 어두운 파란색 */
   color: #ffffff;
 }
+
 /* 알림 섹션 스타일 */
 .notifications {
-  display: flex; /* 가로로 정렬 */
-  align-items: center; /* 수직 중앙 정렬 */
-  gap: 0.5rem; /* 아이콘과 텍스트 간 간격 */
-  font-size: 1rem; /* 글자 크기 */
-  color: #4c6ef5; /* 파란색 */
+  display: flex;
+  /* 가로로 정렬 */
+  align-items: center;
+  /* 수직 중앙 정렬 */
+  gap: 0.5rem;
+  /* 아이콘과 텍스트 간 간격 */
+  font-size: 1rem;
+  /* 글자 크기 */
+  color: #4c6ef5;
+  /* 파란색 */
 }
 
 /* 알림 뱃지 스타일 */
 .notifications .badge {
-  display: inline-flex; /* 인라인 플렉스 */
-  justify-content: center; /* 가운데 정렬 */
-  align-items: center; /* 수직 중앙 정렬 */
-  width: 20px; /* 너비 */
-  height: 20px; /* 높이 */
-  background-color: #ffa500; /* 오렌지색 배경 */
-  color: white; /* 글자 색 흰색 */
-  font-size: 0.75rem; /* 글자 크기 */
-  font-weight: bold; /* 글자 굵게 */
-  border-radius: 50%; /* 원형 모양 */
+  display: inline-flex;
+  /* 인라인 플렉스 */
+  justify-content: center;
+  /* 가운데 정렬 */
+  align-items: center;
+  /* 수직 중앙 정렬 */
+  width: 20px;
+  /* 너비 */
+  height: 20px;
+  /* 높이 */
+  background-color: #ffa500;
+  /* 오렌지색 배경 */
+  color: white;
+  /* 글자 색 흰색 */
+  font-size: 0.75rem;
+  /* 글자 크기 */
+  font-weight: bold;
+  /* 글자 굵게 */
+  border-radius: 50%;
+  /* 원형 모양 */
 }
 
 /* 알림 아이콘이 포함된 컨테이너 */
 .notification-container {
-  position: relative; /* 상대적 위치 */
-  display: flex; /* 가로로 정렬 */
-  align-items: center; /* 수직 중앙 정렬 */
+  position: relative;
+  /* 상대적 위치 */
+  display: flex;
+  /* 가로로 정렬 */
+  align-items: center;
+  /* 수직 중앙 정렬 */
 }
 
 /* 알림 아이콘이 있는 li 태그 스타일 */
 .header-actions li.notification-container {
-  padding: 0; /* 패딩 제거 */
-  margin: 0 1.2rem; /* 좌우 여백 */
+  padding: 0;
+  /* 패딩 제거 */
+  margin: 0 1.2rem;
+  /* 좌우 여백 */
   white-space: nowrap;
 }
 </style>
