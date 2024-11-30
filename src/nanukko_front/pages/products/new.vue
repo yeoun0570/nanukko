@@ -1,5 +1,4 @@
 <script setup>
-import axios from "axios";
 import { useToast } from 'vue-toastification';
 import { useRouter } from 'vue-router';
 import { useURL } from "~/composables/useURL";
@@ -10,11 +9,7 @@ import ProductForm from '~/components/products/products-new/ProductForm.vue';
 const toast = useToast();
 const router = useRouter();
 const auth = useAuth();
-const { baseURL } = useURL();
-
-const axiosInstance = axios.create({
-    baseURL: baseURL, // 토큰을 사용한 axios 인스턴스 생성
-});
+const { axiosInstance } = useURL();
 
 onMounted(() => {
     axiosInstance.interceptors.request.use((config) => {
@@ -66,7 +61,7 @@ const product = ref({
     isCompanion: false,
     isDeputy: false,
     gender: null,
-    ageGroup: null
+    ageGroup: ''
 });
 
 const submitProduct = async () => {
@@ -178,7 +173,10 @@ const submitProduct = async () => {
             }
         };
 
-        const response = await axiosInstance.post(`${baseURL}/products/new`, formData, config);
+        const response = await axiosInstance.post(`/products/new`, formData, config);
+
+        //toast
+        toast.success('상품이 등록되었습니다.');
 
         // 요청 완료 후 로깅
         console.log('===== API 응답 =====');

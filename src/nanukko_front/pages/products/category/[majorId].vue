@@ -1,8 +1,10 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue';
+import { ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { useApi } from "@/composables/useApi";
 import TimeAgo from '~/components/common/TimeAgo.vue';
 
+const api = useApi();
 const route = useRoute();
 const router = useRouter();
 const products = ref({
@@ -30,10 +32,11 @@ const categoryNames = {
 const categoryName = computed(() => categoryNames[route.params.majorId] || '카테고리');
 
 const fetchMiddleCategories = async () => {
+    console.log('fetchMiddleCategories 시작', route.params.majorId);
     try {
-        const response = await fetch(`http://localhost:8080/api/categories/middle/${route.params.majorId}`);
-        const data = await response.json();
-        middleCategories.value = data;
+        const response = await api.get(`/categories/middle/${route.params.majorId}`);
+        middleCategories.value = response;
+        console.log("중분류 카테고리 : ", response);
     } catch (error) {
         console.error('중분류 카테고리 로드 실패:', error);
     }
@@ -43,11 +46,10 @@ const fetchProducts = async () => {
     loading.value = true;
     try {
         const url = selectedMiddleId.value
-            ? `http://localhost:8080/api/products/middle?middleId=${selectedMiddleId.value}&page=${pageNumber.value}&size=${pageSize}`
-            : `http://localhost:8080/api/products/major?majorId=${route.params.majorId}&page=${pageNumber.value}&size=${pageSize}`;
-        const response = await fetch(url);
-        const data = await response.json();
-        products.value = data;
+            ? `/products/middle?middleId=${selectedMiddleId.value}&page=${pageNumber.value}&size=${pageSize}`
+            : `/products/major?majorId=${route.params.majorId}&page=${pageNumber.value}&size=${pageSize}`;
+        const response = await api.get(url);
+        products.value = response;
     } catch (error) {
         console.error('상품 로드 실패:', error);
     } finally {

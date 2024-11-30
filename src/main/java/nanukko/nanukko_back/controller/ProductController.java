@@ -12,6 +12,7 @@ import nanukko.nanukko_back.domain.product.Product;
 import nanukko.nanukko_back.domain.user.User;
 import nanukko.nanukko_back.dto.page.PageResponseDTO;
 import nanukko.nanukko_back.dto.product.ProductRequestDto;
+import nanukko.nanukko_back.dto.product.ProductResponseDto;
 import nanukko.nanukko_back.dto.user.CustomUserDetails;
 import nanukko.nanukko_back.repository.UserRepository;
 import nanukko.nanukko_back.service.ProductService;
@@ -68,16 +69,23 @@ public class ProductController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ProductRequestDto> getProductById(@PathVariable Long id, @AuthenticationPrincipal CustomUserDetails userDetails) {
+    public ResponseEntity<ProductResponseDto> getProductById(@PathVariable Long id, @AuthenticationPrincipal CustomUserDetails userDetails) {
         User currentUser = null;
         if (userDetails != null) {
             String userId = userDetails.getUsername();
             currentUser = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없음"));
         }
-        ProductRequestDto product = productService.getProductDetail(id, currentUser);
+        ProductResponseDto product = productService.getProductDetail(id, currentUser);
+        log.info("ProductResponseDto 전달 : {}", product);
         return ResponseEntity.ok(product);
     }
 
+    @GetMapping("/related")
+    public ResponseEntity<List<ProductResponseDto>> getRelatedProducts(@RequestParam Long productId) {
+        List<ProductResponseDto> relatedProducts = productService.findRelatedProducts(productId);
+        log.info("/////////연관 상품 전달 ?" + relatedProducts.stream().toList());
+        return ResponseEntity.ok(relatedProducts);
+    }
 
     @GetMapping("/search")
     public ResponseEntity<PageResponseDTO<Product>> searchProducts(
@@ -124,66 +132,5 @@ public class ProductController {
         return ResponseEntity.ok(products);
     }
 
-    @GetMapping("/related")
-    public ResponseEntity<List<ProductRequestDto>> getRelatedProducts(
-            @RequestParam Long productId,
-            @RequestParam(defaultValue = "5") int limit) {
-        List<ProductRequestDto> relatedProducts = productService.findRelatedProducts(productId);
-        return ResponseEntity.ok(relatedProducts);
-    }
-
-/*
-    @PostMapping("/new")
-    public ResponseEntity<?> createNewProduct (
-            @RequestBody()
-
-
-                                        @RequestParam("file") MultipartFile file, //******
-                                        @RequestParam("reviewContents") String reviewContents,
-                                        @RequestParam("reservationId") Long reservationId,
-                                        @RequestParam("registerDate") String registerDate,
-                                        @RequestParam("reviewScore") Long reviewScore,
-                                        @RequestParam("userEmail") String userEmail) {
-        try {
-            // *******
-            List<FileDTO> fileDTOList = fileService.uploadFiles(List.of(file), "reviews");
-            String img = fileDTOList.get(0).getUploadFileUrl();
-
-            // Save review details
-            ReviewRequest reviewRequest = ReviewRequest.builder()
-                    .reviewContents(reviewContents)
-                    .reservationId(reservationId)
-                    .registerDate(LocalDate.parse(registerDate))
-                    .reviewScore(reviewScore)
-                    .userEmail(userEmail)
-                    .img(img)
-                    .build();
-
-            myDiningService.registerReview(reviewRequest);
-
-            return ResponseEntity.ok("File uploaded and review saved successfully");
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error occurred: " + e.getMessage());
-        }
-    }*/
-
-    /*// 현재 이미지를 varchar(255)로 받아서 이미지 크기를 담을 수가 없어서 생성이 안됨. 나중에 클라우드 도입시키고 새로 짜야될거 같음
-    @PostMapping("/product/register")
-    public ResponseEntity<?> registerProduct(
-            @RequestParam String userId,
-            @RequestBody UserSetProductDTO productDTO
-    ) {
-        try {
-            log.info("Received userId: {}", userId);
-            log.info("Received productDTO: {}", productDTO);
-
-            UserSetProductDTO savedProduct = userService.registerProduct(userId, productDTO);
-            return ResponseEntity.ok(savedProduct);
-        } catch (Exception e) {
-            log.error("Error registering product", e);
-            return ResponseEntity.badRequest()
-                    .body(Map.of("error", e.getMessage()));
-        }
-    }*/
 
 }

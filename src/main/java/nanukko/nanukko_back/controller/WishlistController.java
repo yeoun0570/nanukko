@@ -40,5 +40,16 @@ public class WishlistController {
         ));
     }
 
+    @PostMapping("/{productId}/view")
+    public ResponseEntity<?> incrementViewCount(
+            @PathVariable Long productId) {
+        try {
+            wishlistService.incrementViewCount(productId);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
 
 }

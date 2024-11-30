@@ -87,6 +87,10 @@ dependencies {
     //이미지 리사이징용
     implementation 'net.coobird:thumbnailator:0.4.20'
 
+    //TwelveMonkeys 이미지 플러그인
+    implementation 'com.twelvemonkeys.imageio:imageio-webp:3.9.4'
+
+
 }
 
 tasks.named('test') {

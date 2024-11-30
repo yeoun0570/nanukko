@@ -62,7 +62,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     @Query("SELECT p FROM Product p " +
             "WHERE p.productId != :productId " +
             "AND p.middleCategory.middleId = :middleId " +
-            "AND p.status = 'SALE' " +
+            "AND p.status = 'SELLING' " +
             "ORDER BY p.updatedAt DESC")
     List<Product> findRelatedProductsByMiddleId(
             @Param("productId") Long productId,

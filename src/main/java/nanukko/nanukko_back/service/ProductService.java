@@ -13,11 +13,13 @@ import nanukko.nanukko_back.dto.file.FileDTO;
 import nanukko.nanukko_back.dto.file.FileDirectoryType;
 import nanukko.nanukko_back.dto.page.PageResponseDTO;
 import nanukko.nanukko_back.dto.product.ProductRequestDto;
+import nanukko.nanukko_back.dto.product.ProductResponseDto;
 import nanukko.nanukko_back.dto.user.UserProductDTO;
 import nanukko.nanukko_back.repository.MiddleCategoryRepository;
 import nanukko.nanukko_back.repository.ProductRepository;
 import nanukko.nanukko_back.repository.UserRepository;
 import nanukko.nanukko_back.repository.WishlistRepository;
+import nanukko.nanukko_back.util.ProductMapper;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -25,6 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -51,6 +54,8 @@ public class ProductService {
         //이미지 업로드, URL 리스트
         List<FileDTO> imgUrls = imageService.uploadMultipleFiles(images, FileDirectoryType.SELL, seller.getUserId());
 //        List<String> imgUrls = fileService.uploadProductImages(images, "products", 500);
+
+        log.info("업로드 이미지 url : {}" , imgUrls);
         Image image = new Image(imgUrls);
 
         //상품 엔티티 생성
@@ -88,15 +93,12 @@ public class ProductService {
         return modelMapper.map(product, ProductRequestDto.class);
     }
 
-    public ProductRequestDto getProductDetail (Long productId, User user) {
+    public ProductResponseDto getProductDetail (Long productId, User user) {
         Product product = getProductById(productId);
-        boolean isWished = false;
-        if (user != null) {
-            isWished = wishlistRepository.existsByUserAndProduct(user, product);
-        }
-        ProductRequestDto productRequestDto = modelMapper.map(product, ProductRequestDto.class);
-        productRequestDto.setIsWished(isWished);
-        return productRequestDto;
+        boolean isWished = user != null && wishlistRepository.existsByUserAndProduct(user, product);
+        ProductResponseDto dto = ProductMapper.toDto(product);
+        dto.setIsWished(isWished);
+        return dto;
     }
 
     public PageResponseDTO<Product> searchProducts(String query, Pageable pageable) { //상품명 검색 페이지별 조회
@@ -114,14 +116,20 @@ public class ProductService {
         return new PageResponseDTO<>(result);
     }
 
-    public List<ProductRequestDto> findRelatedProducts(Long productId) {
+    public List<ProductResponseDto> findRelatedProducts(Long productId) {
         // 1. 현재 상품의 중분류 ID 조회
         Product currentProduct = getProductById(productId);
         Long middleId = currentProduct.getMiddleCategory().getMiddleId();
-
+        log.info("연관상품 조회 중..." + middleId);
         // 2. 동일한 중분류의 다른 상품들 조회
         List<Product> products = productRepository.findRelatedProducts(productId, middleId);
-        return products.stream().map((element) -> modelMapper.map(element, ProductRequestDto.class)).collect(Collectors.toList());
+        log.info("연관상품 조회 중...List<Product> 몇 개? : " + products.size());
+
+        List<ProductResponseDto> dto = products.stream()
+                .map(ProductMapper::toDto) // 각 Product를 ProductResponseDto로 변환
+                .toList();
+        log.info("연관 상품 Dto : " + dto);
+        return dto;
     }
 
     ///////////////////공통 메서드//////////////////////

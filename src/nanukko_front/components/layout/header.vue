@@ -58,7 +58,6 @@ import { useAuth } from "~/composables/auth/useAuth";
 import { useRouter } from "vue-router";
 import { useToast } from "vue-toastification";
 
-
 const router = useRouter();
 
 const { userId, nickname, isAuthenticated, logout } = useAuth();
@@ -73,7 +72,6 @@ const navigateToChat = () => {
 };
 
 const toast = useToast();
-
 
 // 로그아웃
 const doLogout = () => {
@@ -104,57 +102,6 @@ watch(isAuthenticated, () => {
   console.log('qweqweqweqw',isAuthenticated);
 })
 </script>
-
-<template>
-  <header class="header">
-    <!-- 로고, 검색창, 액션 항목을 포함하는 컨테이너 -->
-    <div class="header-container">
-      <!-- 로고 섹션 -->
-      <div class="logo">
-        <NuxtLink to="/">
-          <img
-            src="../../public/image/나누고_Logo_blue.png"
-            alt="nanukko Logo"
-            width="150"
-            height="80"
-          />
-        </NuxtLink>
-      </div>
-
-      <!-- 검색창 섹션 -->
-      <div class="search-bar">
-        <!-- 검색어 입력 필드 -->
-        <input
-          type="text"
-          placeholder="검색어를 입력해주세요"
-          v-model="searchQuery"
-          @keyup.enter="onSearch"
-        />
-        <!-- 검색 버튼 -->
-        <button @click="onSearch">🔍</button>
-        <!-- 클릭 시 검색 실행 -->
-      </div>
-
-      <!-- 액션 섹션 (채팅, 알림, 로그인, 마이페이지 링크) -->
-      <ul class="header-actions">
-        <li>
-          <button v-if="!isAuthenticted" @click="navigateToChat">채팅</button>
-          <button v-else @click="showLoginAlert">채팅</button>
-        </li>
-        <li class="notification-cotainer"><Notification /></li>
-        <button v-if="!isAuthenticted">
-          <NuxtLink to="/auth/login">로그인</NuxtLink>
-        </button>
-        <button v-if="isAuthenticted">
-          <NuxtLink to="/my-store">마이페이지</NuxtLink>
-        </button>
-        <button v-if="isAuthenticted" @click="doLogout">로그아웃</button>
-        <!-- 판매 글 작성을 위한 페이지로 이동하는 링크 -->
-        <button v-if="isAuthenticted" class="sell-button">판매하기</button>
-      </ul>
-    </div>
-  </header>
-</template>
 
 <style>
 /* 헤더 전체 레이아웃 */
@@ -241,10 +188,14 @@ watch(isAuthenticated, () => {
 
 /* 헤더 액션 버튼들 스타일 */
 .header-actions {
-  display: flex; /* 가로로 정렬 */
-  flex-direction: row; /* 기본 행 방향 설정 */
-  width: 400px; /* 너비 */
-  justify-content: space-around; /* 항목 간 간격 균등하게 */
+  display: flex;
+  /* 가로로 정렬 */
+  flex-direction: row;
+  /* 기본 행 방향 설정 */
+  width: 400px;
+  /* 너비 */
+  justify-content: space-around;
+  /* 항목 간 간격 균등하게 */
 }
 
 /* 액션 버튼 리스트 스타일 */
