@@ -1,0 +1,119 @@
+/* 사이드바의 기본 크기와 배경을 설정하는 최상위 컨테이너 스타일 */
+.sidebar {
+    width: 250px;/* 사이드바의 고정 너비를 250px로 설정 */
+    background-color: rgb(255, 255, 255); /* 사이드바의 배경색을 연한 회색으로 설정 */
+    min-height: 100vh; /* 최소 높이를 뷰포트 높이의 100%로 설정 (화면 전체 높이) */
+  }
+  
+  .sidebar-container {
+    padding: 50px; /* 내부 여백 조정*/
+  }
+  
+  /* 프로필 섹션  */
+  .profile-section {
+    padding: 20px; /*위 여백: 20 , 아래 여백*/
+    border-bottom: 0.5px solid #eee; /* 아래 테두리를 연한 회색으로 */
+    margin-bottom: 50px; /* 아래 공간 (프로필섹션과 내정보 사이) 50px */
+  }
+  /* 프로필 이미지 영역 */
+  .profile-image {
+    width: 100px; /* 가로 크기 100px */
+    height: 100px; /* 세로 크기 100px */
+    margin: 30px 40px 50px 60px;
+    border-radius: 50%; /* 원형으로 표현 */
+    margin-bottom: 100px; /*아래 여백 100px*/
+  }
+  /* 프로필 이미지에 등록하는 실제 이미지 스타일 */
+  .profile-image img {
+    width: 100%; /* 컨테이너 너비를 100% 채움 */
+    height: 100%; /* 컨테이너 높이를 100% 채움 */
+    border-radius: 50%; /* 원형으로 표현 */
+    object-fit: cover; /* 이미지 비율 유지하며 컨테이너에 맞춤 */
+    /* background-color: green; */
+  }
+  
+  /* 프로필 정보(이름/상품개수/평점)*/
+  .profile-info {
+    text-align: center; /* 텍스트를 중앙 정렬 */
+    margin-top: 10px; /* 위 여백 10px */
+  }
+  /* 사용자 이름 스타일 */
+  .profile-name {
+    font-size: 1.2rem; /* 글자 크기 */
+    font-weight: bold; /* 굵은 글씨 */
+    margin-bottom: 10px; /* 아래 여백 10px */
+  }
+  /* 통계 정보 섹션(상품 개수, 평점) */
+  .profile-stats {
+    display: flex; /* 플렉스 박스 레이아웃 */
+    justify-content: center; /* 가운데 정렬 */
+    gap: 20px; /* 요소 간 간격 20px */
+  }
+  /* 개별 통계 항목(상품, 평점) */
+  .stat-item {
+    display: flex; /* 플렉스 박스 레이아웃 */
+    flex-direction: column; /* 세로로 정렬 */
+    align-items: center; /* 가운데 정렬 */
+  }
+  /* 통계 항목 레이블 (상품, 평점 등) */
+  .stat-label {
+    font-size: 0.9rem; /* 글자 크기 */
+    color: #666; /* 회색 글씨 */
+    margin-bottom: 5px; /* 아래 여백 5px */
+  }
+  /* 통계 값 (숫자 등) */
+  .stat-value {
+    font-weight: bold;/* 굵은 글씨 */
+  }
+  /* 평점 표시 영역 */
+  .rating {
+    display: flex; /* 플렉스 박스 레이아웃 */
+    align-items: center; /* 수직 정렬 */
+    gap: 5px; /* 아이콘과 숫자 간 간격 5px */
+  }
+  
+  /* 내상점 섹션 스타일 */
+  .mystore {
+    margin-bottom: 30px; /* 아래 여백 30px */
+  }
+  /* 드롭다운 헤더 스타일 */
+  .dropdown-header {
+    position : relative;
+    display: flex; /* 플렉스 박스 레이아웃 */
+    cursor: pointer;
+    padding: 10px 0;
+  }
+  /* 드롭다운 제목(내상점, 거래내역) 스타일 */
+  .dropdown-header h2 {
+    margin: 0; /* 기본 여백 제거 */
+    font-size: 1.2rem; /* 글자 크기 */
+  }
+  /* 클릭 시 애니메이션 효과 적용을 위한 클래스 */
+  .click-title {
+    transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out; /* 부드러운 전환 효과*/
+    transition: transform 0.3s ease; /*부드러운 애니메이션 */
+  }
+
+  /* 드롭다운 내용 리스트 스타일 */
+  .dropdown-content {
+    list-style: none; /* 리스트 기본 스타일 제거 */
+    padding-left: 20px; /* 왼쪽 여백 20px */
+    margin: 10px 0; /* 위아래 여백 10px */
+  }
+
+  /* 드롭다운 항목 스타일 */
+  .dropdown-content li {
+    display: block;
+    padding: 10px 0; /* 위아래 여백 10px */
+    cursor: pointer;
+    color: #666;
+  }
+  /* 드롭다운 항목에 마우스 오버 시 스타일 */
+  .dropdown-content li:hover {
+    color: rgb(76, 110, 245);
+  }
+  .dropdown:hover .dropdown-content {
+    display: block;
+  }
+
+  

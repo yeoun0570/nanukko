@@ -1,6 +1,5 @@
 <script setup>
 import StarRating from "~/components/my-store/buy-products/StarRating.vue";
-import { useAuth } from "~/composables/auth/useAuth";
 import { useApi } from '@/composables/useApi';
 
 const api = useApi();
@@ -9,11 +8,9 @@ definePageMeta({
   layout: "mystore",
 });
 
-const userId = useAuth();
 const route = useRoute();
 
 const reviewInfo = ref({
-  authorId: userId,
   orderId: route.query.orderId,
   productName: route.query.productName,
   thumbnailImage: route.query.thumbnailImage,
@@ -41,10 +38,10 @@ const writeReview = async () => {
 
     const reviewData = {
       orderId: reviewInfo.value.orderId,
-      authorId: reviewInfo.value.authorId,
-      review: reviewInfo.value.review,
-      rate: reviewInfo.value.rate,
+      review: reviewInfo.value.review.trim(), //trim()으로 문자열임을 확실히
+      rate: Number(reviewInfo.value.rate), //숫자임을 확실히
     };
+    console.log("리뷰 데이터: ", reviewData);
 
     await api.post(`/review/write`, reviewData);
     alert("리뷰가 작성되었습니다.");

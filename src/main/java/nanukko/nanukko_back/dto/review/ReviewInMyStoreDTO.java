@@ -17,7 +17,7 @@ public class ReviewInMyStoreDTO {
     private Long productId;
     private String productName;
     private String authorId;
-    private String profile;
+    private String thumbnail;
     private String authorNickName;
     private String review;
     private int rate;

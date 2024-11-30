@@ -15,10 +15,9 @@ defineEmits(["toggle"]);
 
 <template>
   <div class="notification-icon" @click="$emit('toggle')">
-    <i class="fas fa-bell" :class="{ 'has-notifications': unreadCount > 0 }">
-      <span v-show="unreadCount > 0 && showBadge" class="notification-badge">
-        {{ unreadCount }}
-      </span>
-    </i>
+    <span class="notification-text">알림</span>
+    <span v-if="unreadCount > 0" class="notification-badge">
+      {{ unreadCount }}
+    </span>
   </div>
 </template>

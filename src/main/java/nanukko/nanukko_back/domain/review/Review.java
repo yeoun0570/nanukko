@@ -33,6 +33,7 @@ public class Review {
     private Product product; // 후기가 작성될 상품 (FK)
 
     @NotNull
+    @Column(columnDefinition = "TEXT")
     private String review; // 후기 메시지
 
     @NotNull

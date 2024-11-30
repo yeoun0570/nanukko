@@ -13,9 +13,8 @@ import lombok.NoArgsConstructor;
 @Builder
 public class ReviewRegisterDTO {
     private String orderId;
-    private String authorId; // 후기 작성자
     private String review;
     @Min(0)
-    @Max(100)
+    @Max(10)
     private int rate; //후기 평점
 }
