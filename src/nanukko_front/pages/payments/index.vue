@@ -11,7 +11,7 @@ const auth = useAuth();
 
 //추후에 상세페이지에서 라우팅 받으면 받아야 될 값
 const route = useRoute();
-const productId = route.query.productId;
+const productId = route.query.productId; //추가
 
 const orderData = ref(null);
 const loading = ref(false);
@@ -45,11 +45,19 @@ onMounted(() => {
   );
 
   loadOrderPage();
+  console.log("구매자: ", auth.userId.value);
 });
 
 const startPayment = async () => {
   try {
     loading.value = true;
+
+    console.log("구매자 검증: ", orderData.value, ", ", auth.userId.value);
+    if (orderData.value.sellerId === auth.userId.value) {
+      alert("자신의 상품은 구매할 수 없습니다.");
+      return;
+    }
+
     orderId.value = `ORDER_${new Date().getTime()}`;
 
     console.log("orderId:", orderId.value);
@@ -76,8 +84,17 @@ const startPayment = async () => {
       failUrl: `${window.location.origin}/payments/fail`,
     });
   } catch (error) {
-    console.error("결제 시작 실패:", error);
-    alert("결제가 취소되었습니다.");
+    console.log("결제 실패: ", error);
+    console.error("에러 응답:", error.response?.data); // 에러 응답 확인용 로그
+
+    if (error.response?.data) {
+      // 백엔드의 예외 메시지를 그대로 표시
+      if (error.response?.data?.message) {
+        alert(error.response.data.message);
+      } else {
+        alert("결제 처리 중 오류가 발생했습니다.");
+      }
+    }
   } finally {
     loading.value = false;
   }
