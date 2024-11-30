@@ -1,32 +1,12 @@
 <script setup>
-import axios from "axios";
 import { useURL } from "~/composables/useURL";
 import { useAuth } from "~/composables/auth/useAuth";
 
-const { baseURL } = useURL();
+const { axiosInstance } = useURL();
 const auth = useAuth();
 
 // token을 ref로 선언
 const token = ref(null);
-
-// 토큰을 사용한 axios 인스턴스 생성
-const axiosInstance = axios.create({
-  baseURL: baseURL,
-});
-
-// 컴포넌트가 마운트된 후에 token 가져오기
-// 요청 인터셉터 설정
-onMounted(() => {
-  axiosInstance.interceptors.request.use((config) => {
-    const token = auth.getToken();
-    console.log("Current token:", token); // 토큰 확인용 로그
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    console.log("Request headers:", config.headers); // 헤더 확인용 로그
-    return config;
-  });
-});
 
 const props = defineProps({
   profile: String,
@@ -78,16 +58,11 @@ const handleFileSelect = async (event) => {
     const formData = new FormData();
     formData.append("file", file);
 
-    const response = await axiosInstance.post(
-      `${baseURL}/files/profile`,
-      formData,
-      {
-        headers: {
-          "Content-Type": "multipart/form-data",
-          "x-amz-acl": "public-read", // 공개 읽기 권한으로 수정
-        },
-      }
-    );
+    const response = await axiosInstance.post("/files/profile", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
     console.log("response.data.uploadFileUrl: ", response.data.uploadFileUrl);
 
     //업로드 성공시 부모 컴포넌트에 URL 전달
