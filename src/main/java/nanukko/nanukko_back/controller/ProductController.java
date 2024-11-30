@@ -3,6 +3,7 @@ package nanukko.nanukko_back.controller;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +20,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -35,28 +37,34 @@ import java.util.Map;
 public class ProductController {
     private final UserRepository userRepository;
     private final ProductService productService;
+    private final ObjectMapper objectMapper;
 
-    @PostMapping("/new")
+    @PostMapping(value = "/new", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Map> createProduct(
-            @RequestPart(value = "productInfo") @Valid ProductRequestDto productRequestDto,
-            @RequestPart(value = "images") List<MultipartFile> images)
-    //@AuthenticationPrincipal UserDetails userDetails 로그인 유저 정보 받아오기*** 서비스 로직 수정 필***
-    {
-        try {
-            Product newProduct = productService.createProduct(productRequestDto, images);
+            @RequestPart("productInfo") String productInfoJson,  // JSON 문자열로 받음
+            @RequestPart(value = "images", required = false) List<MultipartFile> images,  // 파일 데이터
+            @AuthenticationPrincipal CustomUserDetails userDetails) throws JsonProcessingException {
 
-            //알림, 이메일 전송 등 추가 로직 구현 가능
+        log.info("=== 상품 등록 요청 시작 ===");
+        log.info("productInfoJson: {}", productInfoJson);
+        log.info("이미지 개수: {}", images.size());
 
-            return ResponseEntity.ok(
-                    Map.of(
-                            "productId", newProduct.getProductId(),
-                            "productName", newProduct.getProductName()
-                    )
-            );
-        } catch (Exception e) {
-            log.error("상품 등록 에러: ", e);
-            return ResponseEntity.internalServerError().build();
-        }
+        String userId = userDetails.getUsername();
+        log.info("인증된 사용자 ID: {}", userId);
+
+        log.info("=== JSON 문자열을 DTO로 변환 시작 ===");
+        ProductRequestDto productRequestDto = objectMapper.readValue(productInfoJson, ProductRequestDto.class);
+
+        Product newProduct = productService.createProduct(productRequestDto, images, userId);
+        log.info("생성된 상품: {}", newProduct);
+
+        Map<String, Object> response = Map.of(
+                "productId", newProduct.getProductId(),
+                "productName", newProduct.getProductName()
+        );
+
+        log.info("응답 데이터: {}", response);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{id}")

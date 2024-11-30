@@ -20,6 +20,7 @@ const isEditing = ref(false); //수정 모드
 // 원본 데이터 저장용 ref 추가
 const originalUserInfo = ref(null);
 
+//수정모드 진입
 const toggleEdit = () => {
   if (!isEditing.value) {
     // 수정 모드 진입 시 현재 데이터 복사

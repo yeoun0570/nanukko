@@ -1,12 +1,12 @@
 <script setup>
 import ReadOnlyStarRating from "~/components/my-store/reviews/ReadOnlyStarRating.vue";
 import StoreScore from "~/components/my-store/reviews/StoreScore.vue";
-import { useApi } from '@/composables/useApi';
+import { useApi } from "@/composables/useApi";
 
 const api = useApi();
 
 definePageMeta({
-  layout: 'mystore'
+  layout: "mystore",
 });
 
 const reviewInfo = ref([]);
@@ -17,15 +17,12 @@ const reviewRate = ref(0);
 
 const loadReviews = async (page = 0) => {
   try {
-    const response = await api.get(
-      `/my-store/reviews`,
-      {
-        params: {
-          page: page,
-          size: pageSize.value,
-        },
-      }
-    );
+    const response = await api.get(`/my-store/reviews`, {
+      params: {
+        page: page,
+        size: pageSize.value,
+      },
+    });
     reviewInfo.value = response.content;
     totalPages.value = response.totalPages;
     currentPage.value = response.currentPage;
@@ -56,15 +53,19 @@ onMounted(() => {
     <div v-if="reviewInfo.length > 0">
       <StoreScore :reviewRate="reviewRate" />
       <div class="reviews-list">
-        <div v-for="review in reviewInfo" :key="review.reviewId" class="review-card">
+        <div
+          v-for="review in reviewInfo"
+          :key="review.reviewId"
+          class="review-card"
+        >
           <div class="review-header">
             <div class="profile-section">
               <img
-                :src="review.profile || '/default-profile.png'"
-                alt="프로필 사진"
-                class="profile-image"
+                :src="review.thumbnail || '/default-profile.png'"
+                alt="상품 썸네일"
+                class="thumbnail-image"
               />
-              <h3 class="author-name">{{ review.authorName }}</h3>
+              <h3 class="author-name">{{ review.authorNickName }}</h3>
             </div>
             <div class="rating">
               <ReadOnlyStarRating :rating="normalizeRating(review.rate)" />
@@ -90,5 +91,5 @@ onMounted(() => {
 </template>
 
 <style>
-@import url('../../assets/my-store/Reviews.css');
+@import url("../../assets/my-store/Reviews.css");
 </style>

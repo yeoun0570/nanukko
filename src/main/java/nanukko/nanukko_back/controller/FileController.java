@@ -33,7 +33,7 @@ public class FileController {
 
     //프로필 이미지 업로드(프로필은 한장이기 때문에 단일 업로드로 진행)
     @PostMapping("profile")
-    public ResponseEntity<FileDTO> uploadSingleImage(
+    public ResponseEntity<FileDTO> uploadProfileImage(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestParam("file") MultipartFile file
     ) {

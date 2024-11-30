@@ -4,8 +4,10 @@ import DeliverySection from "~/components/payments/DeliverySection.vue";
 import PaymentAmountSection from "~/components/payments/PaymentAmountSection.vue";
 import PaymentButton from "~/components/payments/PaymentButton.vue";
 import { useApi } from '@/composables/useApi';
+import { useAuth } from "~/composables/auth/useAuth";
 
 const api = useApi();
+const auth = useAuth();
 
 //추후에 상세페이지에서 라우팅 받으면 받아야 될 값
 const route = useRoute();
@@ -16,7 +18,7 @@ const loading = ref(false);
 const error = ref(null);
 const tossPayments = ref(null);
 const orderId = ref(null);
-const productId = 3;
+const productId = 18;
 
 const loadOrderPage = async () => {
   try {
@@ -25,7 +27,7 @@ const loadOrderPage = async () => {
     );
     orderData.value = response;
     console.log(orderData.value.status);
-    if (response.data.status !== "SELLING") {
+    if (response.status !== "SELLING") {
       alert("판매중인 상품이 아닙니다.");
       // 이전 페이지로 돌아가기
       navigateTo('/');
@@ -43,18 +45,26 @@ onMounted(() => {
   );
 
   loadOrderPage();
+  console.log("구매자: ", auth.userId.value);
 });
 
 const startPayment = async () => {
   try {
     loading.value = true;
+
+    console.log("구매자 검증: ", orderData.value, ", ", auth.userId.value);
+    if (orderData.value.sellerId === auth.userId.value) {
+      alert("자신의 상품은 구매할 수 없습니다.");
+      return;
+    }
+
     orderId.value = `ORDER_${new Date().getTime()}`;
 
     console.log("orderId:", orderId.value);
 
     const paymentInfo = {
       productId: productId,
-      buyerId: "buyer1", // 추후에 로그인한 사용자로 변경
+      buyerId: auth.userId.value, // 추후에 로그인한 사용자로 변경
       amount: orderData.value.totalAmount,
       productName: orderData.value.productName,
     };
@@ -74,8 +84,17 @@ const startPayment = async () => {
       failUrl: `${window.location.origin}/payments/fail`,
     });
   } catch (error) {
-    console.error("결제 시작 실패:", error);
-    alert("결제가 취소되었습니다.");
+    console.log("결제 실패: ", error);
+    console.error("에러 응답:", error.response?.data); // 에러 응답 확인용 로그
+
+    if (error.response?.data) {
+      // 백엔드의 예외 메시지를 그대로 표시
+      if (error.response?.data?.message) {
+        alert(error.response.data.message);
+      } else {
+        alert("결제 처리 중 오류가 발생했습니다.");
+      }
+    }
   } finally {
     loading.value = false;
   }

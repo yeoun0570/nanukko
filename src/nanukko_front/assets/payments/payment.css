@@ -14,7 +14,7 @@
 }
 
 .title {
-  font-size: 18px;
+  font-size: 23px;
   font-weight: bold;
   margin-bottom: 20px;
 }
@@ -101,7 +101,7 @@
 }
 
 .payment-container h2 {
-  font-size: 18px;
+  font-size: 23px;
   font-weight: bold;
   margin-bottom: 12px;
 }
@@ -147,6 +147,12 @@
   margin-bottom: 20px;
 }
 
+.delivery-container h2 {
+  font-size: 23px;
+  font-weight: bold;
+  margin-bottom: 12px;
+}
+
 .header {
   display: flex;
   justify-content: space-between;
@@ -160,6 +166,9 @@
 }
 
 .edit-button {
+  position: absolute; /* 추가: 절대 위치 설정 */
+  top: 20px; /* 추가: 상단에서 20px 떨어짐 */
+  right: 20px; /* 추가: 우측에서 20px 떨어짐 */
   color: #666;
   font-size: 14px;
   border: none;
@@ -173,6 +182,7 @@
   border-radius: 8px;
   padding: 20px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  position: relative; /* 추가: 상대 위치 설정 */
 }
 
 .delivery-info {
@@ -210,6 +220,63 @@
 .phone {
   color: #666;
   font-size: 14px;
+}
+
+.delivery-btn-container {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.delivery-btn-container button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.search-address-btn {
+  padding: 6px 12px;
+  background-color: #4c6ef5;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.search-address-btn:hover {
+  background-color: #4263eb;
+  transform: translateY(-1px);
+}
+
+.save-button {
+  padding: 10px 20px;
+  background-color: #0d6efd;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.save-button:hover {
+  background-color: #0b5ed7;
+  transform: translateY(-1px);
+}
+
+.cancel-button {
+  padding: 10px 20px;
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.cancel-button:hover {
+  background-color: #5c636a;
+  transform: translateY(-1px);
 }
 
 /* PaymentButton */

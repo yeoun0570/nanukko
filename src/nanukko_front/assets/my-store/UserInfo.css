@@ -480,6 +480,32 @@ hr {
   transform: scale(1.05);
 }
 
+/* 삭제 버튼 스타일 */
+.remove-button {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 24px;
+  height: 24px;
+  background-color: #ff4444;
+  border: none;
+  border-radius: 50%;
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.remove-button:hover {
+  background-color: #cc0000;
+}
+
+.remove-button i {
+  font-size: 12px;
+}
+
 /* AddressInfo */
 .address-content {
   flex: 1;

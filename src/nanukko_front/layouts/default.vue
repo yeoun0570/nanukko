@@ -1,14 +1,15 @@
 <script setup>
 import Header from "~/components/layout/header.vue";
+import Navigator from "~/components/layout/navigator.vue";
 import Footer from "~/components/layout/footer.vue";
-import navigator from "~/components/layout/navigator.vue";
+
 </script>
 
 <template>
   <div class="layout">
     <!-- Header 컴포넌트 -->
-    <Header />
-    <navigator />
+  <Header />
+  <Navigator />
 
     <!-- 메인 콘텐츠 영역 -->
     <main>

@@ -30,7 +30,6 @@
     "vue-toastification": "^2.0.0-rc.5",
 
     "vuetify": "^3.7.4"
-
   },
   "devDependencies": {
     "@eslint/js": "^9.14.0",
