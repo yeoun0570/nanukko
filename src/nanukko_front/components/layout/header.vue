@@ -1,3 +1,56 @@
+
+<template>
+  <header class="header">
+    <!-- 로고, 검색창, action 을 포함하는 Flex 컨테이너 -->
+    <div class="header-container">
+      <!-- 로고 -->
+      <div class="logo">
+        <NuxtLink to="/">
+        <img
+          src="../../public/image/나누고_Logo_blue.png"
+          alt="nanukko Logo"
+          width="150"
+          height="80"
+        />
+      </NuxtLink>
+      </div>
+      <!-- 검색창 -->
+      <div class="search-bar">
+        <input
+          type="text"
+          placeholder="검색어를 입력해주세요"
+          v-model="searchQuery"
+          @keyup.enter="onSearch"
+        />
+        <button @click="onSearch">🔍</button>
+      </div>
+
+      <!-- actions 채팅, 알림, 로그인, 마이페이지 -->
+      <ul class="header-actions">
+        <li>
+        <button
+          v-if="isAuthenticated"
+          @click="navigateToChat"
+        >
+          채팅
+        </button>
+        <button
+          v-else
+          @click="showLoginAlert"
+        >
+          채팅
+        </button>
+      </li>
+        <li class="notification-cotainer"><Notification /></li>
+        <li v-if="!isAuthenticated"><NuxtLink to="/auth/login" >로그인</NuxtLink></li>
+        <li v-if="isAuthenticated"><NuxtLink to="/mypage">마이페이지</NuxtLink></li>
+        <li v-if="isAuthenticated"><button @click="doLogout">로그아웃</button></li>
+      </ul>
+    </div>
+
+  </header>
+</template>
+
 <script setup>
 import { ref } from "vue";
 import Notification from "../notification/Notification.vue";
@@ -5,8 +58,11 @@ import { useAuth } from "~/composables/auth/useAuth";
 import { useRouter } from "vue-router";
 import { useToast } from "vue-toastification";
 
+
 const router = useRouter();
-const { userId, nickname, isAuthenticted } = useAuth();
+
+const { userId, nickname, isAuthenticated, logout } = useAuth();
+
 const showLoginAlert = () => {
   alert("채팅을 이용하려면 로그인이 필요합니다.");
   router.push("/auth/login");
@@ -17,6 +73,7 @@ const navigateToChat = () => {
 };
 
 const toast = useToast();
+
 
 // 로그아웃
 const doLogout = () => {
@@ -42,6 +99,10 @@ const onSearch = () => {
     alert(`You searched for: ${searchQuery.value}`); // 임시 알림 처리
   }
 };
+
+watch(isAuthenticated, () => {
+  console.log('qweqweqweqw',isAuthenticated);
+})
 </script>
 
 <template>

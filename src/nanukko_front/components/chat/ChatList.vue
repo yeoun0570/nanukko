@@ -25,6 +25,7 @@
 
       <!-- 채팅방 목록 -->
       <div v-else-if="chatRooms?.length > 0" class="chat-list">
+        <!--동적 클래스 : 현재 선택된 채팅방 하이라이트를 통해 강조-->
         <div 
           v-for="room in chatRooms" 
           :key="room.chatRoomId"
