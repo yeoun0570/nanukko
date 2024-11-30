@@ -29,43 +29,50 @@ export const useChatRooms = () => {
   }
 
   // 채팅방 생성/입장만 처리하는 메서드
-const createOrEnterChatRoom = async (productId) => {
-  loading.value = true;
-  try {
-    const response = await api.post(`/chat/getChat?productId=${productId}`, null);
-    
-    if (!response) {
-      throw new Error('채팅방 생성/입장에 실패했습니다.');
-    }
-
-    currentRoom.value = response;
-
-    // WebSocket 연결 및 구독 설정
-    if (stomp.connected.value && response.chatRoomId) {
-      currentSubscription.value = await stomp.subscribeToChatRoom(
-        response.chatRoomId,
-        {
-          onMessage: (message) => {
-            if (currentRoom.value?.chatRoomId === response.chatRoomId) {
-              if (!currentRoom.value.messages) {
-                currentRoom.value.messages = [];
+  const createOrEnterChatRoom = async (productId) => {
+    loading.value = true;
+    try {
+      const response = await api.post(`/chat/getChat?productId=${productId}`, null, {
+        rawResponse: true
+      });
+      
+      if (!response.ok) {
+        throw new Error('채팅방 생성/입장에 실패했습니다.');
+      }
+  
+      const data = await response.json();
+      if (!data) {
+        throw new Error('채팅방 데이터를 받지 못했습니다.');
+      }
+  
+      currentRoom.value = data;
+  
+      // WebSocket 연결 및 구독 설정
+      if (stomp.connected.value && data.chatRoomId) {
+        currentSubscription.value = await stomp.subscribeToChatRoom(
+          data.chatRoomId,
+          {
+            onMessage: (message) => {
+              if (currentRoom.value?.chatRoomId === data.chatRoomId) {
+                if (!currentRoom.value.messages) {
+                  currentRoom.value.messages = [];
+                }
+                currentRoom.value.messages.push(message);
               }
-              currentRoom.value.messages.push(message);
             }
           }
-        }
-      );
+        );
+      }
+  
+      return data;
+    } catch (err) {
+      console.error('[useChatRooms] 채팅방 생성/입장 실패:', err);
+      error.value = err;
+      throw err;
+    } finally {
+      loading.value = false;
     }
-
-    return response;
-  } catch (err) {
-    console.error('[useChatRooms] 채팅방 생성/입장 실패:', err);
-    error.value = err;
-    throw err;
-  } finally {
-    loading.value = false;
-  }
-};
+  };
 
 // 메시지 로드를 처리하는 별도 메서드
 const loadChatMessages = async (chatRoomId, page = 0, size = 20) => {
