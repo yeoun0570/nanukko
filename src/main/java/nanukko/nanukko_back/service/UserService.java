@@ -482,5 +482,21 @@ public class UserService {
                 .build();
     }
 
+    //사이드바에 있는 프로필 정보
+    @Transactional(readOnly = true)
+    public UserSimpleInfoDTO getSimpleInfo(String userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        int countProduct = productRepository.countBySeller(user);
+
+        return UserSimpleInfoDTO.builder()
+                .profile(user.getProfile())
+                .nickname(user.getNickname())
+                .reviewRate(user.getReviewRate())
+                .countProduct(countProduct)
+                .build();
+    }
+
     //문의 조회 --> 챗봇 진행되고 할 예정
 }
