@@ -41,6 +41,14 @@ const handleFileSelect = async (event) => {
   // 파일이 없으면 함수 종료
   if (!file) return;
 
+  // 허용되는 이미지 형식 검사
+  const allowedTypes = ["image/jpeg", "image/png"];
+  if (!allowedTypes.includes(file.type)) {
+    alert("지원하지 않는 파일 형식입니다. JPG, PNG 형식만 업로드 가능합니다.");
+    event.target.value = ""; // 파일 선택 초기화
+    return;
+  }
+
   //파일 미리보기 생성
   // FileReader를 사용하여 선택된 파일의 미리보기 생성
   const reader = new FileReader();
