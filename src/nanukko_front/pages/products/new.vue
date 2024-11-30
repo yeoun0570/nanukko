@@ -66,7 +66,7 @@ const product = ref({
     isCompanion: false,
     isDeputy: false,
     gender: null,
-    ageGroup: null
+    ageGroup: ''
 });
 
 const submitProduct = async () => {
@@ -179,6 +179,9 @@ const submitProduct = async () => {
         };
 
         const response = await axiosInstance.post(`${baseURL}/products/new`, formData, config);
+
+        //toast
+        toast.success('상품이 등록되었습니다.');
 
         // 요청 완료 후 로깅
         console.log('===== API 응답 =====');

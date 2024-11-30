@@ -15,8 +15,9 @@ const handleInput = (field, value) => {
 };
 
 const handleGenderChange = (value) => {
-    // true = 남자, false = 여자로 변환
-    emit("update:options", "gender", value === 'male');
+    // male/female 선택에 따라 true/false/null 전달
+    const genderValue = value === 'male' ? true : (value === 'female' ? false : null);
+    emit("update:options", "gender", genderValue);
 };
 
 const ageGroups = [

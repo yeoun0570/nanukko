@@ -5,6 +5,8 @@ import AddressSearch from '~/components/common/AddressSearch.vue';
 import Map from '~/components/products/products-detail/Map.vue';
 import CategorySelect from '~/components/my-store/CategorySelect.vue';
 
+const emit = defineEmits(['update:modelValue']);
+
 const props = defineProps({
     modelValue: {
         type: Object,
@@ -12,7 +14,19 @@ const props = defineProps({
     }
 });
 
-const emit = defineEmits(['update:modelValue']);
+//필드 업데이트 시
+const updateField = (field, value) => {
+    // 가격과 배송비의 경우 음수와 소수점 처리
+    if (field === 'price' || field === 'shippingFee') {
+        value = Math.max(0, Math.floor(Number(value)));
+    }
+
+    emit('update:modelValue', {
+        ...props.modelValue,
+        [field]: value
+    });
+};
+
 
 // 가격과 배송비 입력 처리를 위한 유틸리티 함수들
 const formatNumber = (value) => {
@@ -51,26 +65,6 @@ const handlePriceBlur = (event, field) => {
     updateField(field, Number(value));
 };
 
-const updateField = (field, value) => {
-    // 가격과 배송비의 경우 음수와 소수점 처리
-    if (field === 'price' || field === 'shippingFee') {
-        value = Math.max(0, Math.floor(Number(value)));
-    }
-
-    emit('update:modelValue', {
-        ...props.modelValue,
-        [field]: value
-    });
-};
-
-// 거래 옵션 computed 속성
-const tradeOptions = computed(() => ({
-    isCompanion: props.modelValue.isCompanion || false,
-    isDeputy: props.modelValue.isDeputy || false,
-    gender: props.modelValue.gender ?? true,  // true = 남성, false = 여성
-    ageGroup: props.modelValue.ageGroup || ''
-}));
-
 // 카테고리 업데이트 핸들러
 const handleCategoryUpdate = (field, value) => {
     if (field === "middleCategory") {
@@ -78,6 +72,14 @@ const handleCategoryUpdate = (field, value) => {
         updateField('middleCategory', value);
     }
 };
+
+//TradeOptions를 위한 함수
+const tradeOptions = computed(() => ({
+    isCompanion: props.modelValue.isCompanion || false,
+    isDeputy: props.modelValue.isDeputy || false,
+    gender: props.modelValue.gender ?? null,  // 기본값을 true에서 null로 변경
+    ageGroup: props.modelValue.ageGroup || ''
+}));
 
 const handleTradeTypeChange = (type) => {
     const updatedProduct = { ...props.modelValue };
@@ -100,7 +102,7 @@ const handleTradeTypeChange = (type) => {
             updatedProduct.longitude = null;
             updatedProduct.isCompanion = false;
             updatedProduct.isDeputy = false;
-            updatedProduct.gender = true;
+            updatedProduct.gender = null;
             updatedProduct.ageGroup = '';
         }
     }
@@ -157,6 +159,7 @@ const productConditions = [
     { value: 'USED', label: '사용감 적음', description: '눈에 띄는 부분이 약간 있어요' },
     { value: 'HEAVILY_USED', label: '사용감 많음', description: '눈에 띄는 부분이 많아요' }
 ];
+
 </script>
 
 <template>
@@ -164,7 +167,7 @@ const productConditions = [
         <div class="form-group">
             <label for="productName">상품명</label>
             <input type="text" id="productName" :value="modelValue.productName"
-                @input="updateField('productName', $event.target.value)" required>
+                @input="updateField('productName', $event.target.value)" maxlength="85" required>
         </div>
 
         <!-- 카테고리 선택 부분 -->
@@ -256,7 +259,7 @@ const productConditions = [
         <div class="form-group">
             <label for="content">상품 설명</label>
             <textarea id="content" :value="modelValue.content" @input="updateField('content', $event.target.value)"
-                rows="4" required></textarea>
+                rows="4" maxlength="85" required></textarea>
         </div>
     </div>
 </template>
