@@ -1,47 +1,54 @@
 <script setup>
 import { ref } from 'vue';
-import axios from 'axios';
+import { useApi } from "@/composables/useApi";
+import { useRouter } from 'vue-router';
+import { useToast } from 'vue-toastification';
 
 const props = defineProps({
     productId: {
         type: String,
         required: true
     },
-    initialIsWished: {
+    modelValue: {
         type: Boolean,
-        default: false
+        required: true
     }
 });
 
-const emit = defineEmits(['action-click']);
+const emit = defineEmits(['update:isWished', 'wish-updated']);
+const api = useApi();
+const router = useRouter();
+const toast = useToast();
 
+const localIsWished = ref(props.isWished);
 const isWished = ref(props.initialIsWished);
 const isProcessing = ref(false);
 
+watch(() => props.modelValue, (newValue) => {
+    localIsWished.value = newValue;
+});
+
 const handleWishClick = async () => {
     try {
-        isProcessing.value = true;
+        const response = await api.post(`/wishlist/${props.productId}`);
 
-        const response = await axios.post(`http://localhost:8080/api/my-store/wishlist/${props.productId}`, null, {
-            withCredentials: true  // 쿠키 기반 인증을 사용하는 경우
-        });
-
-        if (response.status === 200) {
-            isWished.value = !isWished.value;
-            // 성공 메시지 표시
-            alert(isWished.value ? '찜 목록에 추가되었습니다.' : '찜 목록에서 제거되었습니다.');
+        if (response.data) {
+            localIsWished.value = response.data.isWished;
+            emit('update:modelValue', response.data.isWished);
+            emit('wish-updated', {
+                isWished: response.data.isWished,
+                productId: props.productId
+            });
+            toast.success(response.data.message);
         }
     } catch (error) {
         if (error.response?.status === 401) {
-            alert('로그인이 필요한 서비스입니다.');
-            // 로그인 페이지로 리다이렉션
-            navigateTo('/login');
+            toast.warning('로그인이 필요한 서비스입니다.');
+            router.push('/auth/login');
         } else {
             console.error('찜하기 처리 중 오류 발생:', error);
-            alert('처리 중 오류가 발생했습니다.');
+            toast.error('처리 중 오류가 발생했습니다.');
         }
-    } finally {
-        isProcessing.value = false;
     }
 };
 
@@ -56,18 +63,17 @@ const handleBuyClick = () => {
 
 <template>
     <div class="product-actions">
-        <button class="action-button like" :class="{ active: isWished, disabled: isProcessing }"
-            @click="handleWishClick" :disabled="isProcessing">
-            <v-icon>{{ isWished ? 'mdi-heart' : 'mdi-heart-outline' }}</v-icon>
-            <span>찜{{ isWished ? '됨' : '' }}</span>
+        <button class="action-button like" @click="handleWishClick">
+            <v-icon>{{ localIsWished ? 'mdi-heart' : 'mdi-heart-outline' }}</v-icon>
+            <span>찜</span>
         </button>
         <button class="action-button chat" @click="handleChatClick">
             <v-icon>mdi-chat</v-icon>
-            <span>톡하기</span>
+            <span>채팅하기</span>
         </button>
         <button class="action-button buy" @click="handleBuyClick">
             <v-icon>mdi-gift-open</v-icon>
-            <span>구매하기</span>
+            <span>즉시결제</span>
         </button>
     </div>
 </template>
@@ -101,10 +107,6 @@ const handleBuyClick = () => {
 
 .like {
     background-color: #007bff;
-}
-
-.like.active {
-    background-color: #dc3545;
 }
 
 .chat {

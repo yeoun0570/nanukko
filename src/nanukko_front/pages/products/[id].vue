@@ -1,74 +1,159 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue';
-import { useRoute } from 'vue-router';
-import axios from 'axios';
+import { ref, computed, defineAsyncComponent } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { useToast } from 'vue-toastification';
+import { useAuth } from "~/composables/auth/useAuth";
+import { useApi } from "@/composables/useApi";
 import ProductImage from '~/components/products/products-detail/ProductImage.vue';
 import ProductActions from '~/components/products/products-detail/ProductActions.vue';
 import ProductMiniSummary from '~/components/products/products-detail/ProductMiniSummary.vue';
-import TimeAgo from '~/components/common/TimeAgo.vue';
 import Map from '~/components/products/products-detail/Map.vue';
 
 const route = useRoute();
+const router = useRouter();
+const toast = useToast();
+const { auth, isAuthenticated } = useAuth();
+const api = useApi();
+const isLoading = ref(true);
 const product = ref(null);
+const relatedProducts = ref([]);
+const TimeAgo = defineAsyncComponent(() => import('~/components/common/TimeAgo.vue'));
+
+onMounted(async () => {
+    try {
+        await loadProductDetail();
+        await loadRelatedProducts();
+    } finally {
+        isLoading.value = false;
+    }
+});
+
 
 // 상품 정보 로드
 const loadProductDetail = async () => {
     try {
-        // URL 파라미터 이름을 id로 변경
-        const response = await axios.get(`http://localhost:8080/api/products/${route.params.id}`);
-        product.value = response.data;
+        const response = await api.get(`/products/${route.params.id}`);
+
+        // if (productResponse.status === 403) {
+        //     throw new Error('권한이 없거나 존재하지 않는 상품입니다.');
+        // }
+
+        product.value = response;
+
+        await api.post(`/wishlist/${route.params.id}/view`); // 조회수 증가 API 호출
     } catch (error) {
         console.error('상품 정보 로드 실패:', error);
-        alert('상품 정보를 불러오는데 실패했습니다.');
+        toast.error('존재하지 않는 상품입니다.');
+        await router.push('/');
+        return;
     }
 };
-
-// 가격 포맷팅
-const formattedPrice = computed(() => {
-    if (!product.value) return '0';
-    return product.value.price.toLocaleString();
-});
-
-const handleActionClick = () => {
-    console.log("확인!");
-};
-
-onMounted(() => {
-    loadProductDetail();
-    loadRelatedProducts();
-});
-
-const relatedProducts = ref([]);
 
 // 연관 상품 로드
 const loadRelatedProducts = async () => {
     try {
-        const response = await fetch(
-            `http://localhost:8080/api/products/related?productId=${route.params.id}&limit=5`
-        );
-        const data = await response.json();
-        relatedProducts.value = data;
+        const response = await api.get(`/products/related?productId=${route.params.id}`);
+        if (Array.isArray(response)) {
+            relatedProducts.value = response;
+        } else {
+            console.error('연관 상품 데이터 형식 오류:', response);
+            relatedProducts.value = [];
+        }
     } catch (error) {
         console.error('연관 상품 로드 실패:', error);
+        relatedProducts.value = [];
     }
 };
 
+const goToProduct = (productId) => {
+    router.push(`/products/${productId}`);
+};
+
+// 가격 포맷팅
+const formattedPrice = computed(() => {
+    if (!product.value?.price) return '0';
+    return new Intl.NumberFormat('ko-KR').format(product.value.price);
+});
+
 const productImages = computed(() => {
     if (!product.value) return [];
-
-    // 각 이미지 필드를 배열로 변환
-    const images = [
+    return [
         product.value.image1,
         product.value.image2,
         product.value.image3,
         product.value.image4,
         product.value.image5
-    ];
-
-    // null, undefined, 빈 문자열 제거
-    return images.filter(image => image);
+    ].filter(image => image);
 });
 
+// 버튼 클릭 시
+const handleWishClick = async () => {
+    if (!isAuthenticated) {
+        //에러 toast 추가 !!!
+
+        setTimeout(() => {
+            router.push('/auth/login')
+        }, 1500)
+        return
+    }
+
+    try {
+        const response = await api.post(`/wishlist/${route.params.id}`);
+        console.log('위시리스트 응답:', response);
+
+        if (response) { // response.data 대신 response 확인
+            product.value = {
+                ...product.value,
+                isWished: response.isWished,
+                favorite_count: response.isWished
+                    ? product.value.favorite_count + 1
+                    : product.value.favorite_count - 1
+            };
+
+            toast.success(response.message);
+        }
+    } catch (error) {
+        console.error('위시리스트 에러:', error); // 에러 로깅
+        if (error.response?.status === 401) {
+            toast.warning('로그인이 필요한 서비스입니다.');
+            router.push('auth/login');
+        } else {
+            toast.error('처리 중 오류가 발생했습니다.');
+        }
+    }
+};
+
+const handleChatClick = () => {
+    if (!isAuthenticated) {
+        //에러 toast 추가 !!!
+
+        setTimeout(() => {
+            router.push('/auth/login')
+        }, 1500)
+        return
+    }
+
+    router.push({
+        path: '/chat',
+        query: { productId: route.params.id }
+    });
+}
+
+const handleBuyClick = () => {
+    if (!isAuthenticated) {
+        //에러 toast 추가 !!!
+
+        setTimeout(() => {
+            router.push('/auth/login')
+        }, 1500)
+        return
+    }
+
+    router.push({
+        path: '/payments',
+        query: { productId: route.params.id }
+    });
+};
 </script>
 
 <template>
@@ -85,23 +170,18 @@ const productImages = computed(() => {
                         {{ formattedPrice }}<span class="price-unit">원</span>
                     </p>
                     <hr>
-                    <!-- 미니 아이콘 섹션 -->
                     <div class="product-stats">
                         <div class="stat-item">
                             <v-icon>mdi-heart</v-icon>
-                            <span>{{ product.favoriteCount || 0 }}</span>
+                            <span>{{ product.favorite_count || 0 }}</span>
                         </div>
                         <div class="stat-item">
                             <v-icon>mdi-eye-outline</v-icon>
-                            <span>{{ product.viewCount || 0 }}</span>
+                            <span>{{ product.view_count || 0 }}</span>
                         </div>
                         <div class="stat-item">
                             <v-icon>mdi-message-outline</v-icon>
-                            <span>{{ product.talkCount || 0 }}</span>
-                        </div>
-                        <div class="stat-item">
-                            <v-icon>mdi-clock-outline</v-icon>
-                            <TimeAgo :timestamp="product.updated_time" />
+                            <span>{{ product.talk_count || 0 }}</span>
                         </div>
                     </div>
                 </div>
@@ -111,7 +191,20 @@ const productImages = computed(() => {
                     :freeShipping="product.freeShipping" :address="product.address" :isCompanion="product.isCompanion"
                     :isDeputy="product.isDeputy" :gender="product.gender" :ageGroup="product.ageGroup" />
 
-                <ProductActions @action-click="handleActionClick" />
+                <div class="product-actions">
+                    <button class="action-button like" @click="handleWishClick">
+                        <v-icon>{{ product.isWished ? 'mdi-heart' : 'mdi-heart-outline' }}</v-icon>
+                        <span>찜</span>
+                    </button>
+                    <button class="action-button chat" @click="handleChatClick">
+                        <v-icon>mdi-chat</v-icon>
+                        <span>채팅하기</span>
+                    </button>
+                    <button class="action-button buy" @click="handleBuyClick">
+                        <v-icon>mdi-gift-open</v-icon>
+                        <span>즉시결제</span>
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -130,34 +223,22 @@ const productImages = computed(() => {
                     {{ product.detailAddress }}
                 </span>
             </p>
-            <div class="map-container">
-                <Map :lat="Number(product.latitude)" :lon="Number(product.longitude)" />
-            </div>
+            <Map :lat="Number(product.latitude)" :lon="Number(product.longitude)" />
         </div>
 
-        <!-- 판매자 정보 섹션 -->
-        <div class="seller-section card-container">
+        <!-- 판매자 -->
+        <div class="seller-section card-container" v-if="product.userId">
             <div class="seller-info">
-                <!-- 프로필 및 닉네임 -->
                 <div class="seller-profile">
                     <div class="profile-image">
-                        <img :src="product.seller.profileImage || '/default-profile.jpg'" alt="판매자 프로필">
+                        <img :src="product.profile || '/default-profile.jpg'" alt="판매자 프로필">
                     </div>
                     <div class="seller-name">
-                        {{ product.seller.nickname }}
+                        {{ product.userId }}
+                        <div class="seller-rating" v-if="product.reviewRate != null">
+                            평점: {{ product.reviewRate.toFixed(1) }}
+                        </div>
                     </div>
-                </div>
-
-                <!-- 판매 상품 정보 -->
-                <div class="seller-products">
-                    <div class="total-products">
-                        총 판매상품 <span class="count">{{ product.seller.totalProducts }}개</span>
-                    </div>
-                    <ul class="recent-products">
-                        <li v-for="item in product.seller.recentProducts" :key="item.productId">
-                            {{ item.productName }}
-                        </li>
-                    </ul>
                 </div>
             </div>
         </div>
@@ -166,34 +247,92 @@ const productImages = computed(() => {
         <div class="related-products card-container">
             <h3>연관 상품</h3>
             <div class="products-row">
-                <div v-for="relatedProduct in relatedProducts" :key="relatedProduct.productId"
-                    class="related-product-card" @click="goToProduct(relatedProduct.productId)">
+                <div v-for="relatedProduct in relatedProducts" :key="relatedProduct.id" class="related-product-card"
+                    @click="goToProduct(relatedProduct.id)">
                     <div class="product-image">
-                        <img :src="relatedProduct.thumbnailImage" :alt="relatedProduct.productName">
+                        <img :src="relatedProduct.image1" :alt="relatedProduct.productName">
                     </div>
                     <div class="product-info">
                         <div class="product-name">{{ relatedProduct.productName }}</div>
-                        <div class="product-price">{{ formatPrice(relatedProduct.price) }}원</div>
+                        <div class="product-price">{{
+                            new Intl.NumberFormat('ko-KR').format(relatedProduct.price) }}원
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div v-else class="loading">
+    <div v-else-if="isLoading" class="loading">
         상품 정보를 불러오는 중...
+    </div>
+
+    <div v-else class="error">
+        상품 정보를 찾을 수 없습니다.
     </div>
 
 </template>
 
 <style scoped>
+.product-actions {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    padding: 1.25rem 0;
+    width: 100%;
+}
+
+.action-button {
+    display: flex;
+    align-items: center;
+    gap: 0.3125rem;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 0.3125rem;
+    color: white;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.action-button:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+.action-button:active {
+    transform: translateY(0);
+}
+
+.like {
+    background-color: #007bff;
+}
+
+.chat {
+    background-color: #ffc107;
+}
+
+.buy {
+    background-color: #dc3545;
+}
+
 /* 판매자 정보 스타일 */
+.seller-rating {
+    font-size: 0.9rem;
+    color: #666;
+    margin-top: 0.3rem;
+}
+
+.error {
+    text-align: center;
+    padding: 2rem;
+    color: #dc3545;
+}
+
 .seller-section {
     margin-top: 2rem;
     padding: 1.5rem;
     background-color: white;
-    border-radius: 0.5rem;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .seller-info {
@@ -256,8 +395,6 @@ const productImages = computed(() => {
     margin-top: 2rem;
     padding: 1.5rem;
     background-color: white;
-    border-radius: 0.5rem;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .related-products h3 {
@@ -329,10 +466,8 @@ const productImages = computed(() => {
 
 .product-image {
     flex: 0 0 500px;
-    /* 고정 너비 500px로 변경 */
     height: 500px;
-    /* 높이도 500px로 설정 */
-    border: 2px solid black;
+    border: none;
 }
 
 .product-content {
@@ -402,8 +537,8 @@ hr {
     margin-top: 2rem;
     padding: 1.5rem;
     background-color: white;
-    border-radius: 0.5rem;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    /* border-radius: 0.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); */
 }
 
 .trade-location h3 {
@@ -427,7 +562,7 @@ hr {
 
 .map-container {
     width: 100%;
-    height: 400px;
+    height: 300px;
     border-radius: 0.5rem;
     overflow: hidden;
     border: 1px solid #eee;
