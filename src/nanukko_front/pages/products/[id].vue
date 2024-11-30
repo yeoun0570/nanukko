@@ -5,7 +5,6 @@ import { useToast } from 'vue-toastification';
 import { useAuth } from "~/composables/auth/useAuth";
 import { useApi } from "@/composables/useApi";
 import ProductImage from '~/components/products/products-detail/ProductImage.vue';
-import ProductActions from '~/components/products/products-detail/ProductActions.vue';
 import ProductMiniSummary from '~/components/products/products-detail/ProductMiniSummary.vue';
 import Map from '~/components/products/products-detail/Map.vue';
 
