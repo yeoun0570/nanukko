@@ -36,8 +36,8 @@ public class ChatMessageController {
     public ChatMessageDTO sendMessage(
             @DestinationVariable Long chatRoomId,
             @Payload ChatMessageDTO msg
-    ) throws InterruptedException {
-        Thread.sleep(500); // 메시지 처리 시간 시뮬레이션
+    ){
+        //Thread.sleep(500); // 메시지 처리 시간 시뮬레이션
         log.info("채팅 메시지 전송: roomId={}, message={}", chatRoomId, msg.getChatMessage());
 
         return chatService.sendMessage(chatRoomId, msg); // 메시지 전송 + DB 저장
