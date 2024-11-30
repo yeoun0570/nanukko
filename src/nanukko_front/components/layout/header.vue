@@ -1,56 +1,3 @@
-
-<template>
-  <header class="header">
-    <!-- 로고, 검색창, action 을 포함하는 Flex 컨테이너 -->
-    <div class="header-container">
-      <!-- 로고 -->
-      <div class="logo">
-        <NuxtLink to="/">
-        <img
-          src="../../public/image/나누고_Logo_blue.png"
-          alt="nanukko Logo"
-          width="150"
-          height="80"
-        />
-      </NuxtLink>
-      </div>
-      <!-- 검색창 -->
-      <div class="search-bar">
-        <input
-          type="text"
-          placeholder="검색어를 입력해주세요"
-          v-model="searchQuery"
-          @keyup.enter="onSearch"
-        />
-        <button @click="onSearch">🔍</button>
-      </div>
-
-      <!-- actions 채팅, 알림, 로그인, 마이페이지 -->
-      <ul class="header-actions">
-        <li>
-        <button
-          v-if="isAuthenticated"
-          @click="navigateToChat"
-        >
-          채팅
-        </button>
-        <button
-          v-else
-          @click="showLoginAlert"
-        >
-          채팅
-        </button>
-      </li>
-        <li class="notification-cotainer"><Notification /></li>
-        <li v-if="!isAuthenticated"><NuxtLink to="/auth/login" >로그인</NuxtLink></li>
-        <li v-if="isAuthenticated"><NuxtLink to="/mypage">마이페이지</NuxtLink></li>
-        <li v-if="isAuthenticated"><button @click="doLogout">로그아웃</button></li>
-      </ul>
-    </div>
-
-  </header>
-</template>
-
 <script setup>
 import { ref } from "vue";
 import Notification from "../notification/Notification.vue";
@@ -59,7 +6,6 @@ import { useRouter } from "vue-router";
 import { useToast } from "vue-toastification";
 
 const router = useRouter();
-
 const { userId, nickname, isAuthenticated, logout } = useAuth();
 
 const showLoginAlert = () => {
@@ -75,6 +21,7 @@ const toast = useToast();
 
 // 로그아웃
 const doLogout = () => {
+
   logout();
   //알림 팝업
   toast.info("로그아웃되었습니다.", {
@@ -97,11 +44,58 @@ const onSearch = () => {
     alert(`You searched for: ${searchQuery.value}`); // 임시 알림 처리
   }
 };
-
-watch(isAuthenticated, () => {
-  console.log('qweqweqweqw',isAuthenticated);
-})
 </script>
+
+<template>
+  <header class="header">
+    <!-- 로고, 검색창, 액션 항목을 포함하는 컨테이너 -->
+    <div class="header-container">
+      <!-- 로고 섹션 -->
+      <div class="logo">
+        <NuxtLink to="/">
+          <img
+            src="../../public/image/나누고_Logo_blue.png"
+            alt="nanukko Logo"
+            width="150"
+            height="80"
+          />
+        </NuxtLink>
+      </div>
+
+      <!-- 검색창 섹션 -->
+      <div class="search-bar">
+        <!-- 검색어 입력 필드 -->
+        <input
+          type="text"
+          placeholder="검색어를 입력해주세요"
+          v-model="searchQuery"
+          @keyup.enter="onSearch"
+        />
+        <!-- 검색 버튼 -->
+        <button @click="onSearch"><i class="fi fi-rr-search"></i></button>
+        <!-- 클릭 시 검색 실행 -->
+      </div>
+
+      <!-- 액션 섹션 (채팅, 알림, 로그인, 마이페이지 링크) -->
+      <ul class="header-actions">
+        <li>
+          <button v-if="isAuthenticated" @click="navigateToChat">채팅</button>
+          <button v-else @click="showLoginAlert">채팅</button>
+        </li>
+        <li class="notification-cotainer"><Notification /></li>
+        <button v-if="!isAuthenticated">
+          <NuxtLink to="/auth/login">로그인</NuxtLink>
+        </button>
+        <button v-if="isAuthenticated">
+          <NuxtLink to="/my-store">마이페이지</NuxtLink>
+        </button>
+        <button v-if="isAuthenticated" @click="doLogout">로그아웃</button>
+        <!-- 판매 글 작성을 위한 페이지로 이동하는 링크 -->
+        <button v-if="isAuthenticated" class="sell-button">판매하기</button>
+      </ul>
+    </div>
+  </header>
+</template>
 
 <style>
 /* 헤더 전체 레이아웃 */
@@ -156,7 +150,7 @@ watch(isAuthenticated, () => {
 .search-bar input {
   width: 100%; /* 입력 필드 너비를 검색창에 맞춤 */
   max-width: 400px; /* 최대 너비 제한 */
-  padding: 0.5rem 1rem; /* 상하 0.5rem, 좌우 1rem 패딩 */
+  padding: 0.4rem 1rem; /* 상하 0.5rem, 좌우 1rem 패딩 */
   border: none; /* 테두리 제거 */
   border-radius: 20px; /* 둥근 모서리 */
   outline: none; /* 포커스 시 파란 테두리 제거 */
@@ -188,14 +182,10 @@ watch(isAuthenticated, () => {
 
 /* 헤더 액션 버튼들 스타일 */
 .header-actions {
-  display: flex;
-  /* 가로로 정렬 */
-  flex-direction: row;
-  /* 기본 행 방향 설정 */
-  width: 400px;
-  /* 너비 */
-  justify-content: space-around;
-  /* 항목 간 간격 균등하게 */
+  display: flex; /* 가로로 정렬 */
+  flex-direction: row; /* 기본 행 방향 설정 */
+  width: 400px; /* 너비 */
+  justify-content: space-around; /* 항목 간 간격 균등하게 */
 }
 
 /* 액션 버튼 리스트 스타일 */
@@ -216,7 +206,7 @@ watch(isAuthenticated, () => {
   background-color: #ffffff; /* 파란색 배경 */
   color: #000000; /* 글자 색을 흰색으로 설정 */
   font-size: 1rem;
-  border-radius: 20px; /* 둥근 모서리 */
+  border-radius: 10px; /* 둥근 모서리 */
   cursor: pointer; /* 포인터 커서 표시 */
   white-space: nowrap;
 }

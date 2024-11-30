@@ -133,7 +133,7 @@ public class ChatService {
 
         // 4. 새 채팅방 생성 (구매자만 가능)
         if (product.getSeller().getUserId().equals(userId)) {
-            throw new IllegalStateException("판매자는 새로운 채팅방을 생성할 수 없습니다.");
+            throw new IllegalStateException("본인이 판매 중인 상품에 대해 새 채팅방을 생성할 수 없습니다.");
         }
 
         User buyer = userRepository.findById(userId)
