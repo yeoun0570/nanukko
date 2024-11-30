@@ -77,4 +77,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
         );
     }
 
+    //사용자의 자신의 상품 개수
+    int countBySeller(User user);
+
 }
