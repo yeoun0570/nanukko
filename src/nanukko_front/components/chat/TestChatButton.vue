@@ -8,6 +8,7 @@
       {{ loading ? '채팅방 생성 중...' : '테스트 채팅 시작 (Product ID: 8)' }}
     </button>
     
+    
     <!-- 결과 메시지 표시 -->
     <div v-if="error" class="error-message">
       {{ error }}
