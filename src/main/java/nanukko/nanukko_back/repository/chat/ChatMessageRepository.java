@@ -12,15 +12,18 @@ import org.springframework.data.jpa.repository.Query;
 public interface ChatMessageRepository extends JpaRepository<ChatMessages, Long> {
 
     //채팅 목록 들고오기
-    Page<ChatMessages> findByChatRoom_ChatRoomIdOrderByCreatedAtAsc(Long chatRoomId, Pageable pageable);
+    Page<ChatMessages> findByChatRoom_ChatRoomIdOrderByCreatedAtDesc(Long chatRoomId, Pageable pageable);
 
     //사용자 마지막 퇴장 시점 이후의 메시지 목록만 출력
     @Query(
             "SELECT m FROM ChatMessages m " +
                     "WHERE m.chatRoom.chatRoomId = :chatRoomId " +
-                    "AND ((:userId = m.chatRoom.product.seller.userId AND (m.createdAt > m.chatRoom.sellerLeftAt OR m.chatRoom.sellerLeftAt IS NULL))) " +
-                    "OR (:userId = m.chatRoom.buyer.userId AND (m.createdAt > m.chatRoom.buyerLeftAt OR m.chatRoom.buyerLeftAt IS NULL)) " +
-                    "ORDER BY m.createdAt ASC"
+                    "AND (" +
+                    "(:userId = m.chatRoom.product.seller.userId AND (m.createdAt > m.chatRoom.sellerLeftAt OR m.chatRoom.sellerLeftAt IS NULL)) " +
+                    "OR " +
+                    "(:userId = m.chatRoom.buyer.userId AND (m.createdAt > m.chatRoom.buyerLeftAt OR m.chatRoom.buyerLeftAt IS NULL))" +
+                    ") " +
+                    "ORDER BY m.createdAt DESC"
     )
     Page<ChatMessages> findMessagesSinceLastExit(@Param("chatRoomId")Long chatRoomId, @Param("userId") String userId, Pageable pageable);
     

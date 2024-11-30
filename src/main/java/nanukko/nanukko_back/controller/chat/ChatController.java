@@ -2,6 +2,7 @@ package nanukko.nanukko_back.controller.chat;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import nanukko.nanukko_back.dto.chat.ChatMessageDTO;
 import nanukko.nanukko_back.dto.chat.ChatRoomDTO;
 import nanukko.nanukko_back.dto.page.PageResponseDTO;
 import nanukko.nanukko_back.dto.user.CustomUserDetails;
@@ -19,7 +20,7 @@ import org.springframework.web.bind.annotation.*;
 public class ChatController {
     private final ChatService chatService;
 
-    /*채팅방 목록 불러오기*/
+    /*채팅방 목록 불러오기 -> 기존 메시지는 HTTP 요청으로 한 번에 가져옴 */
     @GetMapping("/list")
     public ResponseEntity<PageResponseDTO<ChatRoomDTO>> getChatRoomList(
             @AuthenticationPrincipal CustomUserDetails details,
@@ -45,5 +46,35 @@ public class ChatController {
         Pageable pageable = PageRequest.of(page, size);
         ChatRoomDTO chatRoomDTO = chatService.createOrReturnToChatRoom(userId, productId, pageable);
         return ResponseEntity.ok(chatRoomDTO);
+    }
+
+    @GetMapping("/messages")
+    public ResponseEntity<PageResponseDTO<ChatMessageDTO>> getChatMessages(
+            @RequestParam Long roomId,
+            @AuthenticationPrincipal CustomUserDetails details,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "50") int size
+    ) {
+        String userId = details.getUsername();
+        Pageable pageable = PageRequest.of(page, size);
+        PageResponseDTO<ChatMessageDTO> messages = chatService.getChatMessagesAndMarkAsRead(
+                roomId, userId, pageable
+        );
+        return ResponseEntity.ok(messages);
+    }
+
+    @GetMapping("/getMessages")
+    public ResponseEntity<PageResponseDTO<ChatMessageDTO>> getChatRoomMessages(
+            @RequestParam Long chatRoomId,
+            @AuthenticationPrincipal CustomUserDetails details,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        String userId = details.getUsername();
+        Pageable pageable = PageRequest.of(page, size);
+        PageResponseDTO<ChatMessageDTO> messages = chatService.getChatMessagesAndMarkAsRead(
+                chatRoomId, userId, pageable
+        );
+        return ResponseEntity.ok(messages);
     }
 }

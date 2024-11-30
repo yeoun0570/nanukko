@@ -33,7 +33,8 @@
         <!--로그인 버튼-->
         <button type="submit"
           :disabled="isLoading"
-          class="login-button">
+          class="login-button"
+          @click="handleLogin">
           <span v-if="isLoading">로그인 중...</span>
           <span v-else>로그인</span>
         </button>
@@ -61,7 +62,7 @@ import { useRouter } from 'vue-router';
 
 // 필요한 composables 초기화
 const router = useRouter();
-const { setToken } = useAuth();
+const { setToken, isAuthenticated } = useAuth();
 const api = useApi();
 
 // 로컬 상태 관리
@@ -113,8 +114,13 @@ const handleLogin = async () => {
     // 로그인 성공 처리
     setToken(token); // 토큰 저장
 
+    
+
     // 페이지 이동 (완료될 때까지 대기)
     await router.push('/');
+    window.location.reload();
+    
+    
     console.log('로그인 완료 후 메인페이지 이동');
 
   } catch (err) {
@@ -126,6 +132,7 @@ const handleLogin = async () => {
     isLoading.value = false; // 로딩 상태 비활성화
   }
 };
+
 </script>
 
 <style scoped>

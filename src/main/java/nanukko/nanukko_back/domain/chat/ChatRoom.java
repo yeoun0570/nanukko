@@ -100,6 +100,7 @@ public class ChatRoom {
         return ChatRoom.builder()
                 .product(product)
                 .buyer(buyer)
+                .createdAt(LocalDateTime.now())
                 .build();
     }
 
