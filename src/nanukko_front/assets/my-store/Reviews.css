@@ -106,11 +106,20 @@
   gap: 1rem;
 }
 
-.profile-image {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  object-fit: cover;
+.thumbnail-image {
+  width: 100px; /* 상품 이미지에 적합한 크기 */
+  height: 100px;
+  border-radius: 8px; /* 살짝 둥근 모서리 */
+  object-fit: cover; /* 이미지 비율 유지하면서 영역 채우기 */
+  border: 1px solid #eee; /* 미세한 테두리 */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* 약간의 그림자 효과 */
+  margin-right: 1rem; /* 오른쪽 여백 */
+  flex-shrink: 0; /* 이미지 크기 고정 */
+  transition: transform 0.2s ease; /* 호버 효과를 위한 트랜지션 */
+}
+
+.thumbnail-image:hover {
+  transform: scale(1.05); /* 호버 시 살짝 확대 */
 }
 
 .author-name {

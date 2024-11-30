@@ -28,7 +28,7 @@ public class OrderController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable Long productId) {
         String userId = userDetails.getUsername();
-        OrderPageDTO dto = orderService.getOrder(productId, userId); 
+        OrderPageDTO dto = orderService.getOrder(productId, userId);
 
         return ResponseEntity.ok(dto);
     }
@@ -41,8 +41,13 @@ public class OrderController {
 
     //결제 승인 -> 결제하고 나서 승인 처리 -> IN_PROGRESS 삳태를 DONE 으로 만들어주기
     @PostMapping("/confirm")
-    public ResponseEntity<OrderResponseDTO> confirmPayment(@RequestBody OrderConfirmDTO request) {
-        return ResponseEntity.ok(orderService.confirmPayment(request));
+    public ResponseEntity<?> confirmPayment(@RequestBody OrderConfirmDTO request) {
+        try {
+            return ResponseEntity.ok(orderService.confirmPayment(request));
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            return ResponseEntity.badRequest()
+                    .body(new ErrorResponse(e.getMessage()));
+        }
     }
 
     //구매확정

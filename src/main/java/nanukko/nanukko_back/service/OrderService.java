@@ -4,8 +4,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import nanukko.nanukko_back.config.RestTemplateConfig;
 import nanukko.nanukko_back.config.TossPaymentsConfig;
-import nanukko.nanukko_back.domain.order.Delivery;
-import nanukko.nanukko_back.domain.order.DeliveryStatus;
 import nanukko.nanukko_back.domain.order.Orders;
 import nanukko.nanukko_back.domain.order.PaymentStatus;
 import nanukko.nanukko_back.domain.product.Product;
@@ -27,10 +25,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 @Service
@@ -62,6 +57,7 @@ public class OrderService {
         int totalAmount = productPrice + chargeAmount;
 
         return OrderPageDTO.builder()
+                .sellerId(product.getSeller().getUserId())
                 .thumbnailImage(product.getThumbnailImage())
                 .productName(product.getProductName())
                 .status(product.getStatus())
@@ -231,6 +227,11 @@ public class OrderService {
             throw new IllegalStateException("이미 판매된 상품입니다.");
         }
 
+        if (product.getSeller().getUserId().equals(request.getBuyerId())) {
+            log.info("자신의 상품을 구매할 수 없습니다.");
+            throw new IllegalStateException("자신의 상품을 구매할 수 없습니다.");
+        }
+
         try {
             // 토스페이먼츠 API 요청용 데이터 생성
             Map<String, Object> payloadMap = new HashMap<>();
@@ -290,8 +291,8 @@ public class OrderService {
             throw new IllegalArgumentException("이미 거래 완료된 상품입니다.");
         }
 
-        if (order.getStatus() != PaymentStatus.ESCROW_HOLDING) {
-            throw new IllegalArgumentException("에스크로 상태가 아닙니다.");
+        if (order.getStatus() != PaymentStatus.DELIVERED) {
+            throw new IllegalArgumentException("배송완료 상태가 아닙니다.");
         }
 
         // 판매자 정산 처리
@@ -305,6 +306,7 @@ public class OrderService {
                 releaseEscrowPayment(order.getPaymentKey());
                 log.info("에스크로 해제 완료 - paymentKey: {}", order.getPaymentKey());
             } catch (Exception e) {
+                // 에러가 무시되어야 되니 error가 아닌 warn 으로 경고처리
                 log.warn("에스크로 해제 실패 (무시됨) - paymentKey: {}, error: {}",
                         order.getPaymentKey(), e.getMessage());
             }
@@ -397,18 +399,12 @@ public class OrderService {
     @Transactional
     //에스크로 상태일 때 결제 취소해서 환불받기
     public OrderResponseDTO cancelOrder(String orderId) {
+        log.info("orderId: {}", orderId);
         Orders order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다."));
 
-        Delivery delivery = deliveryRepository.findByOrderOrderId(orderId)
-                .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다."));
 
-        // 배송이 시작되었으면 취소 불가
-        if (delivery != null &&
-                (delivery.getStatus() == DeliveryStatus.IN_TRANSIT ||
-                        delivery.getStatus() == DeliveryStatus.DELIVERED)) {
-            throw new IllegalStateException("배송이 시작된 주문은 취소가 불가능합니다.");
-        }
+        log.info("주문 조회 성공 - order: {}", order);
 
         // 에스크로 상태 확인
         if (order.getStatus() != PaymentStatus.ESCROW_HOLDING) {

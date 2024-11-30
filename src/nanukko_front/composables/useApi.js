@@ -64,6 +64,14 @@ export const useApi = () => {
 
       const response = await fetch(fullUrl, finalOptions);
 
+      // 여기에 상태 코드 체크를 추가
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(
+          errorData.message || "요청 처리 중 오류가 발생했습니다"
+        );
+      }
+
       // rawResponse 옵션이 있으면 response 객체를 직접 반환
       if (options.rawResponse) {
         return response;
