@@ -21,6 +21,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.nio.file.AccessDeniedException;
+import java.util.List;
 import java.util.Map;
 
 @Controller // WebSocket 메시지 처리를 위한 컨트롤러
@@ -74,13 +75,53 @@ public class ChatMessageController {
         return ResponseEntity.ok(chatRooms);
     }
 
-    @MessageMapping("/chat/{chatRoomId}/read")
+    @MessageMapping("/chat/{chatRoomId}/mark-read")
     @SendTo("/queue/{chatRoomId}")
     public void markMessageAsRead(
             @DestinationVariable Long chatRoomId,
             @Payload ChatMessageDTO messageDTO
     ) {
         chatService.markMessageAsRead(chatRoomId, messageDTO.getSender(), messageDTO.getChatMessageId());
+    }
+
+    /*여러 메시지 읽음 처리*/
+    @MessageMapping("/chat/{chatRoomId}/read-realtime")
+    @SendTo("/queue/chat/{chatRoomId}")
+    public ChatMessageDTO markMessageAsReadRealtime(
+            @DestinationVariable Long chatRoomId,
+            @Payload ReadMessageRequest request
+    ) {
+        try {
+            // 페이징 객체 생성
+            Pageable pageable = PageRequest.of(request.getPage(), request.getSize());
+
+            // 서비스 호출 - 읽음 처리 및 업데이트된 메시지 목록 반환
+            PageResponseDTO<ChatMessageDTO> updatedMessages =
+                    chatService.markMessagesAsReadRealtime(chatRoomId, request.getUserId(), request.getMessageIds(), pageable);
+
+            // 업데이트된 메시지 정보 반환
+            return ChatMessageDTO.builder()
+                    .chatMessageId(null) // 일괄 업데이트의 경우 단일 메시지 ID는 불필요
+                    .messageIds(request.getMessageIds())
+                    .updatedMessages(updatedMessages.getContent())
+                    .isRead(true) // 읽음 처리됨을 표시
+                    .build();
+
+        } catch (Exception e) {
+            log.error("읽음 처리 실패", e);
+            throw e;
+        }
+    }
+
+    // 수정된 요청 데이터 클래스
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public class ReadMessageRequest {
+        private List<Long> messageIds; // 여러 메시지 ID를 받을 수 있도록 수정
+        private String userId;
+        private int page;
+        private int size;
     }
 
 

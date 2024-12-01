@@ -33,17 +33,15 @@
           </div>
           
           <!-- 메시지 목록 -->
-          <template v-for="message in group" :key="message.chatMessageId">
-
-             <!-- 디버깅용 주석 (개발 중에만 사용) -->
-  <!--{{ console.log('랜더링 메시지:', message) }}-->
-  <div 
-    class="message-wrapper"
-    :class="{ 
-      'message-sent': isSentByCurrentUser(message),
-      'message-received': !isSentByCurrentUser(message)
-    }"
-  >
+<!-- 메시지 목록 -->
+<template v-for="message in group" :key="message.chatMessageId || `${message.createdAt}-${message.sender}`">
+      <div 
+        class="message-wrapper"
+        :class="{ 
+          'message-sent': isSentByCurrentUser(message),
+          'message-received': !isSentByCurrentUser(message)
+        }"
+      >
     <div class="message-bubble">
       <!-- 이미지 메시지 -->
       <div v-if="message.image" class="image-message">
@@ -176,43 +174,99 @@ const handleSendMessage = async (messageData) => {
     const fullMessageData = {
       ...messageData,
       sender: props.userId,
-      isRead: false
+      isRead: false,
+      createdAt: new Date().toISOString()
     };
     
-    // UI에 메시지 추가
-    messages.value.push(fullMessageData);
-    
-    // 스크롤 처리
-    await nextTick(() => {
-      scrollToBottom(true);
-    });
-    
-    // 서버로 전송
+    console.log('메시지 전송:', fullMessageData);
     await stomp.sendMessage(props.roomId, fullMessageData);
   } catch (error) {
     console.error('메시지 전송 실패:', error);
-    messages.value = messages.value.slice(0, -1);
-    alert('메시지 전송에 실패했습니다.');
+    alert('메시지 전송에 실패했습니다. 다시 시도해주세요.');
   }
 };
 
+
 // 메시지 수신 처리
+// messages 배열 업데이트 로직만 수정
 const handleNewMessage = (message) => {
   try {
-    const receivedMsg = JSON.parse(message.body);
-    const processedMessage = {
-      ...receivedMsg,
-      sender: receivedMsg.sender || receivedMsg.senderId
-    };
+    let messageData;
+    if (typeof message === 'string') {
+      messageData = JSON.parse(message);
+    } else if (message.body) {
+      messageData = JSON.parse(message.body);
+    } else {
+      messageData = message;
+    }
     
-    messages.value.push(processedMessage);
-    nextTick(() => {
-      scrollToBottom(true);
-    });
+    console.log('처리할 메시지 데이터:', messageData);
+
+    // 읽음 상태 업데이트 메시지 처리
+    if (messageData.messageIds && Array.isArray(messageData.messageIds)) {
+      messages.value = messages.value.map(msg => ({
+        ...msg,
+        isRead: messageData.messageIds.includes(msg.chatMessageId) ? true : msg.isRead
+      }));
+      return;
+    }
+
+    // 메시지 정규화
+    const newMessage = {
+      chatMessageId: messageData.chatMessageId || `temp-${Date.now()}`,
+      sender: messageData.sender,
+      chatRoom: messageData.chatRoom || props.roomId,
+      chatMessage: messageData.chatMessage,
+      createdAt: messageData.createdAt,
+      isRead: messageData.isRead || false,
+      type: messageData.type || 'CHAT',
+      image: messageData.image
+    };
+
+    // 중복 체크
+    const isDuplicate = messages.value.some(msg => 
+      (msg.chatMessageId && msg.chatMessageId === newMessage.chatMessageId) || 
+      (msg.chatMessage === newMessage.chatMessage && 
+       msg.sender === newMessage.sender && 
+       msg.createdAt === newMessage.createdAt)
+    );
+
+    if (!isDuplicate) {
+      // 메시지 배열 업데이트
+      messages.value = [...messages.value, newMessage];
+      console.log('메시지 추가됨:', messages.value);
+
+      // 상대방 메시지 읽음 처리
+      if (!isSentByCurrentUser(newMessage)) {
+        const unreadMessages = messages.value
+          .filter(msg => !msg.isRead && !isSentByCurrentUser(msg))
+          .map(msg => msg.chatMessageId)
+          .filter(Boolean); // null이나 undefined 제거
+
+        if (unreadMessages.length > 0) {
+          stomp.sendMessage(`/app/chat/${props.roomId}/read-realtime`, {
+            messageIds: unreadMessages,
+            userId: props.userId,
+            page: currentPage.value,
+            size: 20
+          });
+        }
+      }
+
+      nextTick(() => {
+        scrollToBottom(true);
+      });
+    }
+
   } catch (error) {
-    console.error('메시지 처리 실패:', error);
+    console.error('메시지 처리 중 에러:', error);
   }
 };
+
+// 메시지 변경 감지를 위한 watch 추가
+watch(() => messages.value, (newMessages) => {
+  console.log('메시지 배열 변경됨:', newMessages);
+}, { deep: true });
 
 // 채팅 초기화
 const initializeChat = async () => {
@@ -223,23 +277,21 @@ const initializeChat = async () => {
       await stomp.connectChat(props.userId);
     }
 
-    messages.value = [...props.initialMessages].reverse();
-    
-    const subscription = await stomp.subscribeToChatRoom(props.roomId, {
-      onMessage: (payload) => {
-        if (payload.sender !== props.userId) {
-          messages.value.push({
-            ...payload,
-            sender: payload.sender || payload.senderId,
-            image: payload.image, 
-            type: payload.type,
-            isRead: false
-          });
-          scrollToBottom(true);
+    messages.value = props.initialMessages || [];
+
+    // 구독 설정 강화
+    const subscription = await stomp.subscribeToChatRoom(
+      props.roomId,
+      {
+        onMessage: (receivedMessage) => {
+          console.log('WebSocket 메시지 수신:', receivedMessage);
+          handleNewMessage(receivedMessage);
         }
       }
-    });
+    );
 
+    console.log('채팅방 구독 성공:', subscription);
+    await nextTick();
     scrollToBottom();
     return subscription;
 
@@ -381,6 +433,20 @@ watch([() => props.roomId, () => props.connected],
   }, 
   { immediate: true }
 );
+
+// 컴포넌트 정리 로직 추가
+onUnmounted(() => {
+  console.log('채팅방 컴포넌트 정리');
+  const unsubscribeDestination = `/queue/chat/${props.roomId}`;
+  stomp.unsubscribe(unsubscribeDestination);
+});
+
+// 컴포넌트 watch 추가
+watch(messages, (newMessages) => {
+  console.log('메시지 배열 변경:', newMessages);
+}, { deep: true });
+
+
 </script>
 
 

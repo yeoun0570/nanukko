@@ -393,4 +393,38 @@ public class ChatService {
         }
     }
 
+    @Transactional
+    public PageResponseDTO<ChatMessageDTO> markMessagesAsReadRealtime(
+            Long chatRoomId,
+            String userId,
+            List<Long> messageIds,
+            Pageable pageable
+    ) {
+        // 1. 채팅방 존재 확인
+        ChatRoom chatRoom = chatRoomRepository.findById(chatRoomId)
+                .orElseThrow(() -> new EntityNotFoundException("채팅방을 찾을 수 없습니다."));
+
+        // 2. 접근 권한 확인
+        if (!chatRoom.isMember(userId)) {
+            new AccessDeniedException("해당 채팅방에 접근 권한이 없습니다.");
+        }
+
+        // 3. 메시지들 읽음 처리
+        List<ChatMessages> messagesToUpdate = chatMessageRepository
+                .findAllById(messageIds)
+                .stream()
+                .filter(msg -> !msg.getSender().getUserId().equals(userId))
+                .collect(Collectors.toList());
+
+        messagesToUpdate.forEach(msg -> msg.UnreadToRead(userId));
+        chatMessageRepository.saveAll(messagesToUpdate);
+
+        // 4. 업데이트된 메시지 목록 조회
+        Page<ChatMessages> updatedMessages = chatMessageRepository
+                .findMessagesSinceLastExit(chatRoomId, userId, pageable);
+
+        // 5. DTO 변환 및 반환
+        return new PageResponseDTO<>(updatedMessages.map(ChatMessageDTO::from));
+    }
+
 }
