@@ -1,61 +1,38 @@
+<template>
+    <span>{{ timeAgoText }}</span>
+</template>
+
 <script setup>
-import { computed } from 'vue';
+import { ref, computed, onMounted } from 'vue'
 
 const props = defineProps({
     timestamp: {
-        type: [Number, String, Date],
+        type: String,
         required: true
     }
-});
+})
 
-const getTimeAgo = computed(() => {
-    // timestamp가 Date 객체인 경우 그대로 사용, 아닌 경우 변환
-    const updatedTimeValue = props.timestamp instanceof Date
-        ? props.timestamp
-        : new Date(Number(props.timestamp) * 1000);
+const timeAgoText = computed(() => {
+    try {
+        const date = new Date(props.timestamp)
+        const now = new Date()
 
-    const now = new Date();
-    const diffInSeconds = Math.floor((now - updatedTimeValue) / 1000);
+        const seconds = Math.floor((now - date) / 1000)
+        const minutes = Math.floor(seconds / 60)
+        const hours = Math.floor(minutes / 60)
+        const days = Math.floor(hours / 24)
+        const months = Math.floor(days / 30)
+        const years = Math.floor(days / 365)
 
-    // 시간 단위별 기준값
-    const MINUTE = 60;
-    const HOUR = MINUTE * 60;
-    const DAY = HOUR * 24;
-    const WEEK = DAY * 7;
-    const MONTH = DAY * 30;
-    const YEAR = DAY * 365;
-
-    if (diffInSeconds < MINUTE) {
-        return `${diffInSeconds}초 전`;
-    } else if (diffInSeconds < HOUR) {
-        const diffInMinutes = Math.floor(diffInSeconds / MINUTE);
-        return `${diffInMinutes}분 전`;
-    } else if (diffInSeconds < DAY) {
-        const diffInHours = Math.floor(diffInSeconds / HOUR);
-        return `${diffInHours}시간 전`;
-    } else if (diffInSeconds < WEEK) {
-        const diffInDays = Math.floor(diffInSeconds / DAY);
-        return `${diffInDays}일 전`;
-    } else if (diffInSeconds < MONTH) {
-        const diffInWeeks = Math.floor(diffInSeconds / WEEK);
-        return `${diffInWeeks}주 전`;
-    } else if (diffInSeconds < YEAR) {
-        const diffInMonths = Math.floor(diffInSeconds / MONTH);
-        return `${diffInMonths}개월 전`;
-    } else {
-        const diffInYears = Math.floor(diffInSeconds / YEAR);
-        return `${diffInYears}년 전`;
+        if (years > 0) return `${years}년 전`
+        if (months > 0) return `${months}개월 전`
+        if (days > 0) return `${days}일 전`
+        if (hours > 0) return `${hours}시간 전`
+        if (minutes > 0) return `${minutes}분 전`
+        return '방금 전'
+    } catch (error) {
+        console.error('Invalid date format:', error)
+        return '날짜 형식 오류'
     }
-});
+})
 </script>
-
-<template>
-    <span class="time-ago">{{ getTimeAgo }}</span>
-</template>
-
-<style scoped>
-.time-ago {
-    color: inherit;
-    font-size: inherit;
-}
-</style>
