@@ -35,6 +35,7 @@ export const useApi = () => {
         },
       };
 
+
       // 공개 API가 아닌 경우 토큰 추가
       if (!isPublicPath(url)) {
         const token = localStorage.getItem("access_token");

@@ -135,6 +135,7 @@ public class ChatService {
                 .chatMessages(messages.stream()
                         .map(ChatMessageDTO::from)
                         .collect(Collectors.toList()))
+
                 .createdAt(chatRoom.getCreatedAt())
                 .updatedAt(chatRoom.getUpdatedAt())
                 .sellerLeftAt(chatRoom.getSellerLeftAt())
@@ -334,6 +335,8 @@ public class ChatService {
 
         // 4. 새 메시지 저장
         ChatMessages savedMessage = chatMessageRepository.save(message);
+
+        log.info("저장된 메시지: {}", savedMessage);
 
         ChatMessageDTO chatMessageDTO = ChatMessageDTO.builder()
                 .chatRoom(chatRoomId)
