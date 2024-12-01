@@ -127,6 +127,7 @@ public class ChatService {
                 .chatRoomId(chatRoom.getChatRoomId())
                 .productId(chatRoom.getProduct().getProductId())
                 .productName(chatRoom.getProduct().getProductName())
+                .productThumbnail(chatRoom.getProduct().getThumbnailImage())
                 .buyerId(chatRoom.getBuyer().getUserId())
                 .buyerName(chatRoom.getBuyer().getNickname())
                 .sellerId(chatRoom.getProduct().getSeller().getUserId())

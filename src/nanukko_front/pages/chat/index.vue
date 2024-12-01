@@ -82,24 +82,32 @@ const initializeChat = async () => {
 }
 
 // 채팅방 선택 처리
+// 채팅방 선택 처리
+// 채팅방 선택 처리
+// index.vue의 handleRoomSelect 함수
 const handleRoomSelect = async (chatRoomId) => {
   try {
     activeChatRoom.value = null;
     currentRoomId.value = null;
     currentMessages.value = [];
     
-    // 메시지 직접 로드
+    // 메시지 로드
     const response = await loadChatMessages(chatRoomId, 0, 20);
     console.log('채팅방 메시지 로드:', response);
 
     if (response) {
       currentMessages.value = response.content || [];
+      // chatRooms 배열에서 현재 선택된 채팅방 정보 찾기
+      const selectedRoom = chatRooms.value.find(room => room.chatRoomId === chatRoomId);
+      
       activeChatRoom.value = {
-        chatRoomId,
+        ...selectedRoom, // 기존 채팅방 정보 포함
         hasMore: !response.last,
         currentPage: response.number
       };
       currentRoomId.value = chatRoomId.toString();
+      
+      console.log('설정된 activeChatRoom:', activeChatRoom.value);
     }
   } catch (err) {
     console.error('채팅방 선택 실패:', err);

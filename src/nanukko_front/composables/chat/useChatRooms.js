@@ -29,11 +29,16 @@ export const useChatRooms = () => {
   }
 
   // 채팅방 생성/입장만 처리하는 메서드
-  const createOrEnterChatRoom = async (productId) => {
+  const createOrEnterChatRoom = async (productId, page = 0, size = 50) => {
     loading.value = true;
     try {
-      const response = await api.post(`/chat/getChat?productId=${productId}`, null, {
-        rawResponse: true
+      const response = await api.post(`/chat/getChat`,{
+        params: {
+          productId,
+          page,
+          size
+        }}, {
+        rawResponse: true,
       });
       
       if (!response.ok) {

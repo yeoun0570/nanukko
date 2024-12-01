@@ -1,11 +1,10 @@
 <template>
   <div class="chat-container">
-    <header class="chat-header">
-      <h3 class="chat-title">
-        {{ currentRoom?.productName }}
-        <span v-if="!connected" class="connection-status">(연결 중...)</span>
-      </h3>
-    </header>
+        <!-- 헤더 컴포넌트로 교체 -->
+        <ChatRoomHeader 
+      :product="headerData"
+      :connected="connected"
+    />
 
     <main 
       ref="messageContainer" 
@@ -78,6 +77,7 @@
 </template>
 
 <script setup>
+import ChatRoomHeader from '~/components/chat/ChatRoomHeader.vue'
 import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { useFormatTime } from '~/composables/useFormatTime'
 import { useStomp } from '~/composables/chat/useStomp'
@@ -89,6 +89,18 @@ const sortedMessages = computed(() => {
   return [...messages.value].sort((a, b) => {
     return new Date(a.createdAt) - new Date(b.createdAt);
   });
+});
+
+// 상품 정보를 처리할 computed 속성 추가
+const headerData = computed(() => {
+  console.log('currentRoom data:', props.currentRoom);
+  return {
+    productName: props.currentRoom?.productName,
+    price: props.currentRoom?.price,
+    thumbnailImage: props.currentRoom?.thumbnailImage,
+    status: props.currentRoom?.status,
+    condition: props.currentRoom?.condition
+  }
 });
 
 const props = defineProps({
@@ -390,53 +402,4 @@ watch([() => props.roomId, () => props.connected], async ([newRoomId, isConnecte
 @import '~/assets/chat/chat-room.css';
 
 
-/* 기존 스타일에 추가 */
-.date-divider {
-  display: flex;
-  align-items: center;
-  margin: 1rem 0;
-  padding: 0 1rem;
-}
-
-.date-line {
-  flex: 1;
-  height: 1px;
-  background-color: #e0e0e0;
-}
-
-.date-text {
-  margin: 0 1rem;
-  padding: 0.25rem 0.75rem;
-  font-size: 0.875rem;
-  color: #666;
-  background-color: #f5f5f5;
-  border-radius: 1rem;
-}
-
-.chat-messages {
-  height: calc(100vh - 160px);
-  overflow-y: auto;
-  padding: 1rem;
-}
-
-.chat-messages {
-  height: calc(100vh - 160px);
-  overflow-y: auto; /* 스크롤 가능하도록 설정 */
-  padding: 1rem;
-  -webkit-overflow-scrolling: touch; /* iOS 스크롤 개선 */
-}
-
-/* 스크롤바 스타일링 (선택사항) */
-.chat-messages::-webkit-scrollbar {
-  width: 6px;
-}
-
-.chat-messages::-webkit-scrollbar-thumb {
-  background-color: rgba(0, 0, 0, 0.2);
-  border-radius: 3px;
-}
-
-.chat-messages::-webkit-scrollbar-track {
-  background-color: transparent;
-}
 </style>
