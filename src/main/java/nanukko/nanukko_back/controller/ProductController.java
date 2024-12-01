@@ -40,6 +40,22 @@ public class ProductController {
     private final ProductService productService;
     private final ObjectMapper objectMapper;
 
+    @GetMapping("/main")
+    public ResponseEntity<PageResponseDTO<ProductResponseDto>> getMain(
+            @PageableDefault(size = 20, sort = "updatedAt", direction = Sort.Direction.DESC) Pageable pageable,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        if (userDetails != null) {
+            //로그인 : 사용자 자녀 정보 기반 상품 추천 (찜 여부 포함)
+            PageResponseDTO<ProductResponseDto> dto = productService.getMainProducts(pageable);
+            return ResponseEntity.ok(dto);
+        } else {
+            //로그아웃 : 전체 상품 조회
+            PageResponseDTO<ProductResponseDto> dto = productService.getMainProducts(pageable);
+            return ResponseEntity.ok(dto);
+        }
+    }
+
     @PostMapping(value = "/new", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Map> createProduct(
             @RequestPart("productInfo") String productInfoJson,  // JSON 문자열로 받음
@@ -83,14 +99,14 @@ public class ProductController {
     @GetMapping("/related")
     public ResponseEntity<List<ProductResponseDto>> getRelatedProducts(@RequestParam Long productId) {
         List<ProductResponseDto> relatedProducts = productService.findRelatedProducts(productId);
-        log.info("/////////연관 상품 전달 ?" + relatedProducts.stream().toList());
+        log.info("연관 상품 전달 ?" + relatedProducts.stream().toList());
         return ResponseEntity.ok(relatedProducts);
     }
 
     @GetMapping("/search")
     public ResponseEntity<PageResponseDTO<Product>> searchProducts(
             @RequestParam(required = false, defaultValue = "") @Size(min = 1, max = 100) String query,
-            @PageableDefault(size = 20, sort = "updatedTime", direction = Sort.Direction.DESC) Pageable pageable
+            @PageableDefault(size = 20, sort = "updatedAt", direction = Sort.Direction.DESC) Pageable pageable
     ) {
         // 검색어가 비어있는 경우 빈 결과 반환
         if (query.trim().isEmpty()) {
@@ -106,27 +122,27 @@ public class ProductController {
     }
 
 
-    //카테고리별 조회 : 대분류
-    @GetMapping("/major")
+    //카테고리별 조회 : 대분류 전체 상품 조회
+    @GetMapping("/category/major")
     public ResponseEntity<PageResponseDTO<Product>> getProductsByCategory(
             @RequestParam Long majorId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
 
-        PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "updatedTime"));
+        PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "updatedAt"));
         PageResponseDTO<Product> products = productService.findByMajorCategory(majorId, pageRequest);
 
         return ResponseEntity.ok(products);
     }
 
-    //카테고리별 조회 : 중분류
-    @GetMapping("/middle")
+    //카테고리별 조회 : 중분류 전체 상품 조회
+    @GetMapping("/category/middle")
     public ResponseEntity<PageResponseDTO<Product>> getProductsByMiddleCategory(
             @RequestParam(name = "middleId") Long value,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
 
-        PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "updatedTime"));
+        PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "updatedAt"));
         PageResponseDTO<Product> products = productService.findByMiddleCategory(value, pageRequest);
 
         return ResponseEntity.ok(products);

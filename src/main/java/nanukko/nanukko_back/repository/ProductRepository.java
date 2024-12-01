@@ -5,6 +5,7 @@ import jakarta.persistence.QueryHint;
 import nanukko.nanukko_back.domain.product.Product;
 import nanukko.nanukko_back.domain.product.ProductStatus;
 import nanukko.nanukko_back.domain.user.User;
+import nanukko.nanukko_back.dto.product.ProductResponseDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -46,15 +47,15 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
 
     //상품명 조회
-    @Query("SELECT p FROM Product p WHERE p.productName LIKE CONCAT('%', :query, '%')")
+    @Query("SELECT p FROM Product p WHERE p.productName LIKE CONCAT('%', :query, '%') AND p.isDeleted = false")
     Page<Product> searchByName(@Param("query") String query, Pageable pageable);
 
     //대분류 카테고리 조회
-    @Query("SELECT p FROM Product p WHERE p.middleCategory.major.majorId = :majorId")
+    @Query("SELECT p FROM Product p WHERE p.middleCategory.major.majorId = :majorId AND p.isDeleted = false")
     Page<Product> findByMajorId(@Param("majorId") Long majorId, Pageable pageable);
 
     //중분류 카테고리 조회
-    @Query("SELECT p FROM Product p WHERE p.middleCategory.middleId = :middleId")
+    @Query("SELECT p FROM Product p WHERE p.middleCategory.middleId = :middleId AND p.isDeleted = false")
     Page<Product> findByMiddleId(@Param("middleId") Long middleId, Pageable pageable);
 
 
@@ -63,11 +64,13 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             "WHERE p.productId != :productId " +
             "AND p.middleCategory.middleId = :middleId " +
             "AND p.status = 'SELLING' " +
+            "AND p.isDeleted = false " +
             "ORDER BY p.updatedAt DESC")
     List<Product> findRelatedProductsByMiddleId(
             @Param("productId") Long productId,
             @Param("middleId") Long middleId,
-            Pageable pageable);
+            Pageable pageable
+    );
 
     default List<Product> findRelatedProducts(Long productId, Long middleId) {
         return findRelatedProductsByMiddleId(
@@ -76,5 +79,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
                 PageRequest.of(0, 5, Sort.by(Sort.Direction.DESC, "updatedAt"))
         );
     }
+
+    Page<Product> findAllByIsDeletedFalse(Pageable pageable);
 
 }
