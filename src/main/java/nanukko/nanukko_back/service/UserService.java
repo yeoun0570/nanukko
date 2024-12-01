@@ -202,37 +202,6 @@ public class UserService {
         return new PageResponseDTO<>(dtoPage);
     }
 
-    //사용자의 상품 등록(판매하기) 이것도 상품에서 해야되나?
-    @Transactional
-    public UserSetProductDTO registerProduct(String userId, UserSetProductDTO productDTO) {
-        //판매자 조회 -> 추후에 시큐리티 적용하고 없앨듯
-        User seller = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
-
-        //카테고리 조회
-        MiddleCategory middleCategory = middleCategoryRepository.findById(productDTO.getMiddleId())
-                .orElseThrow(() -> new IllegalArgumentException("카테고리를 찾을 수 없습니다."));
-
-        //엔티티 생성(받은 내용 DTO에서 VO로 변환)
-        Product product = Product.builder()
-                .seller(seller)
-                .middleCategory(middleCategory)
-                .productName(productDTO.getProductName())
-                .price(productDTO.getPrice())
-                .createdAt(LocalDateTime.now())
-                .isDeleted(false) //삭제여부는 false
-                .status(ProductStatus.SELLING) //초기 상태는 판매중
-//                .viewCount(0) //초기 조회수
-                .images(productDTO.getImages())
-                .thumbnailImage(productDTO.getThumbnailImage())
-                .condition(productDTO.getCondition())
-                .content(productDTO.getContent())
-                .build();
-
-        //VO로 저장된 내용들 다시 DTO로 반환
-        return convertToUserSetProductDTO(product);
-    }
-
     //사용자의 판매 상품 수정
     @Transactional
     public UserSetProductDTO modifyProduct(String userId, Long productId, UserSetProductDTO productDTO) {
@@ -479,6 +448,22 @@ public class UserService {
         return UserRemoveDTO.builder()
                 .userId(user.getUserId())
                 .canceled(user.isCanceled())
+                .build();
+    }
+
+    //사이드바에 있는 프로필 정보
+    @Transactional(readOnly = true)
+    public UserSimpleInfoDTO getSimpleInfo(String userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        int countProduct = productRepository.countBySeller(user);
+
+        return UserSimpleInfoDTO.builder()
+                .profile(user.getProfile())
+                .nickname(user.getNickname())
+                .reviewRate(user.getReviewRate())
+                .countProduct(countProduct)
                 .build();
     }
 

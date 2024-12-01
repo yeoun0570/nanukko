@@ -82,4 +82,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     Page<Product> findAllByIsDeletedFalse(Pageable pageable);
 
+    //사용자의 자신의 상품 개수
+    int countBySeller(User user);
+
 }

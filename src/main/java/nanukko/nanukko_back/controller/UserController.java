@@ -168,4 +168,15 @@ public class UserController {
                     .body(new ErrorResponse(e.getMessage()));
         }
     }
+
+    //사이드 바에 넣을 사용자 프로필 정보
+    @GetMapping("/simple-info")
+    public ResponseEntity<UserSimpleInfoDTO> getSimpleInfo(
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        String userId = userDetails.getUsername();
+        UserSimpleInfoDTO response = userService.getSimpleInfo(userId);
+
+        return ResponseEntity.ok(response);
+    }
 }
