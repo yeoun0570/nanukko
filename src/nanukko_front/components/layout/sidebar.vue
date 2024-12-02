@@ -19,6 +19,7 @@ const fetchUserProfile = async () => {
   }
 };
 
+
 // 컴포넌트 마운트 시 프로필 정보 로드
 onMounted(() => {
   fetchUserProfile();
