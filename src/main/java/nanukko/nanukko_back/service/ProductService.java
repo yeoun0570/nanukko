@@ -58,7 +58,6 @@ public class ProductService {
 
         //이미지 업로드, URL 리스트
         List<FileDTO> imgUrls = imageService.uploadMultipleFiles(images, FileDirectoryType.SELL, seller.getUserId());
-//        List<String> imgUrls = fileService.uploadProductImages(images, "products", 500);
 
         log.info("업로드 이미지 url : {}" , imgUrls);
         Image image = new Image(imgUrls);

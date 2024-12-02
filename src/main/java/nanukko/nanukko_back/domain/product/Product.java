@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import nanukko.nanukko_back.domain.product.category.MiddleCategory;
 import nanukko.nanukko_back.domain.user.User;
+import nanukko.nanukko_back.dto.product.ProductRequestDto;
 import org.hibernate.annotations.ColumnDefault;
 
 import java.time.LocalDateTime;
@@ -179,39 +180,26 @@ public class Product {
         this.shippingFee = shippingFree;
     }
 
-
     //상품 수정
-/*
-    public void updateProduct(
-            String productName,
-            int price,
-            ProductStatus status,
-            String content,
-            Condition condition,
-            Image images,
-            String thumbnailImage,
-            boolean isPerson,
-            boolean isDeputy,
-            boolean isCompanion,
-            boolean freeShipping,
-            int shippingFee,
-            LocalDateTime updatedAt
-    ) {
-        this.productName = productName;
-        this.price = price;
-        this.status = status;
-        this.content = content;
-        this.condition = condition;
-        this.images = images;
-        this.thumbnailImage = thumbnailImage;
-        this.isPerson = isPerson;
-        this.isDeputy = isDeputy;
-        this.isCompanion = isCompanion;
-        this.freeShipping = freeShipping;
-        this.updatedAt = updatedAt;
+    public void updateProduct(ProductRequestDto dto) {
+        this.updatedAt = LocalDateTime.now();
+        this.productName = dto.getProductName();
+        this.price = dto.getPrice();
+        this.content = dto.getContent();
+        this.condition = Condition.valueOf(dto.getCondition());
+        this.isPerson = dto.getIsPerson();
+        this.isShipping = dto.getIsShipping();
+        this.freeShipping = dto.getFreeShipping();
+        this.shippingFee = dto.getShippingFee();
+        this.isCompanion = dto.getIsCompanion();
+        this.isDeputy = dto.getIsDeputy();
+        this.gender = dto.getGender();
+        this.ageGroup = dto.getAgeGroup();
+        this.zipCode = dto.getZipCode();
+        this.address = dto.getAddress();
+        this.detailAddress = dto.getDetailAddress();
+        this.latitude = dto.getLatitude();
+        this.longitude = dto.getLongitude();
     }
-*/
-
-
 
 }
