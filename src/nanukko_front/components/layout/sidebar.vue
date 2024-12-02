@@ -61,30 +61,32 @@ onMounted(() => {
           </div>
         </div>
       </div>
+      <div class="border-section"><br></div>
       <!-- 내정보 -->
-      <div class="userInfo">
+      <!-- <div class="userInfo">
         <h2 class="click-title" @click="">내정보</h2>
-      </div>
+      </div> -->
 
       <!--내상점-->
       <div class="mystore">
         <h2 class="click-title">내상점</h2>
         <ul class="dropdown-content">
-          <li>판매상품</li>
-          <li>구매상품</li>
-          <li>찜상품</li>
-          <li>나의 후기</li>
+          <li><NuxtLink to="/my-store">내 정보</NuxtLink></li>
+          <li><NuxtLink to="/my-store/sale-products">판매상품</NuxtLink></li>
+          <li><NuxtLink to="/my-store/buy-products">구매상품</NuxtLink></li>
+          <li><NuxtLink to="/my-store/wishlist">찜상품</NuxtLink></li>
+          <li><NuxtLink to="/my-store/reviews">나의 후기</NuxtLink></li>
         </ul>
       </div>
 
       <!--거래내역-->
-      <div class="transaction-history">
+      <!-- <div class="transaction-history">
         <h2 class="click-title">거래내역</h2>
         <ul class="dropdown-content">
           <li>판매완료</li>
           <li>구매완료</li>
         </ul>
-      </div>
+      </div> -->
     </aside>
   </div>
 </template>
