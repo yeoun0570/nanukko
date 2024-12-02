@@ -114,11 +114,9 @@ onMounted(() => {
 
 <template>
   <div class="order-card">
-    <img
-      :src="order.thumbnailImage"
-      :alt="order.productName"
-      class="order-image"
-    />
+    <div class="order-image">
+      <img :src="order.thumbnailImage" :alt="order.productName" />
+    </div>
     <div class="order-info">
       <h3 class="product-name">{{ order.productName }}</h3>
       <div class="price-status-container">
