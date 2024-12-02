@@ -1,7 +1,12 @@
 package nanukko.nanukko_back.util;
 
+import nanukko.nanukko_back.domain.product.Condition;
 import nanukko.nanukko_back.domain.product.Product;
+import nanukko.nanukko_back.dto.product.ProductRequestDto;
 import nanukko.nanukko_back.dto.product.ProductResponseDto;
+import org.springframework.cglib.core.Local;
+
+import java.time.LocalDateTime;
 
 public class ProductMapper {
     // Product 엔티티를 ProductResponseDto로 매핑

@@ -14,7 +14,6 @@ import nanukko.nanukko_back.dto.file.FileDirectoryType;
 import nanukko.nanukko_back.dto.page.PageResponseDTO;
 import nanukko.nanukko_back.dto.product.ProductRequestDto;
 import nanukko.nanukko_back.dto.product.ProductResponseDto;
-import nanukko.nanukko_back.dto.user.UserProductDTO;
 import nanukko.nanukko_back.repository.MiddleCategoryRepository;
 import nanukko.nanukko_back.repository.ProductRepository;
 import nanukko.nanukko_back.repository.UserRepository;
@@ -23,23 +22,23 @@ import nanukko.nanukko_back.util.ProductMapper;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @Log4j2
 @RequiredArgsConstructor
 @Transactional
 public class ProductService {
-    private final ModelMapper modelMapper;
     private final MiddleCategoryRepository middleCategoryRepository;
     private final UserRepository userRepository;
-    private final FileService fileService;
     private final ProductRepository productRepository;
     private final WishlistRepository wishlistRepository;
     private final ImageService imageService;
@@ -59,7 +58,6 @@ public class ProductService {
 
         //이미지 업로드, URL 리스트
         List<FileDTO> imgUrls = imageService.uploadMultipleFiles(images, FileDirectoryType.SELL, seller.getUserId());
-//        List<String> imgUrls = fileService.uploadProductImages(images, "products", 500);
 
         log.info("업로드 이미지 url : {}" , imgUrls);
         Image image = new Image(imgUrls);
@@ -94,11 +92,6 @@ public class ProductService {
         return productRepository.save(product);
     }
 
-    public ProductRequestDto getProductDtoById (Long productId) { //이건 나중에 지워도 됨
-        Product product = getProductById(productId);
-        return modelMapper.map(product, ProductRequestDto.class);
-    }
-
     public ProductResponseDto getProductDetail (Long productId, User user) {
         Product product = getProductById(productId);
         boolean isWished = user != null && wishlistRepository.existsByUserAndProduct(user, product);
@@ -107,9 +100,21 @@ public class ProductService {
         return dto;
     }
 
+    @Cacheable(
+            value = "productSearch",
+            key = "#query + '_' + #pageable.pageNumber + '_' + #pageable.pageSize",
+            condition = "#query.length() >= 2",
+            unless = "#result.totalElements == 0"
+    )
     public PageResponseDTO<Product> searchProducts(String query, Pageable pageable) { //상품명 검색 페이지별 조회
         Page<Product> searchResult  = productRepository.searchByName(query, pageable);
         return new PageResponseDTO<>(searchResult);
+    }
+
+    @Scheduled(cron = "0 0 0 * * SUN")
+    @CacheEvict(value = "productSearch", allEntries = true)
+    public void clearProductCache() {
+        // 매주 일요일 자정에 저장된 캐시 전체 삭제
     }
 
     public PageResponseDTO<Product> findByMajorCategory(Long majorId, Pageable pageable) { //대분류별 상품 조회
