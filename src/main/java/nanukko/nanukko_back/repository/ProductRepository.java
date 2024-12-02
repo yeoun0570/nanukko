@@ -5,7 +5,6 @@ import jakarta.persistence.QueryHint;
 import nanukko.nanukko_back.domain.product.Product;
 import nanukko.nanukko_back.domain.product.ProductStatus;
 import nanukko.nanukko_back.domain.user.User;
-import nanukko.nanukko_back.dto.product.ProductResponseDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
