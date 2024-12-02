@@ -183,6 +183,9 @@ const submitProduct = async () => {
         console.log('응답 상태:', response.data.status);
         console.log('응답 데이터:', response.data);
 
+        //마이스토어 판매 중인 상품 이동
+        router.push(`/my-store/sale-products`);
+
     } catch (error) {
         // 에러 상세 정보 출력
         console.error('===== API 에러 =====');

@@ -44,6 +44,12 @@ public class ProductService {
     private final WishlistRepository wishlistRepository;
     private final ImageService imageService;
 
+    public PageResponseDTO<ProductResponseDto> getMainProducts (Pageable pageable) {
+        Page<Product> result = productRepository.findAllByIsDeletedFalse(pageable);
+        Page<ProductResponseDto> dto = result.map(ProductMapper::toDto);
+        return new PageResponseDTO<>(dto);
+    }
+
     public Product createProduct(ProductRequestDto dto, List<MultipartFile> images, String userId) {
         // 현재 로그인한 사용자 조회
         User seller = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("사용자 찾기 실패"));

@@ -49,19 +49,31 @@ const conditionLabels = {
     HEAVILY_USED: '사용감 많음'
 };
 
-const getConditionLabel = (condition) => conditionLabels[condition] || condition;
+const ageGroupLabels = {
+    '10S': '10대',
+    '20S': '20대',
+    '30S': '30대',
+    '40S': '40대',
+    '50S': '50대',
+    '60S': '60대 이상'
+};
 
+const getConditionLabel = (condition) => conditionLabels[condition] || condition;
+const getAgeGroupLabel = (ageGroup) => ageGroupLabels[ageGroup] || ageGroup;
 const getTradeTypeLabel = (isPerson, isShipping) => {
     const types = [];
     if (isShipping) types.push('택배거래');
     if (isPerson) types.push('직거래');
     return types.join(', ');
 };
-
 const getGenderLabel = (gender) => gender ? '남성' : '여성';
-
 const formatPrice = (price) => {
     return price.toLocaleString() + '원';
+};
+const getCompanionDeputyLabel = (isCompanion, isDeputy) => {
+    if (isCompanion && isDeputy) return '동행인/대리인';
+    if (isCompanion) return '동행인';
+    return '대리인';
 };
 </script>
 
@@ -92,16 +104,10 @@ const formatPrice = (price) => {
         <!-- 동행인/대리인 정보 -->
         <template v-if="isCompanion || isDeputy">
             <div class="summary-row">
-                <template v-if="isCompanion">
-                    <div class="label">동행인</div>
-                    <div class="value">{{ getGenderLabel(gender) }}</div>
-                </template>
-                <template v-if="isDeputy">
-                    <div class="label">대리인</div>
-                    <div class="value">{{ getGenderLabel(gender) }}</div>
-                </template>
+                <div class="label">{{ getCompanionDeputyLabel(isCompanion, isDeputy) }}</div>
+                <div class="value">{{ getGenderLabel(gender) }}</div>
                 <div v-if="ageGroup" class="label">연령대</div>
-                <div v-if="ageGroup" class="value">{{ ageGroup }}</div>
+                <div v-if="ageGroup" class="value">{{ getAgeGroupLabel(ageGroup) }}</div>
             </div>
         </template>
     </div>
@@ -122,6 +128,7 @@ const formatPrice = (price) => {
     grid-template-columns: 15% 35% 15% 35%;
     min-height: 2rem;
     align-items: center;
+    position: relative;
 }
 
 .label {
