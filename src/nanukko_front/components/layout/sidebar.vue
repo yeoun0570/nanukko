@@ -6,7 +6,6 @@ const api = useApi();
 // 사용자 프로필 데이터 상태 관리
 const userProfile = ref({});
 
-
 // 사용자 프로필 데이터 가져오기
 const fetchUserProfile = async () => {
   try {

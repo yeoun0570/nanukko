@@ -16,7 +16,6 @@ const showLoginAlert = () => {
 const navigateToChat = () => {
   router.push("/chat");
 };
-
 const navigateToProducts = () => {
   router.push('/products/new') 
 };
