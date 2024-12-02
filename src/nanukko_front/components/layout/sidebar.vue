@@ -12,6 +12,8 @@ const fetchUserProfile = async () => {
     const response = await api.get("/my-store/simple-info");
     userProfile.value = response;
     console.log("사이드바 사용자 정보: ", userProfile.value);
+     // 2로 나눈 후 소수점 첫째자리까지 반올림
+     userProfile.value.reviewRate = Math.round((userProfile.value.reviewRate / 2) * 10) / 10;
   } catch (error) {
     console.error("프로필 정보 로드 실패:", error);
   }
