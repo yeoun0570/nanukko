@@ -291,6 +291,7 @@ public class UserService {
 
         return UserRemoveProductDTO.builder()
                 .isDeleted(product.isDeleted())
+                .status(ProductStatus.REMOVED)
                 .build();
     }
 
