@@ -413,6 +413,27 @@ hr {
   color: #212529;
 }
 
+.cancel-kid-btn {
+  background: none;
+  border: none;
+  color: #dc3545;
+  cursor: pointer;
+  padding: 4px 8px;
+  font-size: 1.1rem;
+  margin-left: 8px;
+  transition: color 0.2s;
+}
+
+.cancel-kid-btn:hover {
+  color: #c82333;
+}
+
+.kid-info-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
 /* LoginInfo 섹션 */
 .login-info {
   background: #f8f9fa;
