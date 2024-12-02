@@ -29,7 +29,6 @@
     height: 100%; /* 컨테이너 높이를 100% 채움 */
     border-radius: 50%; /* 원형으로 표현 */
     object-fit: cover; /* 이미지 비율 유지하며 컨테이너에 맞춤 */
-    /* background-color: green; */
   }
   
   /* 프로필 정보(이름/상품개수/평점)*/

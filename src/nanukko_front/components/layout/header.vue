@@ -30,7 +30,6 @@ const doLogout = ()=>{
     hideProgressBar: true, // 진행 바 숨기기
   });
 
-
   router.push('/auth/login');
 };
 

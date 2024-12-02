@@ -28,6 +28,7 @@ import Footer from "~/components/layout/footer.vue";
   min-height: 100vh;
 }
 
+
 main {
   flex: 1;
 }

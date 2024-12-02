@@ -30,6 +30,7 @@ const handleTranslation = () => {
   }
 };
 
+
 // 사용자 프로필 데이터 가져오기
 const fetchUserProfile = async () => {
   try {
