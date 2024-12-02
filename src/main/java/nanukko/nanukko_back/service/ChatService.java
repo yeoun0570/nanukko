@@ -2,11 +2,11 @@ package nanukko.nanukko_back.service;
 
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
+import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import nanukko.nanukko_back.domain.chat.ChatMessages;
 import nanukko.nanukko_back.domain.chat.ChatRoom;
-import nanukko.nanukko_back.domain.chat.MessageType;
 import nanukko.nanukko_back.domain.product.Product;
 import nanukko.nanukko_back.domain.user.User;
 import nanukko.nanukko_back.dto.chat.ChatMessageDTO;
@@ -16,15 +16,13 @@ import nanukko.nanukko_back.repository.ProductRepository;
 import nanukko.nanukko_back.repository.UserRepository;
 import nanukko.nanukko_back.repository.chat.ChatMessageRepository;
 import nanukko.nanukko_back.repository.chat.ChatRoomRepository;
-import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import java.nio.file.AccessDeniedException;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -37,9 +35,10 @@ public class ChatService {
     private final ChatRoomRepository chatRoomRepository;
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
-    private final ModelMapper modelMapper;
 
     private final ChatMessageRepository chatMessageRepository;
+
+
 
 
     /*채팅방 목록 조회*/
@@ -272,36 +271,6 @@ public class ChatService {
                         .build()
         ));
     }
-//    public PageResponseDTO<ChatMessageDTO> getChatMessagesAndMarkAsRead(Long chatRoomId,String userId, Pageable pageable) {
-//
-//        ChatRoom chatRoom = chatRoomRepository.findById(chatRoomId).get();
-//        List<ChatMessages> chatMessages = chatRoom.getChatMessages();
-//        //읽지 않은 메시지 읽음 처리 (수신자의 메시지만)
-//        chatMessages.stream()
-//                .filter(msg -> !msg.isRead())// isRead가 false인 메시지만 필터링
-//                .forEach(msg -> msg.UnreadToRead(userId));// unreadToRead() 메소드 호출
-//
-//        // 변경사항 DB에 반영
-//        chatMessageRepository.saveAll(chatMessages);
-//
-//        //읽음 처리 완료된 상태의 새 메시지 목록 다시 불러오기
-//        Page<ChatMessages> chatMsgPage = chatMessageRepository.
-//                findMessagesSinceLastExit(chatRoomId,userId, pageable);
-//
-//        Page<ChatMessageDTO> dtoPage = chatMsgPage.map(chatMsg ->
-//                ChatMessageDTO.builder()
-//                        .chatMessageId(chatMsg.getChatMessageId())
-//                        .chatRoom(chatMsg.getChatRoom().getChatRoomId())  // ChatRoom 객체에서 ID만 추출
-//                        .sender(chatMsg.getSender().getUserId())            // User 객체에서 ID만 추출
-//                        .chatMessage(chatMsg.getChatMessage())
-//                        .createdAt(chatMsg.getCreatedAt())
-//                        .isRead(chatMsg.isRead())
-//                        .image(chatMsg.getImage())
-//                        .build()
-//        );
-//
-//        return new PageResponseDTO<>(dtoPage);
-//    }
 
     /*채팅 메시지 입력 후 전송 눌렀을 때 DB 저장 + 메시지 전송*/
     public ChatMessageDTO sendMessage(Long chatRoomId, ChatMessageDTO messageDTO){
@@ -346,8 +315,41 @@ public class ChatService {
                 .isRead(false)//새 메시지는 안 읽은 상태
                 .isLatest(true)//새 메시지는 최신 메시지
                 .image(savedMessage.getImage())
+                .type(savedMessage.getType())
                 .build();
+
+
+//        // 채팅방의 다른 사용자에게 알림 보내기
+//        String recipientId;
+//
+//        // 수신자 결정 (발신자가 아닌 사용자)
+//        if (chatRoom.isSeller(messageDTO.getSender())) {
+//            recipientId = chatRoom.getBuyer().getUserId();
+//        } else {
+//            recipientId = chatRoom.getProduct().getSeller().getUserId();
+//        }
+//
+//        // 알림 보내기
+//        messagingTemplate.convertAndSendToUser(
+//                recipientId,
+//                "/queue/notifications",
+//                chatMessageDTO
+//        );
+
+
         return chatMessageDTO;
+    }
+
+
+
+    // 수신자 ID 조회 메서드 추가
+    public String getRecipientId(Long chatRoomId, String senderId) {
+        ChatRoom chatRoom = chatRoomRepository.findById(chatRoomId)
+                .orElseThrow(() -> new EntityNotFoundException("채팅방을 찾을 수 없습니다."));
+
+        return chatRoom.isSeller(senderId)
+                ? chatRoom.getBuyer().getUserId()
+                : chatRoom.getProduct().getSeller().getUserId();
     }
 
     /**
@@ -404,7 +406,7 @@ public class ChatService {
     public PageResponseDTO<ChatMessageDTO> markMessagesAsReadRealtime(
             Long chatRoomId,
             String userId,
-            List<Long> messageIds,
+            List<Integer> messageIds,  // 타입을 Integer로 변경
             Pageable pageable
     ) {
         // 1. 채팅방 존재 확인
@@ -416,10 +418,11 @@ public class ChatService {
             new AccessDeniedException("해당 채팅방에 접근 권한이 없습니다.");
         }
 
-        // 3. 메시지들 읽음 처리
-        List<ChatMessages> messagesToUpdate = chatMessageRepository
-                .findAllById(messageIds)
-                .stream()
+        // 3. Integer를 Long으로 변환하여 메시지 읽음 처리
+        List<ChatMessages> messagesToUpdate = messageIds.stream()
+                .map(Long::valueOf)  // Integer를 Long으로 변환
+                .map(id -> chatMessageRepository.findById(id)
+                        .orElseThrow(() -> new EntityNotFoundException("메시지를 찾을 수 없습니다: " + id)))
                 .filter(msg -> !msg.getSender().getUserId().equals(userId))
                 .collect(Collectors.toList());
 

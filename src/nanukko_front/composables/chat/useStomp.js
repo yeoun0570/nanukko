@@ -115,46 +115,79 @@ export function useStomp() {
 
 
   /** 채팅방 구독 - 특정 채팅방의 메시지를 받기 위한 구독 설정 */
-  const subscribeToChatRoom = async (roomId, callbacks = {}) => {//채팅방 아이디 기준으로 구독 설정, 메시지 받으면 콜백 함수 통해서 처리
-    if (!client.value?.active) {//연결 확인
-      throw new Error('커넥션 에러 - No active STOMP connection');
+  const subscribeToChatRoom = async (destination, callbacks = {}) => {
+    if (!client.value?.active) {
+      throw new Error('커넥션 에러 - No active STOMP connection')
     }
-
-    const destination = `/queue/chat/${roomId}`;//구독
-    console.log('구독하기-Subscribing to:', destination);
-
-    // 같은 채팅방에 이미 구독 중이면 해제
+  
+    console.log('구독하기-Subscribing to:', destination)
+  
+    // 같은 목적지에 이미 구독 중이면 해제
     if (subscriptions.has(destination)) {
-      subscriptions.get(destination).unsubscribe();
+      subscriptions.get(destination).unsubscribe()
     }
-
+  
     return new Promise((resolve, reject) => {
       try {
-        // 새로운 메시지가 올 때마다 실행될 구독 설정
         const subscription = client.value.subscribe(destination, (message) => {
           try {
-            console.log('메시지 수신:', message);
-            ////메시지 받으면 JSON으로 변환
+            console.log('원본 메시지:', message);  // 디버깅용 로그 추가
             const payload = JSON.parse(message.body);
-            console.log('메시지 파싱:', payload);
-            
-            //받은 메시지를 처리하는 콜백함수 실행
+            console.log('파싱된 메시지:', payload);  // 디버깅용 로그 추가
             callbacks.onMessage?.(payload);
           } catch (error) {
-            console.error('메시지 핸들링 error:', error);
+            console.error('메시지 처리 중 에러:', error);
           }
         });
         
-        //구독 정보 저장
-        subscriptions.set(destination, subscription);
-        
-        resolve(subscription);//구독 설정
+        subscriptions.set(destination, subscription)
+        resolve(subscription)
       } catch (error) {
-        console.error('구독 error:', error);
-        reject(error);
+        console.error('구독 error:', error)
+        reject(error)
       }
-    });
-  };
+    })
+  }
+  // const subscribeToChatRoom = async (roomId, callbacks = {}) => {//채팅방 아이디 기준으로 구독 설정, 메시지 받으면 콜백 함수 통해서 처리
+  //   if (!client.value?.active) {//연결 확인
+  //     throw new Error('커넥션 에러 - No active STOMP connection');
+  //   }
+
+  //   const destination = `/queue/chat/${roomId}`;//구독
+  //   console.log('구독하기-Subscribing to:', destination);
+
+  //   // 같은 채팅방에 이미 구독 중이면 해제
+  //   if (subscriptions.has(destination)) {
+  //     subscriptions.get(destination).unsubscribe();
+  //   }
+
+  //   return new Promise((resolve, reject) => {
+  //     try {
+  //       // 새로운 메시지가 올 때마다 실행될 구독 설정
+  //       const subscription = client.value.subscribe(destination, (message) => {
+  //         try {
+  //           console.log('메시지 수신:', message);
+  //           ////메시지 받으면 JSON으로 변환
+  //           const payload = JSON.parse(message.body);
+  //           console.log('메시지 파싱:', payload);
+            
+  //           //받은 메시지를 처리하는 콜백함수 실행
+  //           callbacks.onMessage?.(payload);
+  //         } catch (error) {
+  //           console.error('메시지 핸들링 error:', error);
+  //         }
+  //       });
+        
+  //       //구독 정보 저장
+  //       subscriptions.set(destination, subscription);
+        
+  //       resolve(subscription);//구독 설정
+  //     } catch (error) {
+  //       console.error('구독 error:', error);
+  //       reject(error);
+  //     }
+  //   });
+  // };
 
 
   /**메시지 전송 */
@@ -168,7 +201,10 @@ export function useStomp() {
 
     return client.value.publish({
       destination,
-      body: JSON.stringify(message)//메시지 json 형태로 변환
+      body: JSON.stringify(message),
+      headers: {
+        'content-type': 'application/json'
+      }
     })
   }
 

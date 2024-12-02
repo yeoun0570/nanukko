@@ -219,7 +219,7 @@ const handleNewMessage = async (message) => {
 
     // 새 메시지 처리
     const newMessage = {
-      chatMessageId: messageData.chatMessageId || `temp-${Date.now()}`,
+      chatMessageId: messageData.chatMessageId ,
       sender: messageData.sender,
       chatRoom: messageData.chatRoom || props.roomId,
       chatMessage: messageData.chatMessage,
@@ -251,7 +251,7 @@ const handleNewMessage = async (message) => {
           .filter(Boolean);
 
         if (unreadMessages.length > 0) {
-          await stomp.sendMessage(`/app/chat/${props.roomId}/read-realtime`, {
+          await stomp.sendMessage(`${props.roomId}/read-realtime`, {
             messageIds: unreadMessages,
             userId: props.userId,
             page: currentPage.value,
@@ -306,7 +306,7 @@ const initializeChat = async () => {
       .filter(Boolean);
 
     if (unreadMessages.length > 0) {
-      await stomp.sendMessage(`/app/chat/${props.roomId}/read-realtime`, {
+      await stomp.sendMessage(`${props.roomId}/read-realtime`, {
         messageIds: unreadMessages,
         userId: props.userId,
         page: currentPage.value,
@@ -314,9 +314,16 @@ const initializeChat = async () => {
       });
     }
 
-    const subscription = await stomp.subscribeToChatRoom(props.roomId, {
-      onMessage: handleNewMessage
-    });
+    // 채팅방 구독
+    const subscription = await stomp.subscribeToChatRoom(
+      `/queue/chat/${props.roomId}`,  // 이 경로가 맞는지 확인
+      {
+        onMessage: (message) => {
+          console.log('수신된 메시지:', message);  // 디버깅용 로그
+          handleNewMessage(message);
+        }
+      }
+    );
 
     await nextTick();
     scrollToBottom();
@@ -481,7 +488,7 @@ const handleCloseChat = () => {
 };
 
 // ChatRoom.vue
-const handleLeaveRoom = async ({ chatRoomId, userId }) => {
+const handleLeaveRoom = async ({ chatRoomId}) => {
   try {
     // 1. STOMP를 통해 채팅방 나가기 요청
     await stomp.sendMessage(`leave/${chatRoomId}`, {

@@ -5,7 +5,7 @@
       class="test-chat-button"
       :disabled="loading"
     >
-      {{ loading ? '채팅방 생성 중...' : '테스트 채팅 시작 (Product ID: 9)' }}
+      {{ loading ? '채팅방 생성 중...' : '테스트 채팅 시작 (Product ID: 7)' }}
     </button>
     
     
@@ -49,7 +49,7 @@ const startNewChat = async () => {
 
   try {
     const response = await api.post('/chat/getChat', null, {
-      params: { productId: 9 }
+      params: { productId: 7 }
     })
     
     success.value = response.chatRoomId
