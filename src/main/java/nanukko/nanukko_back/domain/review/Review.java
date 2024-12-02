@@ -38,7 +38,7 @@ public class Review {
 
     @NotNull
     @Min(0)
-    @Max(100)
+    @Max(10)
     private int rate; //평점
 
     @NotNull

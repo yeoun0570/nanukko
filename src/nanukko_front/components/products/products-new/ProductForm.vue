@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { computed } from 'vue';
 import TradeOptions from '~/components/products/products-new/TradeOptions.vue';
 import AddressSearch from '~/components/common/AddressSearch.vue';
 import Map from '~/components/products/products-detail/Map.vue';
@@ -259,7 +259,7 @@ const productConditions = [
         <div class="form-group">
             <label for="content">상품 설명</label>
             <textarea id="content" :value="modelValue.content" @input="updateField('content', $event.target.value)"
-                rows="4" maxlength="85" required></textarea>
+                rows="4" maxlength="700" required></textarea>
         </div>
     </div>
 </template>
