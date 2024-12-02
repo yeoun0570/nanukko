@@ -85,6 +85,7 @@ public class ChatService {
      * - 같은 상품에 대한 채팅방이 있으면 재사용
      * - 없으면 새로 생성
      */
+    @Transactional
     public ChatRoomDTO createOrReturnToChatRoom(String userId, Long productId, Pageable pageable) {
         // 1. 상품 조회
         Product product = productRepository.findById(productId)
@@ -93,69 +94,55 @@ public class ChatService {
         // 2. 기존 채팅방 찾기
         Optional<ChatRoom> existingChatRoom;
         if (product.getSeller().getUserId().equals(userId)) {
-            // 판매자인 경우
             existingChatRoom = chatRoomRepository
                     .findByProduct_ProductIdAndProduct_Seller_UserId(productId, userId);
         } else {
-            // 구매자인 경우
             existingChatRoom = chatRoomRepository
                     .findByBuyer_UserIdAndProduct_ProductId(userId, productId);
         }
 
-        // 3. 기존 채팅방이 있는 경우
+        // 3. 채팅방 DTO 생성 및 반환
+        ChatRoom chatRoom;
         if (existingChatRoom.isPresent()) {
-            ChatRoom chatRoom = existingChatRoom.get();
+            chatRoom = existingChatRoom.get();
+        } else {
+            // 판매자는 새 채팅방을 만들 수 없음
+            if (product.getSeller().getUserId().equals(userId)) {
+                throw new IllegalStateException("판매자는 자신의 상품에 대해 채팅방을 생성할 수 없습니다.");
+            }
 
-            // 해당 채팅방의 메시지만 조회
-            Page<ChatMessages> messages = chatMessageRepository
-                    .findMessagesSinceLastExit(chatRoom.getChatRoomId(),userId, pageable);
-                    //.findByChatRoom_ChatRoomIdOrderByCreatedAtDesc(chatRoom.getChatRoomId(), pageable);
+            User buyer = userRepository.findById(userId)
+                    .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
 
-            List<ChatMessageDTO> messageDTOs = messages.getContent().stream()
-                    .map(ChatMessageDTO::from)
-                    .collect(Collectors.toList());
-
-            return ChatRoomDTO.builder()
-                    .chatRoomId(chatRoom.getChatRoomId())
-                    .productId(chatRoom.getProduct().getProductId())
-                    .productName(chatRoom.getProduct().getProductName())
-                    .buyerId(chatRoom.getBuyer().getUserId())
-                    .buyerName(chatRoom.getBuyer().getNickname())
-                    .sellerId(chatRoom.getProduct().getSeller().getUserId())
-                    .sellerName(chatRoom.getProduct().getSeller().getNickname())
-                    .chatMessages(messageDTOs)
-                    .createdAt(chatRoom.getCreatedAt())
-                    .updatedAt(chatRoom.getUpdatedAt())
-                    .sellerLeftAt(chatRoom.getSellerLeftAt())
-                    .buyerLeftAt(chatRoom.getBuyerLeftAt())
-                    .build();
+            chatRoom = ChatRoom.createChatRoom(product, buyer);
+            chatRoom = chatRoomRepository.save(chatRoom);
         }
 
-        // 4. 새 채팅방 생성 (구매자만 가능)
-        if (product.getSeller().getUserId().equals(userId)) {
-            throw new IllegalStateException("본인이 판매 중인 상품에 대해 새 채팅방을 생성할 수 없습니다.");
-        }
+        // 4. 메시지 조회
+        Page<ChatMessages> messages = chatMessageRepository
+                .findMessagesSinceLastExit(chatRoom.getChatRoomId(), userId, pageable);
 
-        User buyer = userRepository.findById(userId)
-                .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
+        // 5. DTO 변환 및 반환
+        ChatRoomDTO dto = ChatRoomDTO.builder()
+                .chatRoomId(chatRoom.getChatRoomId())
+                .productId(chatRoom.getProduct().getProductId())
+                .productName(chatRoom.getProduct().getProductName())
+                .productThumbnail(chatRoom.getProduct().getThumbnailImage())
+                .buyerId(chatRoom.getBuyer().getUserId())
+                .buyerName(chatRoom.getBuyer().getNickname())
+                .sellerId(chatRoom.getProduct().getSeller().getUserId())
+                .sellerName(chatRoom.getProduct().getSeller().getNickname())
+                .chatMessages(messages.stream()
+                        .map(ChatMessageDTO::from)
+                        .collect(Collectors.toList()))
 
-        ChatRoom newChatRoom = ChatRoom.createChatRoom(product, buyer);
-        ChatRoom savedChatRoom = chatRoomRepository.save(newChatRoom);
-
-        return ChatRoomDTO.builder()
-                .chatRoomId(savedChatRoom.getChatRoomId())
-                .productId(savedChatRoom.getProduct().getProductId())
-                .productName(savedChatRoom.getProduct().getProductName())
-                .buyerId(savedChatRoom.getBuyer().getUserId())
-                .buyerName(savedChatRoom.getBuyer().getNickname())
-                .sellerId(savedChatRoom.getProduct().getSeller().getUserId())
-                .sellerName(savedChatRoom.getProduct().getSeller().getNickname())
-                .chatMessages(new ArrayList<>())
-                .createdAt(savedChatRoom.getCreatedAt())
-                .updatedAt(savedChatRoom.getUpdatedAt())
-                .sellerLeftAt(savedChatRoom.getSellerLeftAt())
-                .buyerLeftAt(savedChatRoom.getBuyerLeftAt())
+                .createdAt(chatRoom.getCreatedAt())
+                .updatedAt(chatRoom.getUpdatedAt())
+                .sellerLeftAt(chatRoom.getSellerLeftAt())
+                .buyerLeftAt(chatRoom.getBuyerLeftAt())
                 .build();
+
+        return dto;
     }
 //    public ChatRoomDTO createOrReturnToChatRoom(String userId, Long productId, Pageable pageable) {
 //        // 1. 상품 조회
@@ -349,6 +336,8 @@ public class ChatService {
         // 4. 새 메시지 저장
         ChatMessages savedMessage = chatMessageRepository.save(message);
 
+        log.info("저장된 메시지: {}", savedMessage);
+
         ChatMessageDTO chatMessageDTO = ChatMessageDTO.builder()
                 .chatRoom(chatRoomId)
                 .sender(message.getSender().getUserId())
@@ -402,6 +391,40 @@ public class ChatService {
             message.UnreadToRead(userId);
             chatMessageRepository.save(message);
         }
+    }
+
+    @Transactional
+    public PageResponseDTO<ChatMessageDTO> markMessagesAsReadRealtime(
+            Long chatRoomId,
+            String userId,
+            List<Long> messageIds,
+            Pageable pageable
+    ) {
+        // 1. 채팅방 존재 확인
+        ChatRoom chatRoom = chatRoomRepository.findById(chatRoomId)
+                .orElseThrow(() -> new EntityNotFoundException("채팅방을 찾을 수 없습니다."));
+
+        // 2. 접근 권한 확인
+        if (!chatRoom.isMember(userId)) {
+            new AccessDeniedException("해당 채팅방에 접근 권한이 없습니다.");
+        }
+
+        // 3. 메시지들 읽음 처리
+        List<ChatMessages> messagesToUpdate = chatMessageRepository
+                .findAllById(messageIds)
+                .stream()
+                .filter(msg -> !msg.getSender().getUserId().equals(userId))
+                .collect(Collectors.toList());
+
+        messagesToUpdate.forEach(msg -> msg.UnreadToRead(userId));
+        chatMessageRepository.saveAll(messagesToUpdate);
+
+        // 4. 업데이트된 메시지 목록 조회
+        Page<ChatMessages> updatedMessages = chatMessageRepository
+                .findMessagesSinceLastExit(chatRoomId, userId, pageable);
+
+        // 5. DTO 변환 및 반환
+        return new PageResponseDTO<>(updatedMessages.map(ChatMessageDTO::from));
     }
 
 }

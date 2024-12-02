@@ -1,33 +1,43 @@
 .chat-layout {
   display: flex;
-  height: 100vh;
+  min-height: calc(100vh - 80px); /* 헤더 높이 등을 고려한 조정 */
   width: 100%;
   background-color: white;
+  margin-top: 80px; /* 헤더 공간 확보 */
+}
+
+.chat-list-section {
+  width: 40%;
+  min-width: 300px;
+  border-right: 1px solid #e5e7eb;
+  overflow-y: auto;
 }
 
 .chat-room-section {
   flex: 1;
-  position: relative;
-  background-color: #f8f9fa;
-}
-
-.empty-state {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  color: #6b7280;
-  font-size: 0.875rem;
+  flex-direction: column;
+  background-color: #f8f9fa;
 }
 
 /* 반응형 디자인 */
 @media (max-width: 768px) {
   .chat-layout {
     flex-direction: column;
+    height: auto;
+  }
+
+  .chat-list-section {
+    width: 100%;
+    height: auto;
+    max-height: 40vh;
+    border-right: none;
+    border-bottom: 1px solid #e5e7eb;
   }
 
   .chat-room-section {
     height: 60vh;
+    width: 100%;
   }
 }
 
