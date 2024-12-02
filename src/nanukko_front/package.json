@@ -1,47 +1,238 @@
 {
 
-  
+  
+
   "name": "nuxt-app",
+
+  
+
   "private": true,
+
+  
+
   "type": "module",
+
+  
+
   "scripts": {
-    "build": "nuxi build",
-    "dev": "nuxi dev",
-    "generate": "nuxi generate",
-    "preview": "nuxi preview",
-    "postinstall": "nuxi prepare",
-    "lint": "eslint \"**/*.{js,vue}\" --fix",
-    "lint-eslint": "eslint --ignore-path .gitignore **/*{js,vue,json} --fix",
-    "lint-prettier": "prettier --write \"**/*.(js|vue|json)\""
+
+  
+
+    
+
+  "build": "nuxi build",
+
+  
+
+    
+
+  "dev": "nuxi dev",
+
+  
+
+    
+
+  "generate": "nuxi generate",
+
+  
+
+    
+
+  "preview": "nuxi preview",
+
+  
+
+    
+
+  "postinstall": "nuxi prepare",
+
+  
+
+    
+
+  "lint": "eslint \"**/*.{js,vue}\" --fix",
+
+  
+
+    
+
+  "lint-eslint": "eslint --ignore-path .gitignore **/*{js,vue,json} --fix",
+
+  
+
+    
+
+  "lint-prettier": "prettier --write \"**/*.(js|vue|json)\""
+
+  
+
   },
+
+  
+
   "dependencies": {
-    "@mdi/font": "^7.4.47",
-    "@stomp/stompjs": "^7.0.0",
-    "axios": "^1.7.7",
-    "buffer": "^6.0.3",
-    "estree-walker": "^3.0.3",
-    "jwt-decode": "^4.0.0",
-    "nuxt": "^3.13.2",
-    "sass": "^1.81.0",
-    "sass-loader": "^16.0.3",
-    "sockjs-client": "^1.5.2",
-    "uuid": "^11.0.3",
-    "vue": "latest",
-    "vue-router": "latest",
 
-    "vue-toastification": "^2.0.0-rc.5",
+  
 
-    "vuetify": "^3.7.4"
+    
+
+  "@flaticon/flaticon-uicons": "^3.3.1",
+
+  
+
+    
+
+  "@mdi/font": "^7.4.47",
+
+  
+
+    
+
+  "@stomp/stompjs": "^7.0.0",
+
+  
+
+    
+
+  "axios": "^1.7.7",
+
+  
+
+    
+
+  "buffer": "^6.0.3",
+
+  
+
+    
+
+  "estree-walker": "^3.0.3",
+
+  
+
+    
+
+  "jwt-decode": "^4.0.0",
+
+  
+
+    
+
+  "nuxt": "^3.13.2",
+
+  
+
+    
+
+  "sass": "^1.81.0",
+
+  
+
+    
+
+  "sass-loader": "^16.0.3",
+
+  
+
+    
+
+  "sockjs-client": "^1.5.2",
+
+  
+
+    
+
+  "uuid": "^11.0.3",
+
+  
+
+    
+
+  "vue": "latest",
+
+  
+
+    
+
+  "vue-router": "latest",
+
+  
+
+    
+
+  "vue-toastification": "^2.0.0-rc.5",
+
+  
+
+    
+
+  "vuetify": "^3.7.4"
+
+  
+
   },
+
+  
+
   "devDependencies": {
-    "@eslint/js": "^9.14.0",
-    "eslint": "^8.57.1",
-    "eslint-config-prettier": "^9.1.0",
-    "eslint-plugin-nuxt": "^4.0.0",
-    "eslint-plugin-prettier": "^5.2.1",
-    "eslint-plugin-vue": "^9.30.0",
-    "globals": "^15.12.0",
-    "prettier": "^3.3.3",
-    "webpack-node-externals": "^3.0.0"
+
+  
+
+    
+
+  "@eslint/js": "^9.14.0",
+
+  
+
+    
+
+  "eslint": "^8.57.1",
+
+  
+
+    
+
+  "eslint-config-prettier": "^9.1.0",
+
+  
+
+    
+
+  "eslint-plugin-nuxt": "^4.0.0",
+
+  
+
+    
+
+  "eslint-plugin-prettier": "^5.2.1",
+
+  
+
+    
+
+  "eslint-plugin-vue": "^9.30.0",
+
+  
+
+    
+
+  "globals": "^15.12.0",
+
+  
+
+    
+
+  "prettier": "^3.3.3",
+
+  
+
+    
+
+  "webpack-node-externals": "^3.0.0"
+
+  
+
   }
+
 }
+

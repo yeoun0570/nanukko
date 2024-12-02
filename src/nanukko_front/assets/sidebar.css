@@ -9,6 +9,7 @@
   min-height: 100vh; /* 최소 높이를 뷰포트 높이의 100%로 설정 (화면 전체 높이) */
 }
 
+
 .sidebar-container {
   /* padding: 50px; 내부 여백 조정 */
   padding: 30px 20px; /* 내부 여백 조정 - 좌우 여백 줄임 */

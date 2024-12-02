@@ -3,7 +3,7 @@ import { ref } from "vue";
 import Notification from "../notification/Notification.vue";
 import { useAuth } from "~/composables/auth/useAuth";
 import { useRouter } from "vue-router";
-import { useToast } from "vue-toastification";
+import VueToastification from 'vue-toastification'
 
 const router = useRouter();
 const { userId, nickname, isAuthenticated, logout } = useAuth();
@@ -17,19 +17,23 @@ const navigateToChat = () => {
   router.push("/chat");
 };
 
-const toast = useToast();
+const navigateToProducts = () => {
+  router.push('/products/new') 
+};
+
+const toast = VueToastification.useToast
 
 // 로그아웃
 const doLogout = () => {
 
   logout();
   //알림 팝업
-  toast.info("로그아웃되었습니다.", {
-    timeout: 3000, // 3초 동안 유지
-    position: "bottom-center", // 화면 중앙 하단
-    icon: "🔒", // 커스텀 아이콘
-    hideProgressBar: true, // 진행 바 숨기기
-  });
+  // toast.info("로그아웃되었습니다.", {
+  //   timeout: 3000, // 3초 동안 유지
+  //   position: "bottom-center", // 화면 중앙 하단
+  //   icon: "🔒", // 커스텀 아이콘
+  //   hideProgressBar: true, // 진행 바 숨기기
+  // });
 
   router.push("/auth/login");
 };
@@ -91,7 +95,7 @@ const onSearch = () => {
         </button>
         <button v-if="isAuthenticated" @click="doLogout">로그아웃</button>
         <!-- 판매 글 작성을 위한 페이지로 이동하는 링크 -->
-        <button v-if="isAuthenticated" class="sell-button">판매하기</button>
+        <button v-if="isAuthenticated" @click = "navigateToProducts" class="sell-button">판매하기</button>
       </ul>
     </div>
   </header>
@@ -126,7 +130,6 @@ const onSearch = () => {
     padding-left: 10px; /* 좁은 화면에서는 패딩을 줄임 */
   }
 }
-
 
 /* 로고 스타일 */
 .logo {
@@ -222,7 +225,6 @@ const onSearch = () => {
   font-size: 1rem;
   cursor: pointer;
   transition: background-color 0.3s ease;
-
 }
 
 .sell-button:hover {
