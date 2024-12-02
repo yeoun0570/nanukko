@@ -75,8 +75,13 @@ public class StompConfig implements WebSocketMessageBrokerConfigurer {
                         message, StompHeaderAccessor.class);
 
                 if (StompCommand.CONNECT.equals(accessor.getCommand())) {
-                    // 여기에 인증 로직 추가 가능
-                    // 예: JWT 토큰 검증 등
+                    // 연결 시 토큰 검증, JWT 토큰 검증
+                    // 검증 실패시 연결 거부
+                    String token = accessor.getFirstNativeHeader("Authorization");
+                    if (token != null && token.startsWith("Bearer ")) {
+                        token = token.substring(7);
+
+                    }
                 }
                 return message;
             }

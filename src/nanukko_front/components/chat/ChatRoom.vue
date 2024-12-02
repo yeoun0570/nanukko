@@ -4,6 +4,10 @@
     <ChatRoomHeader 
       :product="headerData"
       :connected="connected"
+      :room-id="roomId"
+      :user-id="userId"
+      @close-chat="handleCloseChat"
+      @leave-room="handleLeaveRoom"
     />
 
     <!-- 메인 메시지 영역 -->
@@ -115,6 +119,7 @@ import { ref, onMounted, onUnmounted, watch, computed, nextTick } from 'vue'
 import { useFormatTime } from '~/composables/useFormatTime'
 import { useStomp } from '~/composables/chat/useStomp'
 import { useChatRooms } from '~/composables/chat/useChatRooms'
+import { useRouter } from 'vue-router'
 
 // Props 정의
 const props = defineProps({
@@ -140,6 +145,8 @@ const props = defineProps({
   }
 });
 
+const emit = defineEmits(['close-chat']);
+
 // 상태 관리
 const messageContainer = ref(null);
 const messages = ref([]);
@@ -148,10 +155,13 @@ const currentPage = ref(0);
 const hasMore = ref(true);
 const previewImage = ref(null);
 
+const router = useRouter();
+
 // Composables
 const { loadChatMessages } = useChatRooms();
 const stomp = useStomp();
 const { formatTime } = useFormatTime();
+
 
 // Computed Properties
 const sortedMessages = computed(() => {
@@ -464,6 +474,33 @@ watch(messages, (newMessages) => {
 }, { deep: true });
 
 
+/**채팅방 나가기 */
+const handleCloseChat = () => {
+  // STOMP 연결은 유지하고 UI만 닫기
+  emit('close-chat'); // 부모 컴포넌트에서 처리
+};
+
+// ChatRoom.vue
+const handleLeaveRoom = async ({ chatRoomId, userId }) => {
+  try {
+    // 1. STOMP를 통해 채팅방 나가기 요청
+    await stomp.sendMessage(`leave/${chatRoomId}`, {
+      userId,
+      page: 0,
+      size: 30
+    });
+
+    // 2. STOMP 구독 해제
+    stomp.unsubscribe(`/queue/chat/${chatRoomId}`);
+
+    // 3. UI 닫기
+    emit('close-chat');
+
+  } catch (error) {
+    console.error('채팅방 나가기 실패:', error);
+    alert('채팅방 나가기에 실패했습니다.');
+  }
+};
 </script>
 
 

@@ -1,6 +1,8 @@
 <!-- components/chat/ChatRoomHeader.vue -->
+<!-- components/chat/ChatRoomHeader.vue -->
 <template>
   <header class="chat-room-header">
+    <!-- 상품 정보 영역 -->
     <div class="product-info">
       <!-- 상품 이미지 -->
       <div class="product-image">
@@ -30,34 +32,85 @@
       </div>
     </div>
 
-    <!-- 연결 상태 표시 -->
-    <div class="connection-info">
-      <span v-if="!connected" class="connection-status">
-        <i class="fas fa-sync fa-spin"></i> 연결 중...
-      </span>
+     <!-- 우측 메뉴 영역 -->
+     <div class="header-actions">
+      <div class="connection-info">
+        <span v-if="!connected" class="connection-status">
+          <i class="fas fa-sync fa-spin"></i> 연결 중...
+        </span>
+      </div>
+
+      <!-- 햄버거 메뉴 -->
+      <button class="menu-button" @click="isMenuOpen = !isMenuOpen">
+        <i class="fas fa-ellipsis-v"></i>
+      </button>
+
+      <!-- 메뉴 드롭다운 -->
+      <div v-if="isMenuOpen" class="menu-dropdown">
+        <!-- 채팅창 닫기 -->
+        <button class="menu-item" @click="handleCloseChat">
+          <i class="fas fa-times"></i>
+          채팅창 닫기
+        </button>
+        <!-- 채팅방 나가기 -->
+        <button class="menu-item leave-button" @click="handleLeaveRoom">
+          <i class="fas fa-sign-out-alt"></i>
+          채팅방 나가기
+        </button>
+      </div>
     </div>
   </header>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { ref } from 'vue';
+import { computed } from 'vue';
 
-// Props 정의 및 검증 강화
+// Props 정의 및 검증
 const props = defineProps({
   product: {
     type: Object,
     required: true,
     validator(value) {
-      // 필수 필드 존재 여부 확인
       const requiredFields = ['productName', 'price', 'status', 'condition']
       return requiredFields.every(field => field in value)
     }
   },
-  connected: {
-    type: Boolean,
-    default: true
+  connected: Boolean,
+  roomId: {
+    type: [String, Number],
+    required: true
+  },
+  userId: {
+    type: String,
+    required: true
   }
-})
+});
+
+// Emits 정의
+const emit = defineEmits(['close-chat', 'leave-room']);
+
+// 상태 관리
+const isMenuOpen = ref(false);
+
+// 채팅창 닫기 핸들러 (STOMP 연결 유지, UI만 닫기)
+const handleCloseChat = () => {
+  if (confirm('채팅창을 닫으시겠습니까?')) {
+    isMenuOpen.value = false;
+    emit('close-chat');
+  }
+};
+
+// 채팅방 나가기 핸들러 (실제 나가기 처리)
+const handleLeaveRoom = () => {
+  if (confirm('채팅방을 나가시겠습니까? 나가기 후에는 채팅 내역이 삭제됩니다.')) {
+    isMenuOpen.value = false;
+    emit('leave-room', {
+      chatRoomId: props.roomId,
+      userId: props.userId
+    });
+  }
+};
 
 // 가격 포맷팅
 const formatPrice = (price) => {
@@ -122,12 +175,14 @@ const conditionClass = computed(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  position: relative;
 }
 
 .product-info {
   display: flex;
   align-items: center;
   gap: 1rem;
+  flex: 1;
 }
 
 .product-image {
@@ -244,5 +299,71 @@ const conditionClass = computed(() => {
   justify-content: center;
   background: #f5f5f5;
   color: #999;
+}
+
+/* 헤더 우측 영역 스타일 */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  position: relative;
+}
+
+/* 메뉴 버튼 스타일 */
+.menu-button {
+  padding: 0.5rem;
+  border: none;
+  background: none;
+  color: #666;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.menu-button:hover {
+  color: #333;
+}
+
+/* 드롭다운 메뉴 스타일 */
+.menu-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 0.5rem;
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  z-index: 100;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  width: 100%;
+  border: none;
+  background: none;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.menu-item:hover {
+  background: #f5f5f5;
+  color: #ff4d4f;
+}
+
+.menu-item i {
+  font-size: 0.875rem;
+}
+
+.leave-button {
+  color: #ff4d4f;
+}
+
+.leave-button:hover {
+  background: #fff1f0;
 }
 </style>
