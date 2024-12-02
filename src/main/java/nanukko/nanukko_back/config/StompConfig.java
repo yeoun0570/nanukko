@@ -1,6 +1,7 @@
 package nanukko.nanukko_back.config;
 
 import lombok.RequiredArgsConstructor;
+import nanukko.nanukko_back.jwt.JWTUtil;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.Message;
@@ -17,12 +18,15 @@ import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketTransportRegistration;
 
+import java.security.Principal;
+
+
 @Configuration
 @EnableWebSocketMessageBroker
 @RequiredArgsConstructor
 public class StompConfig implements WebSocketMessageBrokerConfigurer {
 
-
+    private final JWTUtil jwtUtil;
 
     /*엔드포인트 생성해서 클라이언트가 webSocket에 연결할 수 있도록 함(핸드셰이크를 위한 설정)*/
     @Override
@@ -81,7 +85,16 @@ public class StompConfig implements WebSocketMessageBrokerConfigurer {
                     if (token != null && token.startsWith("Bearer ")) {
                         token = token.substring(7);
 
-                    }
+                        // 검증 성공 시 Principal 설정
+                        String finalToken = token;
+                        accessor.setUser(new Principal() {
+                            @Override
+                            public String getName() {
+                                return jwtUtil.getUsername(finalToken);
+                            }
+                        });
+
+                        };
                 }
                 return message;
             }

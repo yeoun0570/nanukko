@@ -12,15 +12,13 @@ import nanukko.nanukko_back.service.ChatService;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
-import org.springframework.messaging.handler.annotation.DestinationVariable;
-import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.messaging.handler.annotation.Payload;
-import org.springframework.messaging.handler.annotation.SendTo;
+import org.springframework.messaging.handler.annotation.*;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestParam;
+
 
 import java.nio.file.AccessDeniedException;
+import java.security.Principal;
 import java.util.List;
 import java.util.Map;
 
@@ -65,12 +63,12 @@ public class ChatMessageController {
     @SendTo("/queue/chat/{chatRoomId}")
     public ResponseEntity<PageResponseDTO<ChatRoomDTO>> leaveRoom(
             @DestinationVariable Long chatRoomId,
-            @RequestParam String userId,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "30") int size
-    ) throws AccessDeniedException {
+            @Payload Map<String, Integer> pageInfo,
+            @Header("simpUser") Principal principal
+            ) throws AccessDeniedException {
+        String userId = principal.getName();
         chatService.leaveChatRoom(chatRoomId, userId); // 채팅방 나감 처리 후
-        Pageable pageable = PageRequest.of(page, size);
+        Pageable pageable = PageRequest.of(pageInfo.get("page"), pageInfo.get("size"));
         PageResponseDTO<ChatRoomDTO> chatRooms = chatService.getChatRooms(userId, pageable); // 나간 상태의 채팅방 목록 반환
         return ResponseEntity.ok(chatRooms);
     }
@@ -129,22 +127,4 @@ public class ChatMessageController {
         private int size;
     }
 
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public class EnterChatRequest {
-        private String userId;
-        private int page = 0;
-        private int size = 50;
-    }
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public class LeaveChatRequest {
-        private String userId;
-        private int page = 0;
-        private int size = 30;
-    }
 }

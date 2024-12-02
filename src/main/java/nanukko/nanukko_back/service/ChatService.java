@@ -360,10 +360,17 @@ public class ChatService {
         ChatRoom chatRoom = chatRoomRepository.findById(roomId)
                 .orElseThrow(() -> new EntityNotFoundException("채팅방을 찾을 수 없습니다."));
 
+        log.info("원본 채팅방: {}",chatRoom);
+        
         // 나가기 시간 기록
         chatRoom.updateLeftAt(userId);
+        log.info("나간 시록 기록: {}",chatRoom);
+        
+        
         // 나감 여부 기록
         chatRoom.updateIsLeft(userId);
+        log.info("나감 여부 기록: {}",chatRoom);
+        
         chatRoomRepository.save(chatRoom);
 
         // 시스템 메시지 저장 -> 추후에 쓸지도?

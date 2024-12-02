@@ -485,7 +485,6 @@ const handleLeaveRoom = async ({ chatRoomId, userId }) => {
   try {
     // 1. STOMP를 통해 채팅방 나가기 요청
     await stomp.sendMessage(`leave/${chatRoomId}`, {
-      userId,
       page: 0,
       size: 30
     });
