@@ -42,11 +42,12 @@
 
 /* ProductCard */
 .order-card {
-  display: flex;
   background: white;
   border-radius: 12px;
-  overflow: hidden;
+  padding: 1.5rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 1rem;
+  position: relative;
   transition: transform 0.2s ease;
 }
 
@@ -55,9 +56,12 @@
 }
 
 .order-image {
-  width: 180px;
-  height: 180px;
+  width: 100px;
+  height: 100px;
+  border-radius: 8px;
+  overflow: hidden;
   flex-shrink: 0;
+  border: 1px solid #eee;
 }
 
 .order-image img {
@@ -68,16 +72,15 @@
 
 .order-info {
   flex: 1;
-  padding: 1.5rem;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+  min-width: 0;
 }
 
 .order-name {
-  font-size: 1.25rem;
+  font-size: 1.2rem;
   font-weight: 600;
-  margin: 0 0 1rem;
+  color: #333;
+  margin: 0 0 0.5rem;
+  padding-right: 120px; /* 버튼 공간 확보 */
 }
 
 .price-status-container {
@@ -124,6 +127,9 @@
 
 /* Buttons */
 .button-container {
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
   display: flex;
   gap: 0.5rem;
 }
@@ -193,4 +199,27 @@
 button:disabled {
   opacity: 0.7;
   cursor: not-allowed;
+}
+
+/* 반응형 스타일 */
+@media (max-width: 576px) {
+  .order-card {
+    padding: 1rem;
+  }
+
+  .order-image {
+    width: 80px;
+    height: 80px;
+  }
+
+  .button-container {
+    position: static;
+    margin-top: 1rem;
+    justify-content: flex-end;
+  }
+
+  .order-name {
+    padding-right: 0;
+    font-size: 1.1rem;
+  }
 }

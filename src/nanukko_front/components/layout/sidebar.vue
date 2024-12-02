@@ -12,10 +12,13 @@ const fetchUserProfile = async () => {
     const response = await api.get("/my-store/simple-info");
     userProfile.value = response;
     console.log("사이드바 사용자 정보: ", userProfile.value);
+     // 2로 나눈 후 소수점 첫째자리까지 반올림
+     userProfile.value.reviewRate = Math.round((userProfile.value.reviewRate / 2) * 10) / 10;
   } catch (error) {
     console.error("프로필 정보 로드 실패:", error);
   }
 };
+
 
 // 컴포넌트 마운트 시 프로필 정보 로드
 onMounted(() => {
@@ -61,30 +64,32 @@ onMounted(() => {
           </div>
         </div>
       </div>
+      <div class="border-section"><br></div>
       <!-- 내정보 -->
-      <div class="userInfo">
+      <!-- <div class="userInfo">
         <h2 class="click-title" @click="">내정보</h2>
-      </div>
+      </div> -->
 
       <!--내상점-->
       <div class="mystore">
         <h2 class="click-title">내상점</h2>
         <ul class="dropdown-content">
-          <li>판매상품</li>
-          <li>구매상품</li>
-          <li>찜상품</li>
-          <li>나의 후기</li>
+          <li><NuxtLink to="/my-store">내 정보</NuxtLink></li>
+          <li><NuxtLink to="/my-store/sale-products">판매상품</NuxtLink></li>
+          <li><NuxtLink to="/my-store/buy-products">구매상품</NuxtLink></li>
+          <li><NuxtLink to="/my-store/wishlist">찜상품</NuxtLink></li>
+          <li><NuxtLink to="/my-store/reviews">나의 후기</NuxtLink></li>
         </ul>
       </div>
 
       <!--거래내역-->
-      <div class="transaction-history">
+      <!-- <div class="transaction-history">
         <h2 class="click-title">거래내역</h2>
         <ul class="dropdown-content">
           <li>판매완료</li>
           <li>구매완료</li>
         </ul>
-      </div>
+      </div> -->
     </aside>
   </div>
 </template>

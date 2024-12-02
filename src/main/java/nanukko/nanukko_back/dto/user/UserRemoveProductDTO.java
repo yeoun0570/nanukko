@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import nanukko.nanukko_back.domain.product.ProductStatus;
 
 @Data
 @AllArgsConstructor
@@ -12,4 +13,5 @@ import lombok.NoArgsConstructor;
 public class UserRemoveProductDTO {
     private Long productId;
     private boolean isDeleted;
+    private ProductStatus status;
 }

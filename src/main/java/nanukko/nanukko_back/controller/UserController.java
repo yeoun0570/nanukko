@@ -1,20 +1,30 @@
 package nanukko.nanukko_back.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import nanukko.nanukko_back.domain.order.PaymentStatus;
+import nanukko.nanukko_back.domain.product.Product;
 import nanukko.nanukko_back.domain.product.ProductStatus;
 import nanukko.nanukko_back.dto.page.PageResponseDTO;
+import nanukko.nanukko_back.dto.product.ProductRequestDto;
+import nanukko.nanukko_back.dto.product.ProductResponseDto;
 import nanukko.nanukko_back.dto.review.ReviewInMyStoreDTO;
 import nanukko.nanukko_back.dto.user.*;
 import nanukko.nanukko_back.exception.ErrorResponse;
 import nanukko.nanukko_back.service.ImageService;
 import nanukko.nanukko_back.service.UserService;
+import nanukko.nanukko_back.util.ProductMapper;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -23,6 +33,7 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
     private final UserService userService;
     private final ImageService imageService;
+    private final ObjectMapper objectMapper;
 
     //사용자가 자신의 정보 조회
     @GetMapping("/info")
@@ -72,16 +83,28 @@ public class UserController {
         return ResponseEntity.ok(products);
     }
 
-    //사용자가 판매중인 상품 수정
-    @PostMapping("/sale-products/modify")
-    public ResponseEntity<UserSetProductDTO> modifyProduct(
+    //사용자가 판매중인 상품 수정 api/my-store/sale-products/modify
+    @PostMapping(value = "/sale-products/modify" , consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ProductResponseDto> modifyProduct(
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            @RequestParam Long productId,
-            @RequestBody UserSetProductDTO productDTO
-    ) {
+            @RequestPart("productInfo") String productInfoJson,
+            @RequestPart(value = "images", required = false) List<MultipartFile> images
+    ) throws JsonProcessingException {
+        log.info("=== 상품 수정 요청 시작 ===");
+        log.info("이미지 개수: {}", images.size());
+
         String userId = userDetails.getUsername();
-        UserSetProductDTO response = userService.modifyProduct(userId, productId, productDTO);
-        return ResponseEntity.ok(response);
+
+        log.info("=== JSON 문자열을 DTO로 변환 시작 ===");
+        ProductRequestDto requestDto = objectMapper.readValue(productInfoJson, ProductRequestDto.class);
+
+        log.info("=== 상품 수정 시작 ===");
+        Product modified = userService.modifyProduct(userId, requestDto, images);
+
+        log.info("=== Product -> ProductResponseDto 변환 ===");
+        ProductResponseDto result = ProductMapper.toDto(modified);
+        log.info("리턴 값 : {}", result);
+        return ResponseEntity.ok(result);
     }
 
     @PostMapping("/sale-products/remove")

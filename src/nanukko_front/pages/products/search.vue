@@ -30,7 +30,7 @@
                             <div class="flex-between-center">
                                 <span class="card-price mb-0">{{ formatPrice(product.price) }}원</span>
                                 <span class="small-text-muted">
-                                    <TimeAgo :timestamp="product.updatedTime" />
+                                    <TimeAgo :timestamp="product.updatedAt" />
                                 </span>
                             </div>
                         </div>
@@ -60,9 +60,10 @@
 
 import { ref, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import axios from 'axios';
 import TimeAgo from '~/components/common/TimeAgo.vue';
+import { useApi } from "@/composables/useApi";
 
+const api = useApi();
 const route = useRoute();
 const router = useRouter();
 const searchQuery = ref('');
@@ -93,15 +94,15 @@ const searchProducts = async () => {
 
     isLoading.value = true;
     try {
-        const response = await axios.get(`http://localhost:8080/api/products/search`, {
+        const response = await api.get(`/products/search`, {
             params: {
                 query: searchQuery.value,
                 page: pageNumber.value,
                 size: pageSize,
-                sort: 'updatedTime,desc'
+                sort: 'updatedAt,desc'
             }
         });
-        searchResults.value = response.data;
+        searchResults.value = response;
     } catch (error) {
         console.error('검색 오류:', error);
         searchResults.value = {
