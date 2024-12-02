@@ -1,9 +1,12 @@
 <script setup>
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useApi } from "@/composables/useApi";
+import { useURL } from "~/composables/useURL";
 import TimeAgo from '~/components/common/TimeAgo.vue';
 
+
+const axiosInstance = useURL();
 const api = useApi();
 const route = useRoute();
 const router = useRouter();
@@ -17,9 +20,9 @@ const products = ref({
 const loading = ref(false);
 const pageNumber = ref(0);
 const pageSize = 20;
-const middleCategories = ref([]);
-const selectedMiddleId = ref(null);
-
+const majorCategoriesAll = ref([]); //대분류 전체 상품 리스트
+const middleCategoriesTitle = ref([]); //중분류 리스트 모음 (중분류 버튼)
+const selectedMiddleId = ref(null); //중분류 상품 리스트
 const categoryNames = {
     '100000': '0~3개월',
     '200000': '3~6개월',
@@ -28,27 +31,77 @@ const categoryNames = {
     '500000': '만2세',
     '600000': '유아'
 };
+const categoryName = computed(() => categoryNames[route.params.categoryId] || '카테고리');
 
-const categoryName = computed(() => categoryNames[route.params.majorId] || '카테고리');
+onMounted(() => {
+    watch(() => route.params.categoryId, (newId) => {
+        console.log('categoryId changed:', newId);
+        if (newId) {
+            console.log('Fetching data for categoryId:', newId);
+            selectedMiddleId.value = null;
+            pageNumber.value = 0;
+            fetchMiddleCategories();
+            fetchMajorCategoriesProducts();
+            fetchMiddleCategoriesProducts();
+        }
+    }, { immediate: true });
+
+    watch(pageNumber, () => {
+        fetchMiddleCategoriesProducts();
+    });
+});
 
 const fetchMiddleCategories = async () => {
-    console.log('fetchMiddleCategories 시작', route.params.majorId);
+    console.log('fetchMiddleCategories 시작');
     try {
-        const response = await api.get(`/categories/middle/${route.params.majorId}`);
-        middleCategories.value = response;
-        console.log("중분류 카테고리 : ", response);
+        const response = await api.get(`/categories/middle/${route.params.categoryId}`);
+        middleCategoriesTitle.value = response;
+        console.log("중분류 카테고리 리스트 : ", middleCategoriesTitle);
     } catch (error) {
-        console.error('중분류 카테고리 로드 실패:', error);
+        console.log("중분류 카테고리 리스트 조회 실패 ", error);
+    }
+}
+
+const fetchMajorCategoriesProducts = async (page = 0, size = 20) => {
+    console.log('fetchMajorCategoriesProducts 시작', route.params.categoryId);
+    try {
+        const response = await axiosInstance.get("/products/category/major", {
+            params: {  // params 객체로 쿼리 파라미터 전달
+                majorId: route.params.categoryId,
+                page: page,
+                size: size
+            }
+        });
+
+        majorCategoriesAll.value = response;
+        console.log("대분류 전체 상품 조회 : ", response);
+    } catch (error) {
+        console.error('대분류 전체 상품 조회 실패:', error);
     }
 };
 
-const fetchProducts = async () => {
+const fetchMiddleCategoriesProducts = async () => {
+    if (!route.params.categoryId) return; // 카테고리 ID가 없으면 실행하지 않음
+
     loading.value = true;
     try {
         const url = selectedMiddleId.value
-            ? `/products/middle?middleId=${selectedMiddleId.value}&page=${pageNumber.value}&size=${pageSize}`
-            : `/products/major?majorId=${route.params.majorId}&page=${pageNumber.value}&size=${pageSize}`;
-        const response = await api.get(url);
+            ? `/products/category/middle` // URL 수정
+            : `/products/category/major`; // URL 수정
+
+        const params = selectedMiddleId.value
+            ? {
+                middleId: selectedMiddleId.value,
+                page: pageNumber.value,
+                size: pageSize
+            }
+            : {
+                majorId: route.params.categoryId,
+                page: pageNumber.value,
+                size: pageSize
+            };
+
+        const response = await api.get(url, { params }); // params 객체로 쿼리 파라미터 전달
         products.value = response;
     } catch (error) {
         console.error('상품 로드 실패:', error);
@@ -68,24 +121,13 @@ const goToProduct = (productId) => {
 const selectMiddleCategory = (middleId) => {
     selectedMiddleId.value = middleId;
     pageNumber.value = 0;
-    fetchProducts();
+    fetchMiddleCategoriesProducts();
 };
 
 const changePage = (newPage) => {
     pageNumber.value = newPage;
     window.scrollTo(0, 0);
 };
-
-watch(() => route.params.majorId, () => {
-    selectedMiddleId.value = null;
-    pageNumber.value = 0;
-    fetchMiddleCategories();
-    fetchProducts();
-}, { immediate: true });
-
-watch(pageNumber, () => {
-    fetchProducts();
-});
 </script>
 
 <template>
@@ -95,16 +137,20 @@ watch(pageNumber, () => {
             <button class="category-button" :class="{ active: !selectedMiddleId }" @click="selectMiddleCategory(null)">
                 전체보기
             </button>
-            <button v-for="category in middleCategories" :key="category.middleId" class="category-button"
+
+            <button v-for="category in middleCategoriesTitle" :key="category.middleId" class="category-button"
                 :class="{ active: selectedMiddleId === category.middleId }"
                 @click="selectMiddleCategory(category.middleId)">
                 {{ category.middleName }}
                 <span class="count">{{ category.count || '' }}</span>
             </button>
+
         </div>
 
         <h2 class="search-title">
-            {{ categoryName }} ({{ products.totalElements }}개)
+            <span class="category-name">{{ categoryName }}</span>
+            <span style="margin-right: 10px;"></span>
+            <span class="total-count">전체 상품 수 : {{ products.totalElements }}</span>
         </h2>
 
         <div v-if="loading" class="loading-container">
@@ -130,7 +176,7 @@ watch(pageNumber, () => {
                             <div class="flex-between-center">
                                 <span class="card-price mb-0">{{ formatPrice(product.price) }}원</span>
                                 <span class="small-text-muted">
-                                    <TimeAgo :timestamp="product.updatedTime" />
+                                    <TimeAgo :timestamp="product.updatedAt" />
                                 </span>
                             </div>
                         </div>
@@ -157,49 +203,64 @@ watch(pageNumber, () => {
 
 <style scoped>
 .card-container {
-    max-width: 1400px;
+    max-width: 1200px;
     padding: 2rem;
     margin: 0 auto;
 }
 
 .search-title {
     margin-bottom: 2rem;
-    font-size: 1.5rem;
+    font-size: 1.2rem;
     color: #333;
+}
+
+.category-name {
+    color: #3B82F6;
+}
+
+.total-count {
+    font-size: 1rem;
 }
 
 .product-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 2rem;
+    gap: 20px;
     margin-bottom: 2rem;
 }
 
 .product-card {
     display: flex;
-    justify-content: center;
+    flex-direction: column;
+    border-radius: 8px;
     cursor: pointer;
+    width: 100%;
 }
 
 .card-img-wrapper {
-    width: 300px;
-    height: 300px;
-    margin: 0 auto;
+    position: relative;
+    padding-top: 100%;
+    width: 100%;
 }
 
+
 .card-img-top {
-    width: 300px;
-    height: 300px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
     object-fit: cover;
 }
 
 .card-fixed-height {
-    width: 300px;
-    margin: 0 auto;
-    transition: transform 0.2s, box-shadow 0.2s;
-    border: 1px solid #dee2e6;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #e0e0e0;
     border-radius: 8px;
     overflow: hidden;
+    width: 100%;
 }
 
 .card-fixed-height:hover {
@@ -331,11 +392,10 @@ watch(pageNumber, () => {
     border-radius: 20px;
     background: white;
     cursor: pointer;
-    font-size: 0.9rem;
+    font-size: 1rem;
     transition: all 0.2s;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
 }
 
 .category-button.active {
