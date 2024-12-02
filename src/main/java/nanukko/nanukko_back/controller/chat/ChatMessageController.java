@@ -92,6 +92,8 @@ public class ChatMessageController {
             @Payload ReadMessageRequest request
     ) {
         try {
+            log.info("실시간 읽음 처리 요청: roomId={}, messageIds={}", chatRoomId, request.getMessageIds());
+
             // 페이징 객체 생성
             Pageable pageable = PageRequest.of(request.getPage(), request.getSize());
 
@@ -100,12 +102,15 @@ public class ChatMessageController {
                     chatService.markMessagesAsReadRealtime(chatRoomId, request.getUserId(), request.getMessageIds(), pageable);
 
             // 업데이트된 메시지 정보 반환
-            return ChatMessageDTO.builder()
-                    .chatMessageId(null) // 일괄 업데이트의 경우 단일 메시지 ID는 불필요
+            ChatMessageDTO response = ChatMessageDTO.builder()
+                    .chatMessageId(null)
                     .messageIds(request.getMessageIds())
                     .updatedMessages(updatedMessages.getContent())
-                    .isRead(true) // 읽음 처리됨을 표시
+                    .isRead(true)
                     .build();
+
+            log.info("읽음 처리 완료: {}", response);
+            return response;
 
         } catch (Exception e) {
             log.error("읽음 처리 실패", e);

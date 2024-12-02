@@ -189,21 +189,17 @@ const handleSendMessage = async (messageData) => {
 
 // 메시지 수신 처리
 // messages 배열 업데이트 로직만 수정
-const handleNewMessage = (message) => {
+const handleNewMessage = async (message) => {
   try {
-    let messageData;
-    if (typeof message === 'string') {
-      messageData = JSON.parse(message);
-    } else if (message.body) {
-      messageData = JSON.parse(message.body);
-    } else {
-      messageData = message;
-    }
+    let messageData = typeof message === 'string' ? JSON.parse(message) : 
+                     message.body ? JSON.parse(message.body) : message;
     
     console.log('처리할 메시지 데이터:', messageData);
 
     // 읽음 상태 업데이트 메시지 처리
-    if (messageData.messageIds && Array.isArray(messageData.messageIds)) {
+    if (messageData.messageIds) {
+      console.log('읽음 상태 업데이트 요청:', messageData);
+      // 메시지 읽음 상태 업데이트
       messages.value = messages.value.map(msg => ({
         ...msg,
         isRead: messageData.messageIds.includes(msg.chatMessageId) ? true : msg.isRead
@@ -211,7 +207,7 @@ const handleNewMessage = (message) => {
       return;
     }
 
-    // 메시지 정규화
+    // 새 메시지 처리
     const newMessage = {
       chatMessageId: messageData.chatMessageId || `temp-${Date.now()}`,
       sender: messageData.sender,
@@ -232,19 +228,20 @@ const handleNewMessage = (message) => {
     );
 
     if (!isDuplicate) {
-      // 메시지 배열 업데이트
       messages.value = [...messages.value, newMessage];
-      console.log('메시지 추가됨:', messages.value);
 
-      // 상대방 메시지 읽음 처리
+      // 상대방 메시지 즉시 읽음 처리
       if (!isSentByCurrentUser(newMessage)) {
+        await markMessageAsRead(newMessage.chatMessageId);
+        
+        // 읽지 않은 모든 메시지 처리
         const unreadMessages = messages.value
           .filter(msg => !msg.isRead && !isSentByCurrentUser(msg))
           .map(msg => msg.chatMessageId)
-          .filter(Boolean); // null이나 undefined 제거
+          .filter(Boolean);
 
         if (unreadMessages.length > 0) {
-          stomp.sendMessage(`/app/chat/${props.roomId}/read-realtime`, {
+          await stomp.sendMessage(`/app/chat/${props.roomId}/read-realtime`, {
             messageIds: unreadMessages,
             userId: props.userId,
             page: currentPage.value,
@@ -268,6 +265,18 @@ watch(() => messages.value, (newMessages) => {
   console.log('메시지 배열 변경됨:', newMessages);
 }, { deep: true });
 
+// 메시지 읽음 처리 메소드 추가
+const markMessageAsRead = async (messageId) => {
+  try {
+    await stomp.sendMessage(`/app/chat/${props.roomId}/mark-read`, {
+      messageId: messageId,
+      userId: props.userId
+    });
+  } catch (error) {
+    console.error('메시지 읽음 처리 실패:', error);
+  }
+};
+
 // 채팅 초기화
 const initializeChat = async () => {
   isLoading.value = true;
@@ -277,20 +286,28 @@ const initializeChat = async () => {
       await stomp.connectChat(props.userId);
     }
 
+    // 초기 메시지 설정
     messages.value = props.initialMessages || [];
 
-    // 구독 설정 강화
-    const subscription = await stomp.subscribeToChatRoom(
-      props.roomId,
-      {
-        onMessage: (receivedMessage) => {
-          console.log('WebSocket 메시지 수신:', receivedMessage);
-          handleNewMessage(receivedMessage);
-        }
-      }
-    );
+    // 안 읽은 메시지 읽음 처리
+    const unreadMessages = messages.value
+      .filter(msg => !msg.isRead && !isSentByCurrentUser(msg))
+      .map(msg => msg.chatMessageId)
+      .filter(Boolean);
 
-    console.log('채팅방 구독 성공:', subscription);
+    if (unreadMessages.length > 0) {
+      await stomp.sendMessage(`/app/chat/${props.roomId}/read-realtime`, {
+        messageIds: unreadMessages,
+        userId: props.userId,
+        page: currentPage.value,
+        size: 20
+      });
+    }
+
+    const subscription = await stomp.subscribeToChatRoom(props.roomId, {
+      onMessage: handleNewMessage
+    });
+
     await nextTick();
     scrollToBottom();
     return subscription;
