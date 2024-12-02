@@ -31,7 +31,7 @@
           :key="room.chatRoomId"
           class="chat-room-item"
           :class="{ 'active': currentRoomId === room.chatRoomId }"
-          @click="handleRoomSelect(room)"
+          @click="handleRoomSelect(room.chatRoomId)"
         >
           <!-- 프로필 영역 -->
           <div class="profile-image">
@@ -49,7 +49,7 @@
           <div class="chat-content">
             <div class="user-product-info">
               <span class="seller-name">
-                {{ room.sellerName || room.sellerId }}
+                {{ getOtherUserName(room) }}
               </span>
               <span class="product-name">
                 {{ room.productName }}
@@ -112,6 +112,14 @@ const props = defineProps({
   }
 })
 
+// 상대방 이름 표시 메서드
+const getOtherUserName = (room) => {
+  if (!room || !props.userId) return '';
+  
+  // 현재 사용자가 판매자인 경우 구매자 이름을, 구매자인 경우 판매자 이름을 반환
+  return props.userId === room.sellerId ? room.buyerName : room.sellerName;
+}
+
 // 이벤트 정의
 const emit = defineEmits(['select-room'])
 
@@ -119,11 +127,8 @@ const emit = defineEmits(['select-room'])
 const { formatTime } = useFormatTime()
 
 // 채팅방 선택 핸들러
-const handleRoomSelect = (room) => {
-  emit('select-room', {
-    productId: room.productId,
-    chatRoomId: room.chatRoomId
-  })
+const handleRoomSelect = (chatRoomId) => {
+  emit('select-room', chatRoomId)
 }
 
 // 안읽은 메시지 여부 체크

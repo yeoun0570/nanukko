@@ -82,29 +82,32 @@ const initializeChat = async () => {
 }
 
 // 채팅방 선택 처리
-const handleRoomSelect = async (roomData) => {
+// 채팅방 선택 처리
+// 채팅방 선택 처리
+// index.vue의 handleRoomSelect 함수
+const handleRoomSelect = async (chatRoomId) => {
   try {
     activeChatRoom.value = null;
     currentRoomId.value = null;
-    currentMessages.value = []; // 메시지 초기화
+    currentMessages.value = [];
     
-    const { productId } = roomData;
-    
-    const chatRoomData = await createOrEnterChatRoom(productId);
-    
-    if (chatRoomData) {
-      const response = await loadChatMessages(chatRoomData.chatRoomId, 0, 20);
-      console.log('index.vue에서 메시지 로드 확인...', response);
-      
-      // 메시지 상태 업데이트
-      currentMessages.value = response.content || [];  // 서버에서 이미 DESC로 정렬된 상태
+    // 메시지 로드
+    const response = await loadChatMessages(chatRoomId, 0, 20);
+    console.log('채팅방 메시지 로드:', response);
+
+    if (response) {
+      currentMessages.value = response.content || [];
+      // chatRooms 배열에서 현재 선택된 채팅방 정보 찾기
+      const selectedRoom = chatRooms.value.find(room => room.chatRoomId === chatRoomId);
       
       activeChatRoom.value = {
-        ...chatRoomData,
+        ...selectedRoom, // 기존 채팅방 정보 포함
         hasMore: !response.last,
         currentPage: response.number
       };
-      currentRoomId.value = chatRoomData.chatRoomId?.toString();
+      currentRoomId.value = chatRoomId.toString();
+      
+      console.log('설정된 activeChatRoom:', activeChatRoom.value);
     }
   } catch (err) {
     console.error('채팅방 선택 실패:', err);
