@@ -100,6 +100,7 @@ public class UserInfoDTO {
                 .profile(this.profile)
                 .createdAt(LocalDateTime.now())
                 .consent(consent)
+                .balance(999999999)
                 .role(Role.ROLE_USER)//회원가입하면 무조건 일반회원
                 .build();
     }

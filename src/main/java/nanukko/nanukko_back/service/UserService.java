@@ -156,13 +156,39 @@ public class UserService {
         return String.format("%s_KID_%d", user.getUserId(), nextNum);
     }
 
+    //사용자 배송지 정보 수정
+    @Transactional
+    public UserAddrDTO modifyUserAddr(String userId, UserAddrDTO addrDTO) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        user.updateUserAddr(UserAddress.builder()
+                        .addrMain(addrDTO.getAddrMain())
+                        .addrDetail(addrDTO.getAddrDetail())
+                        .addrZipcode(addrDTO.getAddrZipcode())
+                .build());
+        userRepository.save(user);
+
+        return modelMapper.map(user, UserAddrDTO.class);
+    }
+
     //사용자의 판매 상품(판매중, 판매완료) 조회
     @Transactional(readOnly = true)
     public PageResponseDTO<UserProductDTO> getSellProducts(String userId, ProductStatus status, Pageable pageable) {
+        log.info("Fetching products - userId: {}, status: {}", userId, status);
+        log.info("Pageable info - page: {}, size: {}, offset: {}",
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                pageable.getOffset());  // offset 로깅 추가
+
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
         Page<Product> products = productRepository.findBySellerAndStatusAndIsDeletedFalseOrderByCreatedAtDesc(user, status, pageable);
+        log.info("Query result - total elements: {}, total pages: {}, current page: {}",
+                products.getTotalElements(),
+                products.getTotalPages(),
+                products.getNumber());
 
         Page<UserProductDTO> dtoPage = products.map(product -> UserProductDTO.builder()
                 .productId(product.getProductId())
@@ -174,37 +200,6 @@ public class UserService {
                 .build());
 
         return new PageResponseDTO<>(dtoPage);
-    }
-
-    //사용자의 상품 등록(판매하기) 이것도 상품에서 해야되나?
-    @Transactional
-    public UserSetProductDTO registerProduct(String userId, UserSetProductDTO productDTO) {
-        //판매자 조회 -> 추후에 시큐리티 적용하고 없앨듯
-        User seller = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
-
-        //카테고리 조회
-        MiddleCategory middleCategory = middleCategoryRepository.findById(productDTO.getMiddleId())
-                .orElseThrow(() -> new IllegalArgumentException("카테고리를 찾을 수 없습니다."));
-
-        //엔티티 생성(받은 내용 DTO에서 VO로 변환)
-        Product product = Product.builder()
-                .seller(seller)
-                .middleCategory(middleCategory)
-                .productName(productDTO.getProductName())
-                .price(productDTO.getPrice())
-                .createdAt(LocalDateTime.now())
-                .isDeleted(false) //삭제여부는 false
-                .status(ProductStatus.SELLING) //초기 상태는 판매중
-//                .viewCount(0) //초기 조회수
-                .images(productDTO.getImages())
-                .thumbnailImage(productDTO.getThumbnailImage())
-                .condition(productDTO.getCondition())
-                .content(productDTO.getContent())
-                .build();
-
-        //VO로 저장된 내용들 다시 DTO로 반환
-        return convertToUserSetProductDTO(product);
     }
 
     //사용자의 판매 상품 수정
@@ -272,8 +267,8 @@ public class UserService {
                 .content(product.getContent())
                 .condition(product.getCondition())
                 .isPerson(product.isPerson())
-                .isDeputy(product.isDeputy())
-                .isCompanion(product.isCompanion())
+                .isDeputy(product.getIsDeputy())
+                .isCompanion(product.getIsCompanion())
                 .freeShipping(product.isFreeShipping())
                 .build();
     }
@@ -296,6 +291,7 @@ public class UserService {
 
         return UserRemoveProductDTO.builder()
                 .isDeleted(product.isDeleted())
+                .status(ProductStatus.REMOVED)
                 .build();
     }
 
@@ -351,11 +347,10 @@ public class UserService {
 
     //후기 작성
     @Transactional
-    public ReviewRegisterDTO writeReview(ReviewRegisterDTO reviewDTO) {
-        Review savedReview = saveReview(reviewDTO);
+    public ReviewRegisterDTO writeReview(String userId, ReviewRegisterDTO reviewDTO) {
+        Review savedReview = saveReview(userId, reviewDTO);
         updateSellerRating(savedReview.getProduct().getSeller());
         return ReviewRegisterDTO.builder()
-                .authorId(savedReview.getUser().getUserId())
                 .rate(savedReview.getRate())
                 .review(savedReview.getReview())
                 .build();
@@ -363,8 +358,8 @@ public class UserService {
 
     //거래 후기 저장 별도의 트랜잭션으로 관리(커넥션 풀 최적화)
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    protected Review saveReview(ReviewRegisterDTO reviewDTO) {
-        User user = userRepository.findById(reviewDTO.getAuthorId())
+    protected Review saveReview(String userId, ReviewRegisterDTO reviewDTO) {
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
         Orders order = orderRepository.findById(reviewDTO.getOrderId())
@@ -378,7 +373,7 @@ public class UserService {
                 .createdAt(LocalDateTime.now())
                 .review(reviewDTO.getReview())
                 .build();
-        
+
         //판매자에게 리뷰 작성 알림 전송
         notificationService.sendConfirmReview(
                 order.getProduct().getSeller().getUserId(), user.getNickname()
@@ -422,7 +417,7 @@ public class UserService {
                 .authorNickName(review.getUser().getNickname()) // 후기 작성자 이름
                 .rate(review.getRate())
                 .productName(review.getProduct().getProductName())
-                .profile(review.getUser().getProfile()) // 후기 작성자 프로필 사진
+                .thumbnail(review.getProduct().getThumbnailImage()) // 후기 작성된 썸네일 이미지
                 .review(review.getReview())
                 .reviewRate(seller.getReviewRate())  // 판매자의 전체 평점
                 .build());
@@ -454,6 +449,22 @@ public class UserService {
         return UserRemoveDTO.builder()
                 .userId(user.getUserId())
                 .canceled(user.isCanceled())
+                .build();
+    }
+
+    //사이드바에 있는 프로필 정보
+    @Transactional(readOnly = true)
+    public UserSimpleInfoDTO getSimpleInfo(String userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        int countProduct = productRepository.countBySeller(user);
+
+        return UserSimpleInfoDTO.builder()
+                .profile(user.getProfile())
+                .nickname(user.getNickname())
+                .reviewRate(user.getReviewRate())
+                .countProduct(countProduct)
                 .build();
     }
 

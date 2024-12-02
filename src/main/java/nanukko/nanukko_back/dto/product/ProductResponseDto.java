@@ -4,14 +4,14 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import nanukko.nanukko_back.domain.product.Condition;
 
+import java.util.List;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class ProductRequestDto {
+public class ProductResponseDto {
     // 기본 정보
     private Long id;
     private String productName;
@@ -19,13 +19,17 @@ public class ProductRequestDto {
     private String content;
     private String condition; // Condition의 String 값
 
+    // 유저 정보
+    private String userId;
+    private Double reviewRate;
+    private String profile;
+
     // 이미지 정보
     private String image1;
     private String image2;
     private String image3;
     private String image4;
     private String image5;
-    private String thumbnailImage;
 
     // 카테고리 정보
     private Long majorId; //
@@ -57,5 +61,4 @@ public class ProductRequestDto {
     private Integer favorite_count;
     private Integer view_count;
     private Integer talk_count;
-
 }

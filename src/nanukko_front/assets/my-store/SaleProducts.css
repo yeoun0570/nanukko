@@ -42,11 +42,12 @@
 
 /* ProductCard */
 .product-card {
-  display: flex;
   background: white;
   border-radius: 12px;
-  overflow: hidden;
+  padding: 1.5rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 1rem;
+  position: relative;
   transition: transform 0.2s ease;
 }
 
@@ -55,9 +56,12 @@
 }
 
 .product-image {
-  width: 180px;
-  height: 180px;
+  width: 100px;
+  height: 100px;
+  border-radius: 8px;
+  overflow: hidden;
   flex-shrink: 0;
+  border: 1px solid #eee;
 }
 
 .product-image img {
@@ -68,16 +72,15 @@
 
 .product-info {
   flex: 1;
-  padding: 1.5rem;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+  min-width: 0;
 }
 
 .product-name {
-  font-size: 1.25rem;
+  font-size: 1.2rem;
   font-weight: 600;
-  margin: 0 0 1rem;
+  color: #333;
+  margin: 0 0 0.5rem;
+  padding-right: 120px; /* 버튼 공간 확보 */
 }
 
 .price-status-container {
@@ -103,21 +106,24 @@
 }
 
 .status.selling {
-  background-color: #4CAF50;
+  background-color: #4caf50;
   color: white;
 }
 
 .status.reserved {
-  background-color: #FFC107;
+  background-color: #ffc107;
   color: #000;
 }
 
 .status.sold_out {
-  background-color: #F44336;
+  background-color: #f44336;
   color: white;
 }
 
 .button-container {
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
   display: flex;
   gap: 0.5rem;
 }
@@ -133,19 +139,46 @@
 }
 
 .modify-btn {
-  background-color: #2196F3;
+  background-color: #2196f3;
   color: white;
 }
 
 .modify-btn:hover {
-  background-color: #1976D2;
+  background-color: #1976d2;
 }
 
 .remove-btn {
-  background-color: #F44336;
+  background-color: #f44336;
   color: white;
 }
 
 .remove-btn:hover {
-  background-color: #D32F2F;
+  background-color: #d32f2f;
+}
+
+/* 반응형 스타일 */
+@media (max-width: 576px) {
+  .product-card {
+    padding: 1rem;
+  }
+
+  .product-image {
+    width: 80px;
+    height: 80px;
+  }
+
+  .button-container {
+    position: static;
+    margin-top: 1rem;
+    justify-content: flex-end;
+  }
+
+  .product-name {
+    padding-right: 0;
+    font-size: 1.1rem;
+  }
+
+  .product-info {
+    padding: 1rem;
+  }
 }

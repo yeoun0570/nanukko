@@ -22,6 +22,18 @@ const changeStatus = (status) => {
       구매중
     </button>
     <button
+      @click="changeStatus('IN_DELIVERY')"
+      :class="{ active: currentStatus === 'IN_DELIVERY' }"
+    >
+      배송중
+    </button>
+    <button
+      @click="changeStatus('DELIVERED')"
+      :class="{ active: currentStatus === 'DELIVERED' }"
+    >
+      배송완료
+    </button>
+    <button
       @click="changeStatus('ESCROW_RELEASED')"
       :class="{ active: currentStatus === 'ESCROW_RELEASED' }"
     >

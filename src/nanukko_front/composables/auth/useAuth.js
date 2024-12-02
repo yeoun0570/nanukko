@@ -2,7 +2,7 @@ import { ref, onMounted } from 'vue'
 import { jwtDecode } from 'jwt-decode'
 
 export function useAuth() {
-  const isAuthenticted = ref(false)
+  const isAuthenticated = ref(false)
   const userId = ref(null)
   const nickname = ref(null)
   const token = ref(null)
@@ -13,7 +13,7 @@ export function useAuth() {
       const decoded = jwtDecode(accessToken)
       userId.value = decoded.userId
       nickname.value = decoded.nickname
-      isAuthenticted.value = true
+      isAuthenticated.value = true
     } catch (error) {
       console.error('토큰 디코딩 실패:', error)
       clearAuth()
@@ -27,6 +27,7 @@ export function useAuth() {
     localStorage.setItem('access_token', accessToken)
     token.value = accessToken
     decodeAndSetUserInfo(accessToken)
+
   }
 
   // 토큰 가져오기
@@ -49,7 +50,7 @@ export function useAuth() {
     token.value = null
     userId.value = null
     nickname.value = null
-    isAuthenticted.value = false
+    isAuthenticated.value = false
   }
 
   // 로그아웃
@@ -86,7 +87,7 @@ export function useAuth() {
   }
 
   return {
-    isAuthenticted,
+    isAuthenticated,
     userId,
     nickname,
     token,

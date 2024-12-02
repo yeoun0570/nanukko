@@ -4,16 +4,16 @@ import { useAuth } from '../auth/useAuth'
 import { useApi } from '../useApi'
 
 export const useChatRooms = () => {
-  const chatRooms = ref([])
-  const currentRoom = ref(null)
-  const loading = ref(false)
-  const error = ref(null)
-  const currentSubscription = ref(null)
+  const chatRooms = ref([])// 전체 채팅방 목록
+  const currentRoom = ref(null)//현재 활성화된 채팅방
+  const loading = ref(false)//로딩상태
+  const error = ref(null)// 에러
+  const currentSubscription = ref(null)//현재 웹소켓 구독 정보
 
-  const { getToken } = useAuth()
-  const stomp = useStomp()
-  const api = useApi()
+  const stomp = useStomp()//웹소켓 stomp 통신
+  const api = useApi()//http api 통신
 
+  // 채팅방 목록 들고오기
   const fetchChatRooms = async () => {
     loading.value = true
     try {
@@ -28,47 +28,88 @@ export const useChatRooms = () => {
     }
   }
 
-  // 채팅방 생성 또는 입장
-  const createOrEnterChatRoom = async (productId) => {
-    loading.value = true
+  // 채팅방 생성/입장만 처리하는 메서드
+  const createOrEnterChatRoom = async (productId, page = 0, size = 50) => {
+    loading.value = true;
     try {
-      // URL 파라미터로 productId 전달
-      const response = await api.post(`/chat/getChat?productId=${productId}`, null)
+      const response = await api.post(`/chat/getChat`,{
+        params: {
+          productId,
+          page,
+          size
+        }}, {
+        rawResponse: true,
+      });
       
-      console.log('채팅방 생성/입장 응답:', response)
-      
-      if (!response) {
-        throw new Error('채팅방 생성/입장에 실패했습니다.')
+      if (!response.ok) {
+        throw new Error('채팅방 생성/입장에 실패했습니다.');
       }
-
-      currentRoom.value = response
-
+  
+      const data = await response.json();
+      if (!data) {
+        throw new Error('채팅방 데이터를 받지 못했습니다.');
+      }
+  
+      currentRoom.value = data;
+  
       // WebSocket 연결 및 구독 설정
-      if (stomp.connected.value && response.chatRoomId) {
+      if (stomp.connected.value && data.chatRoomId) {
         currentSubscription.value = await stomp.subscribeToChatRoom(
-          response.chatRoomId,
+          data.chatRoomId,
           {
             onMessage: (message) => {
-              if (currentRoom.value?.chatRoomId === response.chatRoomId) {
+              if (currentRoom.value?.chatRoomId === data.chatRoomId) {
                 if (!currentRoom.value.messages) {
-                  currentRoom.value.messages = []
+                  currentRoom.value.messages = [];
                 }
-                currentRoom.value.messages.push(message)
+                currentRoom.value.messages.push(message);
               }
             }
           }
-        )
+        );
       }
-
-      return response
+  
+      return data;
     } catch (err) {
-      console.error('[useChatRooms] 채팅방 생성/입장 실패:', err)
-      error.value = err
-      throw err
+      console.error('[useChatRooms] 채팅방 생성/입장 실패:', err);
+      error.value = err;
+      throw err;
     } finally {
-      loading.value = false
+      loading.value = false;
     }
+  };
+
+// 메시지 로드를 처리하는 별도 메서드
+const loadChatMessages = async (chatRoomId, page = 0, size = 20) => {
+  
+  //if (!currentRoom.value) return null;
+  
+  try {
+    console.log('Requesting messages with page:', page) // 디버깅용
+    
+    const response = await api.get('/chat/getMessages', {
+      params: {
+        chatRoomId,
+        page,
+        size
+      }
+    });
+
+
+    // 응답 데이터 로깅
+    console.log('서버 응답:', response)
+
+    return {
+      content: response.content || [],
+      last: response.last,
+      number: page // 현재 페이지 번호 반환
+    };
+  } catch (error) {
+    console.error('[useChatRooms] 메시지 로드 실패:', error);
+    throw error;
   }
+};
+
 
   // cleanup 함수
   const cleanup = async () => {
@@ -81,12 +122,15 @@ export const useChatRooms = () => {
   }
 
   return {
-    chatRooms,
-    currentRoom,
-    loading,
+    chatRooms,//채팅방 목록
+    currentRoom,//현재 채팅방
+
+    loading,//로딩 상태
     error,
+
     fetchChatRooms,
-    createOrEnterChatRoom,
+    createOrEnterChatRoom,//채팅방 생성 및 입장
+    loadChatMessages,
     cleanup
   }
 }

@@ -1,7 +1,10 @@
 <template>
+  <!--채팅방 목록-->
   <div class="chat-layout">
+    <!-- ClientOnly: 클라이언트 사이드에서만 렌더링되도록 보장 -->
     <ClientOnly>
-      <template v-if="isAuthenticted">
+      <template v-if="isAuthenticated">
+        <!--채팅방 목록, 로딩상태, 현재 선택된 채팅방(선택한 채팅방 하이라이트 해 줌), 로그인한 user, 채팅방 선택 핸들러-->
         <ChatList
           :chat-rooms="chatRooms"
           :loading="loading"
@@ -10,14 +13,16 @@
           :connected="stompState.connected"
           @select-room="handleRoomSelect"
         />
-        
+        <!--채팅창-->
         <section class="chat-room-section">
+          <!-- key:채팅방이 변경될 때마다 컴포넌트를 완전히 새로 생성(재랜더링)-->
           <ChatRoom
             v-if="currentRoomId && activeChatRoom && stompState.connected"
             :key="currentRoomId"
             :room-id="currentRoomId"
             :user-id="userId"
             :current-room="activeChatRoom"
+            :initial-messages="currentMessages"
             :connected="stompState.connected"
           />
           <div v-else class="empty-state">
@@ -41,82 +46,95 @@ import { useStomp } from '~/composables/chat/useStomp'
 import { useAuth } from '~/composables/auth/useAuth'
 
 // 상태 관리
-const currentRoomId = ref(null)
-const activeChatRoom = ref(null)
-const {isAuthenticted, userId} = useAuth()
-const stompState = useStomp()
+const currentRoomId = ref(null)//현재 선택된 채팅방
+const activeChatRoom = ref(null)//활성화된 채팅방 정보
+const {isAuthenticated, userId} = useAuth()
+const stompState = useStomp() //웹 소켓 연결 상태
+const currentMessages = ref([]); // 현재 채팅방의 메시지들
 
 const { 
-  chatRooms, 
-  loading, 
+  chatRooms, //전체 채팅방 목록
+  loading, //로딩 상태(사용자 경험UX를 위해 데이터 로딩 중임을 시각적으로 보여줌)
   error,
-  fetchChatRooms,
-  createOrEnterChatRoom 
+  fetchChatRooms,//채팅방 목록 조회
+  createOrEnterChatRoom, //채팅방 생성/입장
+  loadChatMessages
 } = useChatRooms()
 
 // 초기화 함수
 const initializeChat = async () => {
-  console.log('채팅 초기화 중...로그인 상태', isAuthenticted)
+  console.log('채팅 초기화 중...로그인 상태', isAuthenticated)
   
-  if (!isAuthenticted) {
-    console.log('Not authenticated')
+  if (!isAuthenticated) {
+    console.log('로그인 안됨')
     return
   }
 
   try {
-    // STOMP 연결
-    await stompState.connectChat(userId)
     
-    // 채팅방 목록 조회
-    await fetchChatRooms()
+    await stompState.connectChat(userId)// STOMP 웹소켓 연결
+    
+    await fetchChatRooms()// 채팅방 목록 조회
+  
   } catch (err) {
     console.error('채팅방 초기화 실패:', err)
   }
 }
 
 // 채팅방 선택 처리
-const handleRoomSelect = async (roomData) => {
+// 채팅방 선택 처리
+// 채팅방 선택 처리
+// index.vue의 handleRoomSelect 함수
+const handleRoomSelect = async (chatRoomId) => {
   try {
-    // 현재 채팅방 상태 초기화
-    activeChatRoom.value = null
-    currentRoomId.value = null
+    activeChatRoom.value = null;
+    currentRoomId.value = null;
+    currentMessages.value = [];
     
-    console.log('채팅방 선택:', roomData)
-    
-    const { productId, chatRoomId } = roomData
-    
-    // 채팅방 생성 또는 입장
-    const chatRoomData = await createOrEnterChatRoom(productId)
-    console.log('채팅방 생성/입장 결과:', chatRoomData)
-    
-    if (chatRoomData) {
-      activeChatRoom.value = chatRoomData
-      currentRoomId.value = chatRoomData.chatRoomId?.toString()
+    // 메시지 로드
+    const response = await loadChatMessages(chatRoomId, 0, 20);
+    console.log('채팅방 메시지 로드:', response);
+
+    if (response) {
+      currentMessages.value = response.content || [];
+      // chatRooms 배열에서 현재 선택된 채팅방 정보 찾기
+      const selectedRoom = chatRooms.value.find(room => room.chatRoomId === chatRoomId);
+      
+      activeChatRoom.value = {
+        ...selectedRoom, // 기존 채팅방 정보 포함
+        hasMore: !response.last,
+        currentPage: response.number
+      };
+      currentRoomId.value = chatRoomId.toString();
+      
+      console.log('설정된 activeChatRoom:', activeChatRoom.value);
     }
   } catch (err) {
-    console.error('채팅방 선택 실패:', err)
-    currentRoomId.value = null
-    activeChatRoom.value = null
+    console.error('채팅방 선택 실패:', err);
+    currentRoomId.value = null;
+    activeChatRoom.value = null;
+    currentMessages.value = [];
   }
-}
+};
 
 // 라이프사이클 훅
 onMounted(() => {
-  console.log('Chat component mounted')
+  console.log('채팅 컴포넌트 mounted')
   initializeChat()
 })
 
-// 상태 변화 감지
-watch(() => isAuthenticted, (newValue) => {
-  console.log('Auth state changed:', newValue)
+// 인증 상태 변화 감시
+watch(() => isAuthenticated, (newValue) => {
+  console.log('사용자 상태 바뀜:', newValue)
   if (newValue) {
     initializeChat()
   }
 })
 
+// 웹소켓 연결 상태 감지
 watch(() => stompState.connected, (isConnected) => {
-  console.log('STOMP connection state changed:', isConnected)
-  if (isConnected && isAuthenticted) {
+  console.log('STOMP 연결 상태 감시:', isConnected)
+  if (isConnected && isAuthenticated) {
     fetchChatRooms()
   }
 })
@@ -124,7 +142,7 @@ watch(() => stompState.connected, (isConnected) => {
 // 에러 감지
 watch(error, (newError) => {
   if (newError) {
-    console.error('Chat error:', newError)
+    console.error('채팅 error:', newError)
   }
 })
 </script>

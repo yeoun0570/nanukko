@@ -2,24 +2,25 @@
 import { ref } from "vue";
 import Notification from "../notification/Notification.vue";
 import { useAuth } from "~/composables/auth/useAuth";
-import { useRouter } from 'vue-router';
+import { useRouter } from "vue-router";
 import { useToast } from "vue-toastification";
 
 const router = useRouter();
-const { userId, nickname, isAuthenticted } = useAuth();
+const { userId, nickname, isAuthenticated, logout } = useAuth();
+
 const showLoginAlert = () => {
-  alert('채팅을 이용하려면 로그인이 필요합니다.');
-  router.push('/auth/login');
-}
+  alert("채팅을 이용하려면 로그인이 필요합니다.");
+  router.push("/auth/login");
+};
 
 const navigateToChat = () => {
-  router.push('/chat');
-}
+  router.push("/chat");
+};
 
 const toast = useToast();
 
 // 로그아웃
-const doLogout = ()=>{
+const doLogout = () => {
 
   logout();
   //알림 팝업
@@ -30,7 +31,7 @@ const doLogout = ()=>{
     hideProgressBar: true, // 진행 바 숨기기
   });
 
-  router.push('/auth/login');
+  router.push("/auth/login");
 };
 
 /* 검색창의 입력값을 관리하기 위한 상태 */
@@ -52,13 +53,13 @@ const onSearch = () => {
       <!-- 로고 섹션 -->
       <div class="logo">
         <NuxtLink to="/">
-        <img
-          src="../../public/image/나누고_Logo_blue.png"
-          alt="nanukko Logo"
-          width="150"
-          height="80"
-        />
-      </NuxtLink>
+          <img
+            src="../../public/image/나누고_Logo_blue.png"
+            alt="nanukko Logo"
+            width="150"
+            height="80"
+          />
+        </NuxtLink>
       </div>
 
       <!-- 검색창 섹션 -->
@@ -71,31 +72,26 @@ const onSearch = () => {
           @keyup.enter="onSearch"
         />
         <!-- 검색 버튼 -->
-        <button @click="onSearch">🔍</button> <!-- 클릭 시 검색 실행 -->
+        <button @click="onSearch"><i class="fi fi-rr-search"></i></button>
+        <!-- 클릭 시 검색 실행 -->
       </div>
 
       <!-- 액션 섹션 (채팅, 알림, 로그인, 마이페이지 링크) -->
       <ul class="header-actions">
         <li>
-        <button
-          v-if="!isAuthenticted"
-          @click="navigateToChat"
-        >
-          채팅
-        </button>
-        <button
-          v-else
-          @click="showLoginAlert"
-        >
-          채팅
-        </button>
-      </li>
+          <button v-if="isAuthenticated" @click="navigateToChat">채팅</button>
+          <button v-else @click="showLoginAlert">채팅</button>
+        </li>
         <li class="notification-cotainer"><Notification /></li>
-        <button v-if="isAuthenticted"><NuxtLink to="/auth/login">로그인</NuxtLink></button>
-        <button v-if="!isAuthenticted"><NuxtLink to="/mypage">마이페이지</NuxtLink></button>
-        <button v-if="!isAuthenticted" @click="doLogout">로그아웃</button>
-      <!-- 판매 글 작성을 위한 페이지로 이동하는 링크 -->
-        <sell-button class="sell-button">판매하기</sell-button>
+        <button v-if="!isAuthenticated">
+          <NuxtLink to="/auth/login">로그인</NuxtLink>
+        </button>
+        <button v-if="isAuthenticated">
+          <NuxtLink to="/my-store">마이페이지</NuxtLink>
+        </button>
+        <button v-if="isAuthenticated" @click="doLogout">로그아웃</button>
+        <!-- 판매 글 작성을 위한 페이지로 이동하는 링크 -->
+        <button v-if="isAuthenticated" class="sell-button">판매하기</button>
       </ul>
     </div>
   </header>
@@ -155,7 +151,7 @@ const onSearch = () => {
 .search-bar input {
   width: 100%; /* 입력 필드 너비를 검색창에 맞춤 */
   max-width: 400px; /* 최대 너비 제한 */
-  padding: 0.5rem 1rem; /* 상하 0.5rem, 좌우 1rem 패딩 */
+  padding: 0.4rem 1rem; /* 상하 0.5rem, 좌우 1rem 패딩 */
   border: none; /* 테두리 제거 */
   border-radius: 20px; /* 둥근 모서리 */
   outline: none; /* 포커스 시 파란 테두리 제거 */
@@ -175,7 +171,7 @@ const onSearch = () => {
   margin-right: 0.5rem; /* 오른쪽 여백 */
   padding: 0.3rem 0.5rem 0.4rem 0.5rem;
   border: none; /* 테두리 제거 */
-  background-color: white;  /* 배경 흰색 */
+  background-color: white; /* 배경 흰색 */
   cursor: pointer; /* 포인터 커서 표시 */
   transition: color 0.3s ease; /* 색상 전환 효과 */
 }
@@ -202,21 +198,21 @@ const onSearch = () => {
 .header-actions button {
   /* webkit-box는 webkit 엔진에서 사용하는 css 속성으로 block으로 처리돼서 한줄로 표시 */
   display: -webkit-box;
-  -webkit-line-clamp: 1;/* 줄 수를 설정할 수 있으며 넘치는 텍스트는 ...로 대체 */
-  -webkit-box-orient: vertical;/* 다중으로 줄이 설정될 때 세로로 표시하도록 설정 */
-  overflow: hidden;/* 넘치는 내용들을 숨김처리 */
+  -webkit-line-clamp: 1; /* 줄 수를 설정할 수 있으며 넘치는 텍스트는 ...로 대체 */
+  -webkit-box-orient: vertical; /* 다중으로 줄이 설정될 때 세로로 표시하도록 설정 */
+  overflow: hidden; /* 넘치는 내용들을 숨김처리 */
   margin-right: 0.5rem; /* 오른쪽 여백 */
   padding: 0.5rem 0.5rem; /* 상하 0.5rem, 좌우 1rem 패딩 */
   border: none; /* 테두리 제거 */
-  background-color: #ffffff;/* 파란색 배경 */
+  background-color: #ffffff; /* 파란색 배경 */
   color: #000000; /* 글자 색을 흰색으로 설정 */
   font-size: 1rem;
-  border-radius: 20px; /* 둥근 모서리 */
+  border-radius: 10px; /* 둥근 모서리 */
   cursor: pointer; /* 포인터 커서 표시 */
   white-space: nowrap;
 }
 
-  /* 판매하기 버튼 */
+/* 판매하기 버튼 */
 .sell-button {
   padding: 0.8rem 1.6rem;
   border: none;

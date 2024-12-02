@@ -69,9 +69,9 @@ public class User {
 
     @NotNull
     @Column(name = "review_rate")
-    @ColumnDefault("50")
+    @ColumnDefault("5")
     @Min(0)
-    @Max(100)
+    @Max(10)
     private double reviewRate; //신뢰도 점수
 
     @NotNull
@@ -115,9 +115,15 @@ public class User {
         this.updatedAt = LocalDateTime.now();
     }
 
+    //사용자 배송지만 수정
+    public void updateUserAddr(UserAddress address) {
+        this.address = address;
+    }
+
     //상점 평점 평균 구하기
     public void updateReviewRate(double reviewRate) {
-        this.reviewRate = reviewRate;
+        // 소수점 첫째자리까지 반올림
+        this.reviewRate = Math.round(reviewRate * 10.0) / 10.0;
     }
 
     //탈퇴를 위한 메서드

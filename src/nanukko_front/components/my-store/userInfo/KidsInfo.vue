@@ -9,10 +9,13 @@ const props = defineProps({
 
 const emit = defineEmits(["update:kids"]);
 
+// 현재 추가중인 새로운 자녀들을 추적하기 위한 Set
+const newKidIndices = new Set();
+
 // 년/월/일 선택을 위한 데이터
 const years = computed(() => {
   const currentYear = new Date().getFullYear();
-  return Array.from({ length: 7 }, (_, i) => currentYear - 6 + i);
+  return Array.from({ length: 3 }, (_, i) => currentYear - 2 + i);
 });
 
 const months = Array.from({ length: 12 }, (_, i) => i + 1);
@@ -39,7 +42,7 @@ const parseBirthDate = (birthDate) => {
     return {
       year: today.getFullYear(),
       month: today.getMonth() + 1,
-      day: today.getDate()
+      day: today.getDate(),
     };
   }
   const [year, month, day] = birthDate.split("-").map(Number);
@@ -49,14 +52,31 @@ const parseBirthDate = (birthDate) => {
 // addKid 메서드
 const addKid = () => {
   const today = new Date();
-  const defaultBirthDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-  
+  const defaultBirthDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+
   const updatedKids = [...props.kids];
   updatedKids.push({
     kidBirth: defaultBirthDate,
     kidGender: true,
   });
+  // 새로 추가된 자녀의 인덱스를 newKidIndices에 추가
+  newKidIndices.add(updatedKids.length - 1);
   emit("update:kids", updatedKids);
+};
+
+// 새로 추가된 자녀 정보 취소
+const cancelNewKid = (index) => {
+  if (newKidIndices.has(index)) {
+    const updatedKids = props.kids.filter((_, i) => i !== index);
+    newKidIndices.delete(index);
+    // index보다 큰 인덱스들을 모두 1씩 감소
+    const newIndices = new Set(
+      Array.from(newKidIndices).map((i) => (i > index ? i - 1 : i))
+    );
+    newKidIndices.clear();
+    newIndices.forEach((i) => newKidIndices.add(i));
+    emit("update:kids", updatedKids);
+  }
 };
 </script>
 
@@ -130,6 +150,14 @@ const addKid = () => {
               <option :value="true">아들</option>
               <option :value="false">딸</option>
             </select>
+            <!-- 새로 추가된 자녀에 대해서만 취소 버튼 표시 -->
+            <button
+              v-if="newKidIndices.has(index)"
+              @click="cancelNewKid(index)"
+              class="cancel-kid-btn"
+            >
+              <i class="fas fa-times"></i>
+            </button>
           </template>
           <template v-else>
             <span class="birth-date">{{ kid.kidBirth }}</span>

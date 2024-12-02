@@ -3,6 +3,7 @@ package nanukko.nanukko_back.dto.chat;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.*;
 import nanukko.nanukko_back.domain.chat.ChatRoom;
+import nanukko.nanukko_back.domain.product.ProductStatus;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDateTime;
@@ -19,10 +20,17 @@ public class ChatRoomDTO {
 
     private Long productId;                  // 상품 ID
     private String productName;              // 상품 이름 (클라이언트 표시용)
+    private String productThumbnail;         // 상품 사진
+    private int price;                       // 상품 가격
+    private String status;            // 상품 상태 (SELLING, RESERVED, SOLD_OUT, REMOVED)
+
     private String buyerId;                  // 구매자 ID
     private String buyerName;                // 구매자 이름 (클라이언트 표시용)
+    private String buyerProfile;             // 구매자 프로필 사진
+
     private String sellerId;                 // 판매자 ID
     private String sellerName;               // 판매자 이름 (클라이언트 표시용)
+    private String sellerProfile;            // 판매자 프로필 사진
 
     private List<ChatMessageDTO> chatMessages; // 채팅 메시지 목록
 
@@ -49,6 +57,8 @@ public class ChatRoomDTO {
                 // 상품 정보
                 .productId(entity.getProduct().getProductId())
                 .productName(entity.getProduct().getProductName())  // 상품 이름 추가
+                .price(entity.getProduct().getPrice())//상품 가격
+                .status(entity.getProduct().getStatus().name())
                 // 구매자 정보
                 .buyerId(entity.getBuyer().getUserId())
                 .buyerName(entity.getBuyer().getNickname())

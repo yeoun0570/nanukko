@@ -43,14 +43,6 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
         );
 
 
-//    @EntityGraph(attributePaths = {"product", "product.seller", "buyer"})
-//    Page<ChatRoom> findByBuyer_UserIdAndIsBuyerLeftFalseOrProduct_Seller_UserIdAndIsSellerLeftFalseOrderByUpdatedAtDesc(
-//            String buyerId,
-//            String sellerId,
-//            Pageable pageable
-//    );
-
-
     @Query("SELECT c FROM ChatRoom c " +
             "WHERE c.product.productId = :productId " +
             "AND ((c.buyer.userId = :userId AND c.isBuyerLeft = false) " +
@@ -85,4 +77,10 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
             String sellerId
     );
 
+
+    @EntityGraph(attributePaths = {"product", "product.seller", "buyer"})
+    Optional<ChatRoom> findByProduct_ProductIdAndProduct_Seller_UserId(
+            Long productId,
+            String sellerId
+    );
 }

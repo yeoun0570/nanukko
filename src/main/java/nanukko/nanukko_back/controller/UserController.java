@@ -8,6 +8,7 @@ import nanukko.nanukko_back.dto.page.PageResponseDTO;
 import nanukko.nanukko_back.dto.review.ReviewInMyStoreDTO;
 import nanukko.nanukko_back.dto.user.*;
 import nanukko.nanukko_back.exception.ErrorResponse;
+import nanukko.nanukko_back.service.ImageService;
 import nanukko.nanukko_back.service.UserService;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/my-store")
 public class UserController {
     private final UserService userService;
+    private final ImageService imageService;
 
     //사용자가 자신의 정보 조회
     @GetMapping("/info")
@@ -40,7 +42,11 @@ public class UserController {
             @RequestBody UserInfoDTO userInfoDTO
     ) {
         try {
-            userInfoDTO.setUserId(userDetails.getUsername());
+            String userId = userDetails.getUsername();
+            if (userInfoDTO.getProfile() != null) {
+                imageService.deleteOldProfile(userId); //이전 이미지 NCP Object Storage에서 삭제
+            }
+            userInfoDTO.setUserId(userId);
             log.info("Received data: {}", userInfoDTO);  // 로깅 추가
             UserInfoDTO modifiedUser = userService.modifyUserInfo(userInfoDTO);
             return ResponseEntity.ok(modifiedUser);
@@ -59,6 +65,7 @@ public class UserController {
             @RequestParam(defaultValue = "5") int size
     ) {
         String userId = userDetails.getUsername();
+        log.info("Authenticated user: {}, page: {}, size: {}", userDetails.getUsername(), page, size);  // 인증된 사용자 정보 로깅
         Pageable pageable = PageRequest.of(page, size);
 
         PageResponseDTO<UserProductDTO> products = userService.getSellProducts(userId, status, pageable);
@@ -160,5 +167,16 @@ public class UserController {
             return ResponseEntity.badRequest()
                     .body(new ErrorResponse(e.getMessage()));
         }
+    }
+
+    //사이드 바에 넣을 사용자 프로필 정보
+    @GetMapping("/simple-info")
+    public ResponseEntity<UserSimpleInfoDTO> getSimpleInfo(
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        String userId = userDetails.getUsername();
+        UserSimpleInfoDTO response = userService.getSimpleInfo(userId);
+
+        return ResponseEntity.ok(response);
     }
 }

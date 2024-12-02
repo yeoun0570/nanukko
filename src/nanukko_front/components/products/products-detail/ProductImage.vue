@@ -35,10 +35,10 @@ const goToSlide = (index) => {
         </div>
 
         <button class="slider-button prev" @click="prevSlide">
-            <span class="arrow left"></span>
+            <v-icon>mdi-chevron-left</v-icon>
         </button>
         <button class="slider-button next" @click="nextSlide">
-            <span class="arrow right"></span>
+            <v-icon>mdi-chevron-right</v-icon>
         </button>
     </div>
 </template>
@@ -47,18 +47,14 @@ const goToSlide = (index) => {
 .image-slider {
     position: relative;
     width: 500px;
-    /* 너비 500px로 설정 */
     height: 500px;
-    /* 높이 500px로 설정 */
     overflow: hidden;
 }
 
 .image-slide {
     display: none;
     width: 500px;
-    /* 너비 500px로 설정 */
     height: 500px;
-    /* 높이 500px로 설정 */
 }
 
 .image-slide.active {
@@ -67,11 +63,8 @@ const goToSlide = (index) => {
 
 .image-slide img {
     width: 500px;
-    /* 너비 500px로 설정 */
     height: 500px;
-    /* 높이 500px로 설정 */
     object-fit: contain;
-    /* cover 대신 contain으로 변경하여 이미지 비율 유지 */
 }
 
 .slider-navigation {
@@ -99,10 +92,11 @@ const goToSlide = (index) => {
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
-    background-color: rgba(0, 0, 0, 0.5);
     border: none;
     padding: 0.625rem;
     cursor: pointer;
+    color: rgba(0, 0, 0, 0.5);
+    font-size: 1.5em;
 }
 
 .slider-button.prev {
@@ -111,22 +105,5 @@ const goToSlide = (index) => {
 
 .slider-button.next {
     right: 0.625rem;
-}
-
-.arrow {
-    display: inline-block;
-    width: 0;
-    height: 0;
-    border-style: solid;
-}
-
-.arrow.left {
-    border-width: 0.625rem 0.9375rem 0.625rem 0;
-    border-color: transparent white transparent transparent;
-}
-
-.arrow.right {
-    border-width: 0.625rem 0 0.625rem 0.9375rem;
-    border-color: transparent transparent transparent white;
 }
 </style>

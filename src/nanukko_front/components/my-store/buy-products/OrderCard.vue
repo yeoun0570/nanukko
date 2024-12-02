@@ -1,5 +1,5 @@
 <script setup>
-import { useApi } from '@/composables/useApi';
+import { useApi } from "@/composables/useApi";
 
 const api = useApi();
 
@@ -31,20 +31,17 @@ const checkReviewExists = async () => {
 
 // 구매 확정 처리
 const confirmPurchase = async () => {
-  console.log(props.order);
-  console.log(props.order.orderId);
   if (!props?.order.orderId) return;
 
   try {
     console.log("구매확정 요청 시작 - orderId:", props.order.orderId);
 
-    const response = await api.post(
-      `/payments/${props.order.orderId}/confirm`
-    );
+    const response = await api.post(`/payments/${props.order.orderId}/confirm`);
 
     console.log("구매확정 응답:", response);
 
-    if (response.data.status === "ESCROW_RELEASED") {
+    // status만 확인하여 ESCROW_RELEASED면 성공으로 처리
+    if (response.status === "ESCROW_RELEASED") {
       alert("구매가 확정되었습니다.");
       emit("order-updated");
     } else {
@@ -52,9 +49,12 @@ const confirmPurchase = async () => {
     }
   } catch (error) {
     console.error("구매 확정 중 오류:", error);
-    error.value =
-      error.response?.message || "구매 확정 중 오류가 발생했습니다.";
-    alert(error.value);
+    // 실제 에러인 경우에만 사용자에게 알림
+    if (error.response?.status === 400 || error.response?.status === 500) {
+      alert(
+        error.response?.data?.message || "구매 확정 중 오류가 발생했습니다."
+      );
+    }
   }
 };
 
@@ -70,20 +70,26 @@ const cancelOrder = async () => {
 
     console.log("결제 취소 시작 - orderId:", props.order.orderId);
 
-    const response = await api.post(
-      `/payments/${props.order.orderId}/cancel`
-    );
+    const response = await api.post(`/payments/${props.order.orderId}/cancel`);
+    console.log("응답 데이터: ", response);
 
-    console.log("결제 취소 완료:", response);
-    alert("결제가 취소되었습니다. 전체 금액이 환불됩니다.");
-    emit("order-updated");
-
-    // 취소 후 메인 페이지나 상품 페이지로 이동
-    // navigateTo("/"); // 또는 상품 상세 페이지로 이동
+    if (response.status === "CANCELED") {
+      // 실제 취소가 성공했을 때만
+      console.log("결제 취소 완료:", response);
+      alert("결제가 취소되었습니다. 전체 금액이 환불됩니다.");
+      emit("order-updated");
+      // 취소 후 메인 페이지나 상품 페이지로 이동
+      //navigateTo("/"); // 또는 상품 상세 페이지로 이동
+    }
   } catch (error) {
     console.error("결제 취소 중 오류:", error);
-    error.value =
-      error.response?.message || "결제 취소 중 오류가 발생했습니다.";
+
+    // 서버에서 전달된 에러 메시지 표시
+    if (error.response?.data?.message) {
+      alert(error.response.data.message);
+    } else {
+      alert("결제 취소 중 오류가 발생했습니다.");
+    }
   }
 };
 
@@ -108,11 +114,9 @@ onMounted(() => {
 
 <template>
   <div class="order-card">
-    <img
-      :src="order.thumbnailImage"
-      :alt="order.productName"
-      class="order-image"
-    />
+    <div class="order-image">
+      <img :src="order.thumbnailImage" :alt="order.productName" />
+    </div>
     <div class="order-info">
       <h3 class="product-name">{{ order.productName }}</h3>
       <div class="price-status-container">
@@ -123,13 +127,17 @@ onMounted(() => {
               ? "구매중"
               : order.status === "ESCROW_RELEASED"
                 ? "구매완료"
-                : "없는상품"
+                : order.status === "IN_DELIVERY"
+                  ? "배송중"
+                  : order.status === "DELIVERED"
+                    ? "배송완료"
+                    : "없는상품"
           }}
         </p>
       </div>
       <div class="button-container">
         <button
-          v-if="order.status === 'ESCROW_HOLDING'"
+          v-if="order.status === 'DELIVERED'"
           @click="confirmPurchase"
           class="confirm-btn"
         >
@@ -151,7 +159,7 @@ onMounted(() => {
           }"
           :disabled="hasReview"
         >
-          {{ hasReview ? '후기 작성 완료' : '후기 작성' }}
+          {{ hasReview ? "후기 작성 완료" : "후기 작성" }}
         </button>
       </div>
     </div>

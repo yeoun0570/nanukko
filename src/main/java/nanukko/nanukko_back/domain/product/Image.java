@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import nanukko.nanukko_back.dto.file.FileDTO;
 
 import java.util.List;
 
@@ -27,14 +28,15 @@ public class Image {
     @Column(name = "image5")
     private String image5;
 
-    public Image(List<String> urls) {
+    public Image(List<FileDTO> urls) {
         for (int i = 0; i < urls.size(); i++) {
+            String uploadFileUrl = urls.get(i).getUploadFileUrl();
             switch (i) {
-                case 0 -> this.setImage1(urls.get(i));
-                case 1 -> this.setImage2(urls.get(i));
-                case 2 -> this.setImage3(urls.get(i));
-                case 3 -> this.setImage4(urls.get(i));
-                case 4 -> this.setImage5(urls.get(i));
+                case 0 -> this.setImage1(uploadFileUrl);
+                case 1 -> this.setImage2(uploadFileUrl);
+                case 2 -> this.setImage3(uploadFileUrl);
+                case 3 -> this.setImage4(uploadFileUrl);
+                case 4 -> this.setImage5(uploadFileUrl);
             }
         }
     }

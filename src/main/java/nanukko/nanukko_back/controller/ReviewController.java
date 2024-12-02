@@ -4,8 +4,10 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import nanukko.nanukko_back.dto.review.ReviewRegisterDTO;
+import nanukko.nanukko_back.dto.user.CustomUserDetails;
 import nanukko.nanukko_back.service.UserService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -20,8 +22,10 @@ public class ReviewController {
     //후기 작성
     @PostMapping("/write")
     public ResponseEntity<ReviewRegisterDTO> writeReview(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @Valid @RequestBody ReviewRegisterDTO reviewDTO) {
-        ReviewRegisterDTO response = userService.writeReview(reviewDTO);
+        String userId = userDetails.getUsername();
+        ReviewRegisterDTO response = userService.writeReview(userId, reviewDTO);
         return ResponseEntity.ok(response);
     }
 
