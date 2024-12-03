@@ -26,7 +26,7 @@ public class DummyImageUploader {
     private final ImageService imageService;
     private final ProductRepository productRepository;
 
-    private static final String DUMMY_IMAGES_PATH = "src/test/resources/dummy-images/";
+    private static final String DUMMY_IMAGES_PATH = "src/main/resources/dummy-images/";
 
     private static class DummyMultipartFile implements MultipartFile {
         private final File file;
