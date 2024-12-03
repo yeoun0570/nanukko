@@ -116,6 +116,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/notice/connect/**").permitAll()
                         .requestMatchers("/api/files/**").authenticated()
                         .requestMatchers("/api/review/**").authenticated()
+                        .requestMatchers("/api/upload-dummy-images").permitAll()
                         .anyRequest().authenticated()//나머지 요청에 대해서는 로그인 한 사용자들만 접근 가능함
                 );
 
