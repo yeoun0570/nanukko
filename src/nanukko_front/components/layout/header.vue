@@ -3,7 +3,12 @@ import { ref } from "vue";
 import Notification from "../notification/Notification.vue";
 import { useAuth } from "~/composables/auth/useAuth";
 import { useRouter } from "vue-router";
-import VueToastification from 'vue-toastification'
+
+//import { useToast } from "vue-toastification";
+import ChatNotification from "../chat/ChatNotification.vue";
+
+//import VueToastification from 'vue-toastification'
+
 
 const router = useRouter();
 const { userId, nickname, isAuthenticated, logout } = useAuth();
@@ -20,7 +25,7 @@ const navigateToProducts = () => {
   router.push('/products/new') 
 };
 
-const toast = VueToastification.useToast
+//const toast = VueToastification.useToast
 
 // 로그아웃
 const doLogout = () => {
@@ -82,8 +87,9 @@ const onSearch = () => {
       <!-- 액션 섹션 (채팅, 알림, 로그인, 마이페이지 링크) -->
       <ul class="header-actions">
         <li>
-          <button v-if="isAuthenticated" @click="navigateToChat">채팅</button>
-          <button v-else @click="showLoginAlert">채팅</button>
+          <!-- <button v-if="isAuthenticated" @click="navigateToChat">채팅</button>
+          <button v-else @click="showLoginAlert">채팅</button> -->
+          <ChatNotification @click="navigateToChat"/>
         </li>
         <li class="notification-cotainer"><Notification /></li>
         <button v-if="!isAuthenticated">

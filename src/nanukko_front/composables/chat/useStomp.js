@@ -1,21 +1,29 @@
 import { ref } from 'vue'
 import { Client } from '@stomp/stompjs'// STOMP 라이브러리에서 제공하는 Client 클래스
 import SockJS from 'sockjs-client'
+import { useAuth } from '../auth/useAuth'
+import { useURL } from '../useURL'
 
 export function useStomp() {
   const client = ref(null) // 웹소켓 클라이언트 저장
   const connected = ref(false) //연결 상태
   const connectionPromise = ref(null) // 연결 진행 상태
   const subscriptions = new Map() // 채팅방 구독 정보 저장
+  const { getToken } = useAuth();
   
   /** 연결 시도 함수 */
-  const connectWithRetry = async (userId, token, maxAttempts = 5) => { 
+  const connectWithRetry = async (userId, maxAttempts = 5) => { 
     let attempts = 0 // 시도 횟수
     
     while (attempts < maxAttempts) { //최대 5번까지 시도
       try {
         if (client.value?.active) {// 이미 연결되어 있으면 바로 성공 반환
           return true
+        }
+
+        const token = getToken(); // 현재 토큰 가져오기
+        if (!token) {
+          throw new Error('인증 토큰이 없습니다.');
         }
 
         // 1. 웹소켓 연결 시도
@@ -26,7 +34,6 @@ export function useStomp() {
 
           //3. 클라이언트 설정 및 연결 시도
           client.value = new Client({ // 클라이언트 설정(카톡 앱같은 느낌)
-
             // 웹소켓 생성하는 함수
             webSocketFactory: () => socket,//webSocketFactory는 Client의 설정 옵션 중 하나(WebSocket 연결을 생성하는 방법을 알려주는 옵션)
             connectHeaders: {//연결 정보들
@@ -40,10 +47,19 @@ export function useStomp() {
             heartbeatIncoming: 4000,//서버->클라이언트 생존 확인(4초)
             heartbeatOutgoing: 4000,// 클라이언트 -> 서버 생존 확인(4초)
             
-            //열결됐을 때 실행할 함수
+            //연결됐을 때 실행할 함수
             onConnect: () => {
               console.log('연결 성공 - STOMP connection successful!')
               connected.value = true
+              
+              // 연결 성공 시 메시지 전송에 인증 헤더 추가하는 함수 재정의
+              const originalPublish = client.value.publish;
+              client.value.publish = function(parameters) {
+                const headers = parameters.headers || {};
+                headers['Authorization'] = `Bearer ${token}`;
+                return originalPublish.call(this, { ...parameters, headers });
+              };
+              
               resolve(true)
             },
 
@@ -60,7 +76,6 @@ export function useStomp() {
               connected.value = false
             }
           })
-          /////////////////////////////////////////////여기까지는 전부 연결 설정
 
           client.value.activate()// 연결 시작!
         })
@@ -79,68 +94,100 @@ export function useStomp() {
     throw new Error('결국 연결 실패..- Failed to establish STOMP connection after 5 attempts')
   };
 
-
   /**사용자가 채팅 페이지에 접속하면 실행될 연결 함수 - 연결 관리(연결 상태, 연결 시도 관리) */
-  const connectChat = async (userId, token) => {
+  const connectChat = async (userId) => { // token 파라미터 제거
     if (connectionPromise.value) {//이미 연결 시도 중이면 기존 Promise 반환
       return connectionPromise.value
     }
 
-    connectionPromise.value = connectWithRetry(userId, token)//기존 연결 없으면 새로운 연결 시도 시작
+    connectionPromise.value = connectWithRetry(userId)//기존 연결 없으면 새로운 연결 시도 시작
     
     try {
-      //연결 시도 겨로가 기다리기
+      //연결 시도 결과 기다리기
       await connectionPromise.value
 
       return true//연결 성공하면 true 반환
     } finally {
-
       //다음 연결 시도를 위해 connectionPromise 초기화(성공이든 실패든 "전송 중..." 표시 없애기)
       connectionPromise.value = null
     }
   }
 
+
   /** 채팅방 구독 - 특정 채팅방의 메시지를 받기 위한 구독 설정 */
-  const subscribeToChatRoom = async (roomId, callbacks = {}) => {//채팅방 아이디 기준으로 구독 설정, 메시지 받으면 콜백 함수 통해서 처리
-    if (!client.value?.active) {//연결 확인
-      throw new Error('커넥션 에러 - No active STOMP connection');
+  const subscribeToChatRoom = async (destination, callbacks = {}) => {
+    if (!client.value?.active) {
+      throw new Error('커넥션 에러 - No active STOMP connection')
     }
-
-    const destination = `/queue/chat/${roomId}`;//구독
-    console.log('구독하기-Subscribing to:', destination);
-
-    // 같은 채팅방에 이미 구독 중이면 해제
+  
+    console.log('구독하기-Subscribing to:', destination)
+  
+    // 같은 목적지에 이미 구독 중이면 해제
     if (subscriptions.has(destination)) {
-      subscriptions.get(destination).unsubscribe();
+      subscriptions.get(destination).unsubscribe()
     }
-
+  
     return new Promise((resolve, reject) => {
       try {
-        // 새로운 메시지가 올 때마다 실행될 구독 설정
         const subscription = client.value.subscribe(destination, (message) => {
           try {
-            console.log('메시지 수신:', message);
-            ////메시지 받으면 JSON으로 변환
+            console.log('원본 메시지:', message);  // 디버깅용 로그 추가
             const payload = JSON.parse(message.body);
-            console.log('메시지 파싱:', payload);
-            
-            //받은 메시지를 처리하는 콜백함수 실행
+            console.log('파싱된 메시지:', payload);  // 디버깅용 로그 추가
             callbacks.onMessage?.(payload);
           } catch (error) {
-            console.error('메시지 핸들링 error:', error);
+            console.error('메시지 처리 중 에러:', error);
           }
         });
         
-        //구독 정보 저장
-        subscriptions.set(destination, subscription);
-        
-        resolve(subscription);//구독 설정
+        subscriptions.set(destination, subscription)
+        resolve(subscription)
       } catch (error) {
-        console.error('구독 error:', error);
-        reject(error);
+        console.error('구독 error:', error)
+        reject(error)
       }
-    });
-  };
+    })
+  }
+  // const subscribeToChatRoom = async (roomId, callbacks = {}) => {//채팅방 아이디 기준으로 구독 설정, 메시지 받으면 콜백 함수 통해서 처리
+  //   if (!client.value?.active) {//연결 확인
+  //     throw new Error('커넥션 에러 - No active STOMP connection');
+  //   }
+
+  //   const destination = `/queue/chat/${roomId}`;//구독
+  //   console.log('구독하기-Subscribing to:', destination);
+
+  //   // 같은 채팅방에 이미 구독 중이면 해제
+  //   if (subscriptions.has(destination)) {
+  //     subscriptions.get(destination).unsubscribe();
+  //   }
+
+  //   return new Promise((resolve, reject) => {
+  //     try {
+  //       // 새로운 메시지가 올 때마다 실행될 구독 설정
+  //       const subscription = client.value.subscribe(destination, (message) => {
+  //         try {
+  //           console.log('메시지 수신:', message);
+  //           ////메시지 받으면 JSON으로 변환
+  //           const payload = JSON.parse(message.body);
+  //           console.log('메시지 파싱:', payload);
+            
+  //           //받은 메시지를 처리하는 콜백함수 실행
+  //           callbacks.onMessage?.(payload);
+  //         } catch (error) {
+  //           console.error('메시지 핸들링 error:', error);
+  //         }
+  //       });
+        
+  //       //구독 정보 저장
+  //       subscriptions.set(destination, subscription);
+        
+  //       resolve(subscription);//구독 설정
+  //     } catch (error) {
+  //       console.error('구독 error:', error);
+  //       reject(error);
+  //     }
+  //   });
+  // };
 
 
   /**메시지 전송 */
@@ -154,7 +201,10 @@ export function useStomp() {
 
     return client.value.publish({
       destination,
-      body: JSON.stringify(message)//메시지 json 형태로 변환
+      body: JSON.stringify(message),
+      headers: {
+        'content-type': 'application/json'
+      }
     })
   }
 

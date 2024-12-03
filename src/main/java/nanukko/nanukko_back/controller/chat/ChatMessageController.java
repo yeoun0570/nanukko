@@ -7,22 +7,23 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import nanukko.nanukko_back.dto.chat.ChatMessageDTO;
 import nanukko.nanukko_back.dto.chat.ChatRoomDTO;
+import nanukko.nanukko_back.dto.chat.ReadMessageRequest;
 import nanukko.nanukko_back.dto.page.PageResponseDTO;
 import nanukko.nanukko_back.service.ChatService;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
-import org.springframework.messaging.handler.annotation.DestinationVariable;
-import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.messaging.handler.annotation.Payload;
-import org.springframework.messaging.handler.annotation.SendTo;
+import org.springframework.messaging.handler.annotation.*;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestParam;
+
 
 import java.nio.file.AccessDeniedException;
+import java.security.Principal;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Controller // WebSocket 메시지 처리를 위한 컨트롤러
 @RequiredArgsConstructor
@@ -38,10 +39,23 @@ public class ChatMessageController {
             @DestinationVariable Long chatRoomId,
             @Payload ChatMessageDTO msg
     ){
-        //Thread.sleep(500); // 메시지 처리 시간 시뮬레이션
-        log.info("채팅 메시지 전송: roomId={}, message={}", chatRoomId, msg.getChatMessage());
+//        //Thread.sleep(500); // 메시지 처리 시간 시뮬레이션
+//        log.info("채팅 메시지 전송: roomId={}, message={}", chatRoomId, msg.getChatMessage());
+//
+//        return chatService.sendMessage(chatRoomId, msg); // 메시지 전송 + DB 저장
 
-        return chatService.sendMessage(chatRoomId, msg); // 메시지 전송 + DB 저장
+        // 서비스에서는 메시지 저장만 처리
+        ChatMessageDTO savedMessage = chatService.sendMessage(chatRoomId, msg);
+
+        // 상대방에게 알림 전송
+        String recipientId = chatService.getRecipientId(chatRoomId, msg.getSender());
+        simpMessagingTemplate.convertAndSendToUser(
+                recipientId,
+                "/queue/notifications",
+                savedMessage
+        );
+
+        return savedMessage;  // @SendTo에 의해 채팅방으로 전송됨
     }
 
     /*채팅방 입장*/
@@ -65,12 +79,12 @@ public class ChatMessageController {
     @SendTo("/queue/chat/{chatRoomId}")
     public ResponseEntity<PageResponseDTO<ChatRoomDTO>> leaveRoom(
             @DestinationVariable Long chatRoomId,
-            @RequestParam String userId,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "30") int size
-    ) throws AccessDeniedException {
+            @Payload Map<String, Integer> pageInfo,
+            @Header("simpUser") Principal principal
+            ) throws AccessDeniedException {
+        String userId = principal.getName();
         chatService.leaveChatRoom(chatRoomId, userId); // 채팅방 나감 처리 후
-        Pageable pageable = PageRequest.of(page, size);
+        Pageable pageable = PageRequest.of(pageInfo.get("page"), pageInfo.get("size"));
         PageResponseDTO<ChatRoomDTO> chatRooms = chatService.getChatRooms(userId, pageable); // 나간 상태의 채팅방 목록 반환
         return ResponseEntity.ok(chatRooms);
     }
@@ -89,62 +103,59 @@ public class ChatMessageController {
     @SendTo("/queue/chat/{chatRoomId}")
     public ChatMessageDTO markMessageAsReadRealtime(
             @DestinationVariable Long chatRoomId,
-            @Payload ReadMessageRequest request
+            @Header("simpUser") Principal principal,
+            @Payload Map<String, Object> payload
     ) {
         try {
-            log.info("실시간 읽음 처리 요청: roomId={}, messageIds={}", chatRoomId, request.getMessageIds());
+            @SuppressWarnings("unchecked")
+            List<Object> rawMessageIds = (List<Object>) payload.get("messageIds");
 
-            // 페이징 객체 생성
-            Pageable pageable = PageRequest.of(request.getPage(), request.getSize());
+            // Object 리스트를 Integer로 변환, 유효하지 않은 값은 필터링
+            List<Integer> messageIds = rawMessageIds.stream()
+                    .filter(Objects::nonNull) // null 값 필터링
+                    .map(id -> {
+                        try {
+                            if (id instanceof Integer) {
+                                return (Integer) id;
+                            } else if (id instanceof String) {
+                                return Integer.valueOf((String) id);
+                            } else {
+                                log.warn("지원되지 않는 타입의 messageId: {}", id);
+                                return null; // 유효하지 않은 타입
+                            }
+                        } catch (NumberFormatException e) {
+                            log.warn("변환 실패 messageId: {}", id, e);
+                            return null; // 변환 실패
+                        }
+                    })
+                    .filter(Objects::nonNull) // 변환 실패 값 필터링
+                    .collect(Collectors.toList());
 
-            // 서비스 호출 - 읽음 처리 및 업데이트된 메시지 목록 반환
+            String userId = principal.getName();
+            int page = payload.containsKey("page") ? (Integer) payload.get("page") : 0;
+            int size = payload.containsKey("size") ? (Integer) payload.get("size") : 20;
+
+            Pageable pageable = PageRequest.of(page, size);
+
             PageResponseDTO<ChatMessageDTO> updatedMessages =
-                    chatService.markMessagesAsReadRealtime(chatRoomId, request.getUserId(), request.getMessageIds(), pageable);
+                    chatService.markMessagesAsReadRealtime(chatRoomId, userId, messageIds, pageable);
 
-            // 업데이트된 메시지 정보 반환
-            ChatMessageDTO response = ChatMessageDTO.builder()
+            return ChatMessageDTO.builder()
                     .chatMessageId(null)
-                    .messageIds(request.getMessageIds())
+                    .messageIds(messageIds.stream().map(Long::valueOf).collect(Collectors.toList()))
                     .updatedMessages(updatedMessages.getContent())
                     .isRead(true)
                     .build();
 
-            log.info("읽음 처리 완료: {}", response);
-            return response;
-
         } catch (Exception e) {
-            log.error("읽음 처리 실패", e);
+            log.error("읽음 처리 실패: {}", e.getMessage(), e);
             throw e;
         }
     }
 
-    // 수정된 요청 데이터 클래스
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public class ReadMessageRequest {
-        private List<Long> messageIds; // 여러 메시지 ID를 받을 수 있도록 수정
-        private String userId;
-        private int page;
-        private int size;
-    }
 
 
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public class EnterChatRequest {
-        private String userId;
-        private int page = 0;
-        private int size = 50;
-    }
 
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public class LeaveChatRequest {
-        private String userId;
-        private int page = 0;
-        private int size = 30;
-    }
+
+
 }
