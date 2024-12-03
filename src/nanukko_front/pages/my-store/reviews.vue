@@ -4,6 +4,7 @@ import StoreScore from "~/components/my-store/reviews/StoreScore.vue";
 import { useApi } from "@/composables/useApi";
 
 const api = useApi();
+const refreshUserProfile = inject('refreshUserProfile');
 
 definePageMeta({
   layout: "mystore",
@@ -44,6 +45,7 @@ const normalizeRating = (rating) => {
 
 onMounted(() => {
   loadReviews();
+  refreshUserProfile();
 });
 </script>
 
