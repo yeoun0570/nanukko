@@ -254,6 +254,7 @@ public class UserService {
         log.info("업로드 이미지 url : {}" , imgUrls);
         Image image = new Image(imgUrls);
         product.setImages(image);
+        product.setThumbnailImage(image.getImage1());
 
         productRepository.save(product);
         return product;

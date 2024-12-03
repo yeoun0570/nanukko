@@ -18,32 +18,26 @@ const product = ref({
   content: '',
   condition: 'NEW',
   images: [],
-
   middleCategory: {
     majorId: null,
     middleId: null
   },
-
   isShipping: false,
   isPerson: false,
   freeShipping: false,
   shippingFee: 0,
-
   zipCode: '',
   address: '',
   detailAddress: '',
   latitude: null,
   longitude: null,
-
   isCompanion: false,
   isDeputy: false,
   gender: null,
   ageGroup: ''
 });
 
-onMounted(async () => {
-  await loadProductData();
-
+const setupAxiosInterceptor = () => {
   axiosInstance.interceptors.request.use((config) => {
     const token = auth.getToken();
     if (token) {
@@ -54,26 +48,25 @@ onMounted(async () => {
     }
     return config;
   });
+};
+
+
+
+onMounted(async () => {
+  setupAxiosInterceptor();
+  await loadProductData();
 });
+
 
 // 이미지 업데이트 핸들러
 const updateImages = (images) => {
-  product.value.images = images;
-};
-
-// 상품 데이터 업데이트 핸들러
-const updateProductData = (newValue) => {
-  product.value = newValue;
-};
-
-const updateProduct = async () => {
-  // submit 이벤트가 아닌 경우 업데이트만 하고 리턴
-  if (e?.type !== 'submit') {
-    product.value = e;
-    return;
+  if (Array.isArray(images)) {
+    product.value.images = images;
+  } else {
+    product.value.images = [];
   }
-
-
+};
+const handleSubmit = async () => {
   try {
     // 필수 필드 검증
     if (!product.value.productName || !product.value.middleCategory.middleId ||
@@ -106,7 +99,7 @@ const updateProduct = async () => {
     const formData = new FormData();
 
     const productData = {
-      productId: route.query.productId,
+      id: route.query.productId,
       productName: product.value.productName,
       price: product.value.price,
       content: product.value.content,
@@ -131,29 +124,39 @@ const updateProduct = async () => {
       productData.longitude = product.value.longitude;
     }
 
+    console.log('전송할 productData:', productData);
     formData.append('productInfo', JSON.stringify(productData));
 
-    // 새로 추가된 이미지만 FormData에 추가
-    if (product.value.images?.length > 0) {
-      product.value.images.forEach((image) => {
+    if (Array.isArray(product.value.images)) {
+      // 새로 추가된 파일이 있는 이미지
+      const newImages = product.value.images.filter(image => image.file);
+
+      // 기존 이미지 URL을 File 객체로 변환하여 추가
+      const existingImages = product.value.images.filter(image => image.isExisting);
+
+      // 모든 이미지를 순차적으로 처리
+      const processImages = [...newImages, ...existingImages];
+
+      processImages.forEach(async (image, index) => {
         if (image.file) {
+          // 새로운 이미지인 경우
           formData.append('images', image.file);
+        } else if (image.url) {
+          // 기존 이미지인 경우 URL을 그대로 전송
+          formData.append('images', image.url);
         }
       });
     }
 
-    const response = await axiosInstance.post(`/my-store/sale-products/modify`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    });
-    console.log("response : " + response);
-
+    const response = await axiosInstance.post('/my-store/sale-products/modify', formData);
+    console.log('수정 응답:', response.data);
     toast.success('상품이 수정되었습니다.');
-    router.push(`/my-store/sale-products`);
+    router.push('/my-store/sale-products');
+
   } catch (error) {
     console.error('상품 수정 실패:', error);
-    toast.error('상품 수정에 실패했습니다.');
+    console.error('에러 상세:', error.response?.data);
+    toast.error(error.response?.data?.message || '상품 수정에 실패했습니다.');
   }
 };
 
@@ -185,7 +188,8 @@ const loadProductData = async () => {
         images.push({
           url: imageUrl,
           file: null,
-          id: i
+          id: i,
+          isExisting: true
         });
       }
     }
@@ -226,7 +230,6 @@ const loadProductData = async () => {
   }
 };
 
-
 </script>
 
 <template>
@@ -234,10 +237,10 @@ const loadProductData = async () => {
     <h1 class="title">상품수정</h1>
     <hr>
 
-    <form @submit.prevent="updateProduct" class="product-form">
-      <ImageUploader :images="product.images" @update:images="updateImages" />
+    <form @submit.prevent="handleSubmit" class="product-form">
+      <ImageUploader :images="product.images" @update:images="images => product.images = images" />
 
-      <ProductForm :value="product" @update:value="updateProduct" />
+      <ProductForm v-model="product" />
 
       <div class="button-group">
         <button type="submit" class="submit-button">수정하기</button>
