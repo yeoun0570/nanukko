@@ -8,6 +8,7 @@ import nanukko.nanukko_back.dto.file.FileDTO;
 import nanukko.nanukko_back.dto.file.FileDirectoryType;
 import nanukko.nanukko_back.repository.ProductRepository;
 import nanukko.nanukko_back.service.ImageService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -26,7 +27,8 @@ public class DummyImageUploader {
     private final ImageService imageService;
     private final ProductRepository productRepository;
 
-    private static final String DUMMY_IMAGES_PATH = "src/main/resources/dummy-images/";
+    @Value("${dummy.images.path}")
+    private String DUMMY_IMAGES_PATH;
 
     private static class DummyMultipartFile implements MultipartFile {
         private final File file;
@@ -83,6 +85,8 @@ public class DummyImageUploader {
     // 카테고리에 맞는 이미지 파일들만 필터링하여 반환
     private List<File> getMatchingImageFiles(String categoryName) throws IOException {
         File dummyImagesDir = new File(DUMMY_IMAGES_PATH);
+        log.info("Attempting to access directory: " + dummyImagesDir.getAbsolutePath());
+        log.info("Directory exists: " + dummyImagesDir.exists());
         File[] allImageFiles = dummyImagesDir.listFiles((dir, name) ->
                 (name.toLowerCase().endsWith(".jpg") ||
                         name.toLowerCase().endsWith(".jpeg") ||
