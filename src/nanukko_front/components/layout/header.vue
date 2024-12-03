@@ -89,7 +89,7 @@ const onSearch = () => {
         <li>
           <!-- <button v-if="isAuthenticated" @click="navigateToChat">채팅</button>
           <button v-else @click="showLoginAlert">채팅</button> -->
-          <ChatNotification @click="navigateToChat"/>
+          <ChatNotification />
         </li>
         <li class="notification-cotainer"><Notification /></li>
         <button v-if="!isAuthenticated">

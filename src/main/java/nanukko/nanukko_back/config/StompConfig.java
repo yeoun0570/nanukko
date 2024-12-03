@@ -46,7 +46,7 @@ public class StompConfig implements WebSocketMessageBrokerConfigurer {
     public void configureMessageBroker(MessageBrokerRegistry registry) {
         // /topic: 1:N 메시징에 사용 (채팅방 내 전체 메시지)
         // /queue: 1:1 메시징에 사용 (개인 메시지)
-        registry.enableSimpleBroker("/topic","/queue");//메시지를 전달할 경로 설정하여 메시지를 브로커가 처리하게 함
+        registry.enableSimpleBroker("/topic","/queue","/user");//메시지를 전달할 경로 설정하여 메시지를 브로커가 처리하게 함
 
         /*바로 브로커로 가는 경우가 아니라 메시지의 처리나 가공이 필요한 경우 핸들러를 타게 할 수 있는 설정*/
         // 클라이언트가 메시지를 보낼 때 사용할 프리픽스 설정

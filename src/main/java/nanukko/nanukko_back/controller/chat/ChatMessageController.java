@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import nanukko.nanukko_back.config.WebSocketSessionManager;
 import nanukko.nanukko_back.dto.chat.ChatMessageDTO;
 import nanukko.nanukko_back.dto.chat.ChatRoomDTO;
 import nanukko.nanukko_back.dto.chat.ReadMessageRequest;
@@ -31,32 +32,36 @@ import java.util.stream.Collectors;
 public class ChatMessageController {
     private final ChatService chatService;
     private final SimpMessagingTemplate simpMessagingTemplate;// 해당 객체를 통해 메시지 브로커로 데이터를 전달한다.
+    private final WebSocketSessionManager sessionManager;
 
     /*메시지 전송*/
     @MessageMapping("/chat/{chatRoomId}") // StompConfig에 설정해놓은 /app과 합쳐져 /app/chat으로 왔을 때 이 컨트롤러 탐(클라이언트에서 메시지를 보낼 주소)
     @SendTo("/queue/chat/{chatRoomId}") //핸들러에서 처리를 마친 후 반환 값을 /topic/message의 경로로 메시지를 보냄(메시지를 구독중인 클라이언트들에게 브로드캐스트)
     public ChatMessageDTO sendMessage(
             @DestinationVariable Long chatRoomId,
-            @Payload ChatMessageDTO msg
-    ){
-//        //Thread.sleep(500); // 메시지 처리 시간 시뮬레이션
-//        log.info("채팅 메시지 전송: roomId={}, message={}", chatRoomId, msg.getChatMessage());
-//
-//        return chatService.sendMessage(chatRoomId, msg); // 메시지 전송 + DB 저장
+            @Payload ChatMessageDTO msg,
+            Principal principal
+    ) {
+        //        //Thread.sleep(500); // 메시지 처리 시간 시뮬레이션
+        log.info("채팅 메시지 전송: roomId={}, message={}", chatRoomId, msg.getChatMessage());
 
-        // 서비스에서는 메시지 저장만 처리
-        ChatMessageDTO savedMessage = chatService.sendMessage(chatRoomId, msg);
-
-        // 상대방에게 알림 전송
-        String recipientId = chatService.getRecipientId(chatRoomId, msg.getSender());
-        simpMessagingTemplate.convertAndSendToUser(
-                recipientId,
-                "/queue/notifications",
-                savedMessage
-        );
-
-        return savedMessage;  // @SendTo에 의해 채팅방으로 전송됨
+        return chatService.sendMessage(chatRoomId, msg); // 메시지 전송 + DB 저장
     }
+//
+//
+//        // 서비스에서는 메시지 저장만 처리
+//        ChatMessageDTO savedMessage = chatService.sendMessage(chatRoomId, msg);
+//
+//        // 상대방에게 알림 전송
+//        String recipientId = chatService.getRecipientId(chatRoomId, msg.getSender());
+//        simpMessagingTemplate.convertAndSendToUser(
+//                recipientId,
+//                "/queue/notifications",
+//                savedMessage
+//        );
+//
+//        return savedMessage;  // @SendTo에 의해 채팅방으로 전송됨
+//    }
 
     /*채팅방 입장*/
     // 채팅방의 이전 메시지 내역 조회 + 안 읽은 메시지 읽음 처리 (채팅방 첫 입장 시 호출)
@@ -104,58 +109,23 @@ public class ChatMessageController {
     public ChatMessageDTO markMessageAsReadRealtime(
             @DestinationVariable Long chatRoomId,
             @Header("simpUser") Principal principal,
-            @Payload Map<String, Object> payload
+            @Payload ReadMessageRequest request
     ) {
-        try {
-            @SuppressWarnings("unchecked")
-            List<Object> rawMessageIds = (List<Object>) payload.get("messageIds");
+        String userId = principal.getName();
+        log.info("읽음 처리 요청 - chatRoomId: {}, userId: {}", chatRoomId, userId);
 
-            // Object 리스트를 Integer로 변환, 유효하지 않은 값은 필터링
-            List<Integer> messageIds = rawMessageIds.stream()
-                    .filter(Objects::nonNull) // null 값 필터링
-                    .map(id -> {
-                        try {
-                            if (id instanceof Integer) {
-                                return (Integer) id;
-                            } else if (id instanceof String) {
-                                return Integer.valueOf((String) id);
-                            } else {
-                                log.warn("지원되지 않는 타입의 messageId: {}", id);
-                                return null; // 유효하지 않은 타입
-                            }
-                        } catch (NumberFormatException e) {
-                            log.warn("변환 실패 messageId: {}", id, e);
-                            return null; // 변환 실패
-                        }
-                    })
-                    .filter(Objects::nonNull) // 변환 실패 값 필터링
-                    .collect(Collectors.toList());
+        PageResponseDTO<ChatMessageDTO> result = chatService.markMessagesAsReadRealtime(
+                chatRoomId,
+                userId,
+                request.getMessageIds(),
+                PageRequest.of(request.getPage(), request.getSize())
+        );
 
-            String userId = principal.getName();
-            int page = payload.containsKey("page") ? (Integer) payload.get("page") : 0;
-            int size = payload.containsKey("size") ? (Integer) payload.get("size") : 20;
-
-            Pageable pageable = PageRequest.of(page, size);
-
-            PageResponseDTO<ChatMessageDTO> updatedMessages =
-                    chatService.markMessagesAsReadRealtime(chatRoomId, userId, messageIds, pageable);
-
-            return ChatMessageDTO.builder()
-                    .chatMessageId(null)
-                    .messageIds(messageIds.stream().map(Long::valueOf).collect(Collectors.toList()))
-                    .updatedMessages(updatedMessages.getContent())
-                    .isRead(true)
-                    .build();
-
-        } catch (Exception e) {
-            log.error("읽음 처리 실패: {}", e.getMessage(), e);
-            throw e;
-        }
+        return ChatMessageDTO.builder()
+                .messageIds(request.getMessageIds())
+                .updatedMessages(result.getContent())
+                .isRead(true)
+                .build();
     }
-
-
-
-
-
 
 }
