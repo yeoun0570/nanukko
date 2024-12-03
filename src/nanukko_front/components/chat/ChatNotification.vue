@@ -22,7 +22,7 @@
         >
           <div class="notifications-header">
             <span>새 메시지</span>
-            <button class="clear-button">모두 지우기</button>
+            <button class="clear-button" @click="clearAllNotifications">모두 지우기</button>
           </div>
           
           <div class="notifications-list">
@@ -51,6 +51,8 @@ import { useStomp } from '~/composables/chat/useStomp'
 import { useAuth } from '~/composables/auth/useAuth'
 import { useRouter } from 'vue-router'
 import { useFormatTime } from '~/composables/useFormatTime'
+import { ca } from 'vuetify/locale'
+import { useApi } from '#build/imports'
 
 /**
  * 
@@ -60,6 +62,7 @@ const storage = {
   save(key, value) {
     if (process.client) {  // 클라이언트 사이드인 경우에만 실행
       localStorage.setItem(key, JSON.stringify(value));
+      updateUnreadCount();// 저장할 때마다 카운트 업데이트
     }
   },
   
@@ -67,7 +70,11 @@ const storage = {
     if (process.client) {  // 클라이언트 사이드인 경우에만 실행
       try {
         const item = localStorage.getItem(key);
-        return item ? JSON.parse(item) : [];
+        const parsedNotifications = item ? JSON.parse(item) : [];
+        notifications.value = parsedNotifications;
+        updateUnreadCount(); // 로드할 때도 카운트 업데이트
+
+        return parsedNotifications;
       } catch (error) {
         console.error('로컬 스토리지 로드 실패:', error);
         return [];
@@ -82,9 +89,18 @@ const notifications = ref([]);  // 초기값은 빈 배열로 설정
 
 // onMounted에서 localStorage 데이터 로드
 onMounted(() => {
+  //저장된 알림 로드
   notifications.value = storage.load('chat-notifications');
-  
-  if (isAuthenticated.value) {
+
+  //저장된 카운트 로드(없으면 계산)
+  const savedCount = localStorage.getItem('chat-notifications-count');
+  if(savedCount !== null){
+    unreadCount.value = parseInt(savedCount, 10);
+  }else{
+    updateUnreadCount();
+  }
+
+  if(isAuthenticated.value){
     initializeNotifications();
   }
 });
@@ -98,6 +114,7 @@ const router = useRouter()
 const stomp = useStomp()
 const { userId, isAuthenticated } = useAuth()
 const { formatTime } = useFormatTime()
+const api = useApi()
 
 // 상태 관리를 위한 refs
 const unreadCount = ref(0)
@@ -124,71 +141,94 @@ function loadNotifications() {
 // 새 메시지 처리 함수
 const handleNewMessage = (message) => {
   try {
-    console.log('raw 메시지:', message)
-    // 메시지 파싱
+    console.log('수신된 알림:', message)
     const messageData = typeof message === 'string' ? 
       JSON.parse(message) : 
       message.body ? JSON.parse(message.body) : message
 
-    console.log('파싱된 메시지:', messageData)
-
-    // 새 알림 생성
-    const notification = {
-      id: Date.now(),
-      chatRoomId: messageData.chatRoom,
-      message: messageData.chatMessage || '새 메시지가 도착했습니다',
-      sender: messageData.sender,
-      createdAt: messageData.createdAt,
-      isRead: false
+      // 읽음 처리 알림인 경우 처리하지 않음
+    if (messageData.isRead) {
+      return;
     }
 
-    // 상태 업데이트
-    nextTick(() => {
-      notifications.value = [notification, ...notifications.value]
-      unreadCount.value = notifications.value.filter(n => !n.isRead).length
-      saveNotifications(notifications.value) // 로컬 스토리지 업데이트
-    })
+    // 이미 존재하는 알림인지 확인
+    // 중복 체크를 위한 키 생성
+    const notificationKey = `${messageData.chatRoom}-${messageData.createdAt}`;
+    const isDuplicate = notifications.value.some(n => 
+      `${n.chatRoomId}-${n.createdAt}` === notificationKey
+    );
+
+    if (!isDuplicate && messageData.chatRoom) {
+      const notification = {
+        id: Date.now(),
+        chatRoomId: messageData.chatRoom,
+        message: messageData.chatMessage,
+        sender: messageData.sender,
+        createdAt: messageData.createdAt,
+        isRead: false
+      };
+
+      notifications.value = [notification, ...notifications.value];
+      storage.save('chat-notifications', notifications.value);
+    }
   } catch (error) {
-    console.error('알림 처리 중 오류:', error)
+    console.error('알림 처리 중 오류:', error);
+  }
+};
+
+
+
+
+//읽음 상태 업데이트
+const updateUnreadCount = () => {
+  const count = notifications.value.filter(n => !n.isRead).length;
+  unreadCount.value = count;
+
+  //localStorage에 카운트도 함께 저장
+  if(process.client){
+    localStorage.setItem('chat-notifications-count', count.toString());
   }
 }
 
-// 알림 클릭 핸들러
+
+// 알림 확인 시 처리
 const handleNotificationClick = async (notification) => {
   try {
-    console.log('알림 클릭됨:', notification) // 디버깅용
-    showDropdown.value = false
+    // 알림 읽음 처리
+    markNotificationAsRead(notification);
+    showDropdown.value = false;
+
 
     // 채팅방으로 이동
-    await navigateToChatRoom(notification.chatRoomId)
+    await navigateToChatRoom(notification.chatRoomId);
   } catch (error) {
-    console.error('채팅방 이동 실패:', error)
+    console.error('알림 처리 실패:', error);
+  }
+};
+
+//채팅방 이동 
+const navigateToChatRoom = async (roomId) => {
+  try {
+    await router.push({
+      path: '/chat',
+      query: roomId? { roomId: roomId.toString() } : undefined
+    });
+    return true;
+  }catch(error){
+    console.error('라우터 이동 실패', error);
+    return false;
   }
 }
 
-// 채팅방 이동 함수 분리
-const navigateToChatRoom = async (roomId) => {
-  try {
-    console.log('채팅방 이동 시도:', roomId) // 디버깅용
-    await router.push({
-      path: '/chat',
-      query: { roomId: roomId.toString() }
-    })
-    return true
-  } catch (error) {
-    console.error('라우터 이동 실패:', error)
-    return false
-  }
-}
+
 
 
 // 드롭다운 토글 함수
 const toggleDropdown = () => {
   showDropdown.value = !showDropdown.value
-  console.log('드롭다운 토글:', showDropdown.value) // 디버깅용
+  unreadCount.value = 0;
 }
 
-// 외부 클릭 처리 추가
 // 외부 클릭 핸들러 추가
 onMounted(() => {
   document.addEventListener('click', (event) => {
@@ -206,9 +246,11 @@ onMounted(() => {
 const clearAllNotifications = () => {
   notifications.value = []
   unreadCount.value = 0
-  showDropdown.value = false
-  saveNotifications([])
-  document.title = '메시지'
+  if(process.client){
+    localStorage.removeItem('chat-notifications');
+    localStorage.removeItem('chat-notifications-count');
+  }
+  showDropdown.value = false;
 }
 
 // 외부 클릭 핸들러
@@ -233,7 +275,7 @@ const initializeNotifications = async () => {
     }
 
     // 개인 알림 채널 구독
-    const destination = `/user/${userId.value}/queue/notifications`
+    const destination = `/user/${userId.value}/queue/chat.notification`
     console.log('알림 구독:', destination)
     
     notificationSubscription = await stomp.subscribeToChatRoom(
@@ -245,19 +287,63 @@ const initializeNotifications = async () => {
   }
 }
 
-// 라이프사이클 훅
-onMounted(() => {
-  // 알림 초기화
+
+// 로그인 시 최신 메시지 체크를 위한 함수 추가
+const initializeUnreadMessages = async () => {
+  try {
+    // API 호출을 통해 읽지 않은 최신 메시지 조회
+    const response = await api.get('/chat/unread-messages');
+
+    // response.data가 유효한 배열인지 확인하고 기본값 설정
+    const unreadMessages = Array.isArray(response.data) ? response.data : [];
+
+    // 읽지 않은 메시지들을 알림으로 변환
+    const newNotifications = unreadMessages.map(msg => ({
+      id: Date.now(),
+      chatRoomId: msg.chatRoom,
+      message: msg.chatMessage,
+      sender: msg.sender,
+      createdAt: msg.createdAt,
+      isRead: false
+    }));
+
+    // 알림 상태 업데이트
+    notifications.value = newNotifications;
+    updateUnreadCount();//읽지 않은 메시지 수 갱신
+    saveNotifications(notifications.value);// 알림 상태 저장
+  } catch (error) {
+    console.error('읽지 않은 메시지 조회 실패:', error);
+  }
+};
+
+
+// 알림 확인 시 처리하는 함수
+const markNotificationAsRead = (notification) => {
+  notification.isRead = true;
+  storage.save('chat-notifications', notifications.value);
+  //참고로 updateUnreadCount는 storage.save 내부에서 호출됨
+}
+
+
+
+// 라이프사이클 훅//
+// useAuth의 logout 함수 호출 후 알림 초기화되도록 watch 추가
+watch(isAuthenticated, (newValue) => {
+  if (!newValue) {
+    clearAllNotifications();
+  }
+});
+
+onMounted(async () => {
   if (isAuthenticated.value) {
-    initializeNotifications()
+    //로그인하면 알림 초기화
+    await initializeNotifications();
+    await initializeUnreadMessages();
   }
   
-  // 외부 클릭 이벤트 리스너 등록
-  document.addEventListener('click', handleOutsideClick)
-  
-  // 읽지 않은 알림 수 초기화
-  unreadCount.value = notifications.value.filter(n => !n.isRead).length
-})
+  document.addEventListener('click', handleOutsideClick);
+  unreadCount.value = notifications.value.filter(n => !n.isRead).length;
+});
 
 onUnmounted(() => {
   // 구독 해제
@@ -281,14 +367,11 @@ watch(isAuthenticated, (newValue) => {
 
 // 알림 상태 변화 감시
 watch(notifications, (newNotifications) => {
-  saveNotifications(newNotifications)
-  unreadCount.value = newNotifications.filter(n => !n.isRead).length
-}, { deep: true })
-
-// 상태 변화 추적
-watch(showDropdown, (newValue) => {
-  console.log('드롭다운 상태 변경:', newValue);
-});
+  if (process.client) {
+    storage.save('chat-notifications', newNotifications);
+    updateUnreadCount();
+  }
+}, { deep: true });
 
 watch(notifications, (newValue) => {
   console.log('알림 목록 변경:', newValue);

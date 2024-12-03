@@ -13,6 +13,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController // JSON 형태로 데이터를 반환하는 API 컨트롤러
 @RequiredArgsConstructor // final 필드에 대한 생성자를 자동으로 생성
 @Log4j2
@@ -77,4 +79,15 @@ public class ChatController {
         );
         return ResponseEntity.ok(messages);
     }
+
+    @GetMapping("/unread-messages")
+    public ResponseEntity<List<ChatMessageDTO>> getUnreadMessages(
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        String userId = userDetails.getUsername();
+        List<ChatMessageDTO> unreadMessages = chatService.getUnreadMessages(userId);
+        log.info("안 읽은 메시지 {}:", unreadMessages);
+        return ResponseEntity.ok(unreadMessages);
+    }
+
 }

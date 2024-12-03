@@ -9,6 +9,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 
+import java.util.List;
+
 public interface ChatMessageRepository extends JpaRepository<ChatMessages, Long> {
 
     //채팅 목록 들고오기
@@ -26,6 +28,13 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessages, Long>
                     "ORDER BY m.createdAt DESC"
     )
     Page<ChatMessages> findMessagesSinceLastExit(@Param("chatRoomId")Long chatRoomId, @Param("userId") String userId, Pageable pageable);
-    
+
+
+    List<ChatMessages> findByChatRoom_ChatRoomIdAndIsReadFalseAndSender_UserIdNot(
+            Long chatRoomId,
+            String userId
+    );
+
+
 }
 

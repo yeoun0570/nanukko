@@ -18,12 +18,14 @@ import nanukko.nanukko_back.repository.UserRepository;
 import nanukko.nanukko_back.repository.chat.ChatMessageRepository;
 import nanukko.nanukko_back.repository.chat.ChatRoomRepository;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import java.nio.file.AccessDeniedException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -337,10 +339,21 @@ public class ChatService {
         //새 메시지 저장
         ChatMessages savedMessage = saveNewMessage(chatRoom, messageDTO);
 
-        //수신자 확인 및 읽음 처리(수신자가 실제 접속 중일 때만 하기)
-        String recipienId = getRecipientId(chatRoomId, messageDTO.getSender());
-        if(sessionManager.isUserConnected(recipienId)){// 수신자 접속 확인
-            handleMessageReadStatus(savedMessage, recipienId);
+        //수신자 확인 후 알림 전송(수신자가 실제 접속 중일 때만 하기)
+        String recipientId = getRecipientId(chatRoomId, messageDTO.getSender());
+        if(sessionManager.isUserConnected(recipientId)){
+            ChatMessageDTO notification = ChatMessageDTO.builder()
+                    .chatMessageId(savedMessage.getChatMessageId())
+                    .chatRoom(chatRoomId)
+                    .sender(savedMessage.getSender().getUserId())
+                    .chatMessage(savedMessage.getChatMessage())
+                    .createdAt(savedMessage.getCreatedAt())
+                    .build();
+
+            simpMessagingTemplate.convertAndSendToUser(
+                    recipientId,
+                    "/queue/chat.notification",
+                    notification);
         }
 
         return ChatMessageDTO.builder()
@@ -501,19 +514,20 @@ public class ChatService {
             unreadMessages.forEach(msg -> msg.UnreadToRead(userId));
             chatMessageRepository.saveAll(unreadMessages);
 
-            // 상대방에게 알림 전송
-            String recipientId = getRecipientId(chatRoomId, userId);
-            simpMessagingTemplate.convertAndSendToUser(
-                    recipientId,
-                    "/queue/notifications",
-                    ChatMessageDTO.builder()
-                            .chatMessageId(null)
-                            .messageIds(unreadMessages.stream()
-                                    .map(ChatMessages::getChatMessageId)
-                                    .collect(Collectors.toList()))
-                            .isRead(true)
-                            .build()
-            );
+            //읽음 처리 알림은 한 번만 전송
+            if(!messageIds.isEmpty()){
+                // 상대방에게 알림 전송
+                String recipientId = getRecipientId(chatRoomId, userId);
+                ChatMessageDTO readNotification = ChatMessageDTO.builder()
+                                .messageIds(messageIds)
+                                        .isRead(true)
+                                                .build();
+                simpMessagingTemplate.convertAndSendToUser(
+                        recipientId,
+                        "/queue/chat.notification",// 알림 전용 채널로 변경
+                       readNotification
+                );
+            }
         }
 
         // 4. 업데이트된 메시지 목록 조회
@@ -522,6 +536,75 @@ public class ChatService {
 
         // 5. DTO 변환 및 반환
         return new PageResponseDTO<>(updatedMessages.map(ChatMessageDTO::from));
+    }
+
+    /*알림 목록 조회 - 최신 메시지의 sender가 로그인한 유저가 아닌 메시지 목록*/
+    @Transactional
+    public List<ChatMessageDTO> getUnreadMessages(String userId) {
+        log.info("읽지 않은 메시지 조회 시작 - userId: {}", userId);
+
+        // 1. 먼저 사용자가 참여한 활성 채팅방 조회
+        List<ChatRoom> activeChatRooms = chatRoomRepository.findActiveRoomsByUserId(userId, Pageable.unpaged())
+                .getContent();
+        log.info("활성 채팅방 수: {}", activeChatRooms.size());
+
+        List<ChatMessageDTO> unreadMessages = new ArrayList<>();
+
+        for (ChatRoom chatRoom : activeChatRooms) {
+            log.info("채팅방 ID: {} 처리 중", chatRoom.getChatRoomId());
+
+            // 2. 각 채팅방의 마지막 메시지 조회
+            Page<ChatMessages> messages = chatMessageRepository
+                    .findByChatRoom_ChatRoomIdOrderByCreatedAtDesc(
+                            chatRoom.getChatRoomId(),
+                            PageRequest.of(0, 1)
+                    );
+
+            if (!messages.isEmpty()) {
+                ChatMessages lastMessage = messages.getContent().get(0);
+                log.info("마지막 메시지 - messageId: {}, sender: {}, isRead: {}",
+                        lastMessage.getChatMessageId(),
+                        lastMessage.getSender().getUserId(),
+                        lastMessage.isRead());
+
+                // 3. 마지막 메시지가 읽지 않은 상대방의 메시지인 경우만 추가
+                if (!lastMessage.isRead() && !lastMessage.getSender().getUserId().equals(userId)) {
+                    ChatMessageDTO dto = ChatMessageDTO.from(lastMessage);
+                    unreadMessages.add(dto);
+                    log.info("읽지 않은 메시지 추가됨 - messageId: {}", dto.getChatMessageId());
+                }
+            }
+        }
+
+        log.info("총 읽지 않은 메시지 수: {}", unreadMessages.size());
+        return unreadMessages;
+    }
+
+    @Transactional
+    public void handleChatRoomEnter(Long chatRoomId, String userId){
+        ChatRoom chatRoom = chatRoomRepository.findById(chatRoomId)
+                .orElseThrow(()-> new EntityNotFoundException("채팅방을 찾을 수 없습니다."));
+
+        //해당 사용자가 받은 읽지 않은 메시지들만 조회
+        List<ChatMessages> unreadMessages = chatMessageRepository.findByChatRoom_ChatRoomIdAndIsReadFalseAndSender_UserIdNot(chatRoomId, userId);
+
+        if(!unreadMessages.isEmpty()){
+            unreadMessages.forEach(msg -> msg.UnreadToRead(userId));
+            chatMessageRepository.saveAll(unreadMessages);
+
+            //읽음 처리 알림 전송
+            String senderId = getRecipientId(chatRoomId, userId);//메시지 발신자
+            if(sessionManager.isUserConnected(senderId)){
+                ChatMessageDTO readNotification = ChatMessageDTO.builder()
+                        .messageIds(unreadMessages.stream()
+                                .map(ChatMessages::getChatMessageId)
+                                .collect(Collectors.toList()))
+                        .isRead(true)
+                        .build();
+
+                simpMessagingTemplate.convertAndSendToUser(senderId, "/queue/chat.read", readNotification);
+            }
+        }
     }
 
 }

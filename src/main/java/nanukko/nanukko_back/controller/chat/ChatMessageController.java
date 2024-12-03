@@ -70,13 +70,16 @@ public class ChatMessageController {
     public PageResponseDTO<ChatMessageDTO> enterAndGetChatMessages(
             @DestinationVariable Long chatRoomId,
             @Payload Map<String, Object> payload  // DTO 대신 Map으로 받기
+            ,Principal principal
     ) {
-        String userId = (String) payload.get("userId");
+        String userId = principal.getName();
         int page = payload.containsKey("page") ? (Integer) payload.get("page") : 0;
         int size = payload.containsKey("size") ? (Integer) payload.get("size") : 50;
 
-        Pageable pageable = PageRequest.of(page, size);
-        return chatService.getChatMessagesAndMarkAsRead(chatRoomId, userId, pageable);
+        //채팅방 입장 시 읽음 처리 수행
+        chatService.handleChatRoomEnter(chatRoomId, userId);
+
+        return chatService.getChatMessagesAndMarkAsRead(chatRoomId, userId, PageRequest.of(page, size));
     }
 
     /*채팅방 나가기*/
