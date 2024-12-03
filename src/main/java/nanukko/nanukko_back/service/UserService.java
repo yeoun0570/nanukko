@@ -21,7 +21,6 @@ import nanukko.nanukko_back.dto.review.ReviewInMyStoreDTO;
 import nanukko.nanukko_back.dto.review.ReviewRegisterDTO;
 import nanukko.nanukko_back.dto.user.*;
 import nanukko.nanukko_back.repository.*;
-import nanukko.nanukko_back.util.ProductMapper;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -30,12 +29,8 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Service
@@ -254,6 +249,7 @@ public class UserService {
         log.info("업로드 이미지 url : {}" , imgUrls);
         Image image = new Image(imgUrls);
         product.setImages(image);
+        product.setThumbnailImage(image.getImage1());
 
         productRepository.save(product);
         return product;

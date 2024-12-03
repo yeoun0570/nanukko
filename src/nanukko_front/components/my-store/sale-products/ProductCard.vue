@@ -79,11 +79,8 @@ const handleDeliverySuccess = () => {
         </p>
       </div>
       <div class="button-container">
-        <button
-          v-if="product.status === 'RESERVED' && !product.hasDelivery"
-          @click="showDeliveryModal = true"
-          class="delivery-btn"
-        >
+        <button v-if="product.status === 'RESERVED' && !product.hasDelivery" @click="showDeliveryModal = true"
+          class="delivery-btn">
           운송장 등록
         </button>
         <button @click="goToModify" class="modify-btn">수정</button>
@@ -93,10 +90,6 @@ const handleDeliverySuccess = () => {
   </div>
 
   <!-- 운송장 등록 모달 -->
-  <DeliveryRegistrationModal
-    v-if="showDeliveryModal"
-    :product-id="product.productId"
-    @close="showDeliveryModal = false"
-    @success="handleDeliverySuccess"
-  />
+  <DeliveryRegistrationModal v-if="showDeliveryModal" :product-id="product.productId" @close="showDeliveryModal = false"
+    @success="handleDeliverySuccess" />
 </template>

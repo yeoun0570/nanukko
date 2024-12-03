@@ -90,7 +90,7 @@ onMounted(() => {
         <h3 class="category-title">대분류</h3>
         <div class="category-list">
           <template v-if="categories.majorCategories.length > 0">
-            <button v-for="major in categories.majorCategories" :key="major.majorId" :class="[
+            <button type="button" v-for="major in categories.majorCategories" :key="major.majorId" :class="[
               'category-item',
               { active: selectedCategories.majorId === major.majorId }
             ]" @click="handleMajorSelect(major.majorId)">
@@ -109,7 +109,7 @@ onMounted(() => {
         <div class="category-list" :class="{ disabled: !selectedCategories.majorId }">
           <template v-if="selectedCategories.majorId">
             <template v-if="categories.middleCategories.length > 0">
-              <button v-for="middle in categories.middleCategories" :key="middle.middleId" :class="[
+              <button type="button" v-for="middle in categories.middleCategories" :key="middle.middleId" :class="[
                 'category-item',
                 { active: selectedCategories.middleId === middle.middleId }
               ]" @click="handleMiddleSelect(middle.middleId)">
