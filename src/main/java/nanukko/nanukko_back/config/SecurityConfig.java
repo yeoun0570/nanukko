@@ -13,6 +13,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -117,6 +118,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/files/**").authenticated()
                         .requestMatchers("/api/review/**").authenticated()
                         .requestMatchers("/api/upload-dummy-images").permitAll()
+                        .requestMatchers("/api/chatbot/**").permitAll()
                         .anyRequest().authenticated()//나머지 요청에 대해서는 로그인 한 사용자들만 접근 가능함
                 );
 
