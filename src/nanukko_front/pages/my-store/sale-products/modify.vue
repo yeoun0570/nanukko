@@ -57,15 +57,6 @@ onMounted(async () => {
   await loadProductData();
 });
 
-
-// 이미지 업데이트 핸들러
-const updateImages = (images) => {
-  if (Array.isArray(images)) {
-    product.value.images = images;
-  } else {
-    product.value.images = [];
-  }
-};
 const handleSubmit = async () => {
   try {
     // 필수 필드 검증
@@ -161,12 +152,11 @@ const handleSubmit = async () => {
 };
 
 const handleCancel = () => {
-  toast.confirmCancel('수정중인 내용이 모두 취소됩니다. 취소하시겠습니까?');
-  if (confirmCancel) {
+  const confirmResult = confirm('수정중인 내용이 모두 취소됩니다. 취소하시겠습니까?');
+  if (confirmResult) {
     router.push('/my-store/sale-products');
   }
 };
-
 
 const loadProductData = async () => {
   try {
