@@ -90,6 +90,8 @@ dependencies {
     //TwelveMonkeys 이미지 플러그인
     implementation 'com.twelvemonkeys.imageio:imageio-webp:3.9.4'
 
+    //JSON Simple
+    implementation 'com.googlecode.json-simple:json-simple:1.1.1'
 
 }
 
