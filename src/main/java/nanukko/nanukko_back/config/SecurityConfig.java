@@ -119,6 +119,11 @@ public class SecurityConfig {
                         .requestMatchers("/api/review/**").authenticated()
                         .requestMatchers("/api/upload-dummy-images").permitAll()
                         .requestMatchers("/api/chatbot/**").permitAll()
+                        .requestMatchers("/api/products/new").authenticated()
+                        .requestMatchers("/api/products/main").authenticated()
+                        .requestMatchers("/api/wishlist/{productId}").authenticated()
+                        .requestMatchers("/api/products/**").permitAll()
+                        .requestMatchers("/api/wishlist/**").permitAll()
                         .anyRequest().authenticated()//나머지 요청에 대해서는 로그인 한 사용자들만 접근 가능함
                 );
 
