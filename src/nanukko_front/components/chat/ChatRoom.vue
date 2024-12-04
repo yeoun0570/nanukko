@@ -201,6 +201,13 @@ const handleNewMessage = async (message) => {
       // 상대방 메시지를 받았을 때 즉시 읽음 처리 요청
       if (!isSentByCurrentUser(newMessage)) {
         try {
+
+          console.log('Sending read status update:', {
+      chatRoomId: props.roomId,
+      newMessage,
+    });
+
+
           await stomp.sendMessage(`${props.roomId}/read-realtime`, {
             messageIds: [newMessage.chatMessageId],
             userId: props.userId,
@@ -239,11 +246,14 @@ const initializeChat = async () => {
       .filter(Boolean)
 
     if (unreadMessages.length > 0) {
+      console.log('Marking initial messages as read:', unreadMessages);
+
       await stomp.sendMessage(`${props.roomId}/read-realtime`, {
         messageIds: unreadMessages,
         userId: props.userId,
         page: currentPage.value,
-        size: 20
+        size: 20,
+        chatRoom: props.roomId //채팅방 아이디
       })
     }
 

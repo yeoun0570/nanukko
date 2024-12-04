@@ -1,51 +1,324 @@
 <template>
-  <ClientOnly>
-    <div class="relative">
-      <!-- 알림 버튼 -->
-      <button 
-        class="chat-button"
-        @click="toggleDropdown"
-        ref="notificationButton"
-      >
-        <i class="fas fa-comments"></i>
-        <span v-if="unreadCount > 0" class="notification-badge">
-          {{ unreadCount }}
-        </span>
-      </button>
+  <div class="notification-wrapper" ref="container">
+    <!-- 채팅 알림 버튼 -->
+    <button 
+      class="chat-button"
+      @click="toggleDropdown"
+      ref="notificationButton"
+    >
+      <i class="fas fa-comments"></i>
+      <!-- 읽지 않은 메시지 수 뱃지 -->
+      <span v-if="unreadCount > 0" class="notification-badge">
+        {{ unreadCount }}
+      </span>
+    </button>
 
-      <!-- 드롭다운 메뉴 -->
-      <Transition name="fade">
-        <div 
-          v-if="showDropdown" 
-          class="notifications-dropdown"
-          ref="dropdownMenu"
-        >
-          <div class="notifications-header">
-            <span>새 메시지</span>
-            <button class="clear-button" @click="clearAllNotifications">모두 지우기</button>
+    <!-- 드롭다운 알림 메뉴 -->
+    <Transition name="slide-fade">
+      <div
+        v-if="showDropdown"
+        class="dropdown-menu"
+        ref="dropdownMenu"
+      >
+        <!-- 알림 헤더 -->
+        <div class="dropdown-header">
+          <h3>새 메시지</h3>
+        </div>
+        
+        <!-- 알림 메시지 목록 -->
+        <div class="messages-container">
+          <!-- 로딩 상태 -->
+          <div v-if="loading" class="loading-state">
+            <i class="fas fa-spinner fa-spin"></i>
           </div>
-          
-          <div class="notifications-list">
+
+          <!-- 메시지 목록 -->
+          <template v-else>
+            <!-- 빈 상태 표시 -->
+            <div v-if="chatRooms.length === 0" class="empty-state">
+              <p>새로운 메시지가 없습니다</p>
+            </div>
+
+            <!-- 메시지 아이템 -->
             <div 
-              v-for="notification in notifications" 
-              :key="notification.id"
-              class="notification-item"
-              @click="handleNotificationClick(notification)"
+              v-else
+              v-for="room in chatRooms" 
+              :key="room.chatRoomId"
+              class="message-item"
+              @click="handleRoomSelect(room)"
             >
-              <div class="notification-sender">{{ notification.sender }}</div>
-              <div class="notification-message">{{ notification.message }}</div>
-              <div class="notification-time">
-                {{ formatTime(notification.createdAt) }}
+              <div class="message-content">
+                <p class="product-name" :title="room.productName">
+                  {{ room.productName }}
+                </p>
+                <span class="unread-badge" v-if="room.unreadCount > 0">
+                  {{ room.unreadCount }}
+                </span>
+              </div>
+              <div class="message-time">
+                {{ formatMessageTime(room.lastMessageTime) }}
               </div>
             </div>
-          </div>
+          </template>
         </div>
-      </Transition>
-    </div>
-  </ClientOnly>
+
+        <!-- 바로가기 푸터 -->
+        <div class="dropdown-footer" @click="navigateToChat">
+          채팅방 전체보기
+        </div>
+      </div>
+    </Transition>
+  </div>
 </template>
 
 <script setup>
+import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { useRouter } from 'vue-router'
+import { useAuth } from '~/composables/auth/useAuth'
+import { useStomp } from '~/composables/chat/useStomp'
+import { useApi } from '~/composables/useApi'
+
+// 라우터 설정
+const router = useRouter()
+const { isAuthenticated, userId } = useAuth()
+const stomp = useStomp()
+const api = useApi()
+
+// 상태 관리
+const chatRooms = ref([]) // 채팅방 목록
+const unreadCount = ref(0) // 읽지 않은 메시지 수
+const showDropdown = ref(false) // 드롭다운 표시 여부
+const loading = ref(false) // 로딩 상태
+const container = ref(null) // 컨테이너 ref
+const notificationSubscription = ref(null) // 웹소켓 구독 정보
+
+// 시간 포맷팅 함수
+const formatMessageTime = (timestamp) => {
+  if (!timestamp) return ''
+  const date = new Date(timestamp)
+  const now = new Date()
+  const diff = now - date
+  
+  if (diff < 60000) return '방금 전'
+  if (diff < 3600000) return `${Math.floor(diff / 60000)}분 전`
+  if (diff < 86400000) {
+    return date.toLocaleTimeString('ko-KR', { 
+      hour: 'numeric', 
+      minute: '2-digit',
+      hour12: true 
+    })
+  }
+  return date.toLocaleDateString('ko-KR', { 
+    month: 'short', 
+    day: 'numeric' 
+  })
+}
+
+// 채팅방 목록 로드
+const loadChatRooms = async () => {
+  loading.value = true
+  try {
+    const response = await api.get('/chat/unread-messages')
+    chatRooms.value = response || []
+    updateUnreadCount()
+  } catch (error) {
+    console.error('채팅방 목록 로드 실패:', error)
+  } finally {
+    loading.value = false
+  }
+}
+
+// 새 메시지 처리
+const handleNewMessage = async (message) => {
+  try {
+    const messageData = typeof message === 'string' ? 
+      JSON.parse(message) : 
+      message.body ? JSON.parse(message.body) : message
+
+    console.log('채팅 알림 메시지 데이터:', messageData);
+
+    // 읽음 처리 메시지인 경우
+    if (messageData.messageIds && Array.isArray(messageData.messageIds)) {
+      console.log('Processing read status update:', {
+        messageIds: messageData.messageIds,
+        chatRoomId: messageData.chatRoom
+      });
+
+      chatRooms.value = chatRooms.value.map(room => {
+        if (room.chatRoomId === messageData.chatRoom) {
+          console.log('Updating room:', room.chatRoomId, 
+            'current unreadCount:', room.unreadCount,
+            'messages marked as read:', messageData.messageIds.length);
+          
+          return {
+            ...room,
+            unreadCount: Math.max(0, (room.unreadCount || 0) - messageData.messageIds.length)
+          };
+        }
+        return room;
+      });
+
+      console.log('Updated chatRooms:', chatRooms.value);
+      
+      updateUnreadCount();
+      return;
+    }
+
+    // 새 메시지인 경우 기존 로직 실행
+    if (!messageData.isRead) {
+      await loadChatRooms();
+    }
+  } catch (error) {
+    console.error('메시지 처리 실패:', error);
+  }
+};
+
+// 드롭다운 토글
+const toggleDropdown = () => {
+  showDropdown.value = !showDropdown.value
+}
+
+// 채팅방 선택 처리
+const handleRoomSelect = async (room) => {
+  showDropdown.value = false
+  router.push(`/chat?roomId=${room.chatRoomId}`)
+}
+
+// 채팅 목록으로 이동
+const navigateToChat = () => {
+  showDropdown.value = false
+  router.push('/chat')
+}
+
+// 읽지 않은 메시지 수 업데이트
+const updateUnreadCount = () => {
+  const previousCount = unreadCount.value;
+  unreadCount.value = chatRooms.value.reduce(
+    (sum, room) => sum + (room.unreadCount || 0), 
+    0
+  );
+  console.log('Updated unread count:', {
+    previous: previousCount,
+    current: unreadCount.value,
+    rooms: chatRooms.value.map(r => ({
+      id: r.chatRoomId,
+      unread: r.unreadCount
+    }))
+  });
+}
+
+// 알림 초기화
+// ChatNotification.vue의 initializeNotifications 함수 수정
+const initializeNotifications = async () => {
+  if (!isAuthenticated.value || !userId.value) return
+
+  try {
+    if (!stomp.connected.value) {
+      await stomp.connectChat(userId.value)
+    }
+
+    // 먼저 채팅방 목록을 로드
+    await loadChatRooms()
+
+    // 개인 알림 채널 구독
+    const notificationDestination = `/user/${userId.value}/queue/chat.notification`;
+    console.log('Subscribing to notifications:', notificationDestination);
+    
+    // 알림 구독
+    notificationSubscription.value = await stomp.subscribeToChatRoom(
+      notificationDestination,
+      { onMessage: handleNewMessage }
+    );
+
+    // 각 채팅방의 읽음 처리 구독
+    for (const room of chatRooms.value) {
+      const readStatusDestination = `/queue/chat/${room.chatRoomId}`;
+      console.log('Subscribing to read status:', readStatusDestination);
+      
+      await stomp.subscribeToChatRoom(
+        readStatusDestination,
+        { onMessage: handleReadStatus }
+      );
+    }
+
+  } catch (error) {
+    console.error('알림 초기화 실패:', error)
+  }
+}
+
+
+// 읽음 처리 핸들러 추가
+const handleReadStatus = (message) => {
+  try {
+    const data = typeof message === 'string' ? 
+      JSON.parse(message) : 
+      message.body ? JSON.parse(message.body) : message;
+
+    console.log('Received read status update:', data);
+
+    if (data.messageIds && Array.isArray(data.messageIds)) {
+      // 채팅방 unreadCount 갱신
+      const roomId = data.chatRoom || message.headers?.destination?.split('/').pop();
+      
+      chatRooms.value = chatRooms.value.map(room => {
+        if (room.chatRoomId.toString() === roomId?.toString()) {
+          console.log(`Updating unread count for room ${roomId}`);
+          return {
+            ...room,
+            unreadCount: Math.max(0, (room.unreadCount || 0) - data.messageIds.length)
+          };
+        }
+        return room;
+      });
+
+      // 전체 알림 수 업데이트
+      updateUnreadCount();
+    }
+  } catch (error) {
+    console.error('읽음 상태 처리 실패:', error);
+  }
+};
+
+
+// 외부 클릭 감지
+const handleOutsideClick = (event) => {
+  if (container.value && !container.value.contains(event.target)) {
+    showDropdown.value = false
+  }
+}
+
+// 컴포넌트 마운트
+onMounted(() => {
+  if (isAuthenticated.value) {
+    initializeNotifications()
+  }
+  document.addEventListener('click', handleOutsideClick)
+})
+
+// 컴포넌트 언마운트
+onUnmounted(() => {
+  if (notificationSubscription.value) {
+    stomp.unsubscribe(notificationSubscription.value)
+  }
+  document.removeEventListener('click', handleOutsideClick)
+})
+
+// 인증 상태 변화 감시
+watch(isAuthenticated, (newValue) => {
+  if (newValue) {
+    initializeNotifications()
+  } else {
+    chatRooms.value = []
+    unreadCount.value = 0
+  }
+})
+</script>
+
+<style scoped>
+@import '~/assets/chat/chat-notification.css';
+</style>
+
+<!-- <script setup>
 import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useStomp } from '~/composables/chat/useStomp'
 import { useAuth } from '~/composables/auth/useAuth'
@@ -376,150 +649,6 @@ watch(notifications, (newNotifications) => {
 watch(notifications, (newValue) => {
   console.log('알림 목록 변경:', newValue);
 }, { deep: true });
-</script>
+</script> -->
 
-<style scoped>
-/* 채팅 버튼 스타일 */
-.chat-button {
-  padding: 0.5rem;
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: #4b5563;
-  transition: color 0.2s;
-}
 
-.chat-button:hover {
-  color: #1d4ed8;
-}
-
-/* 알림 뱃지 스타일 */
-.notification-badge {
-  position: absolute;
-  top: 0;
-  right: 0;
-  background-color: #ef4444;
-  color: white;
-  font-size: 0.75rem;
-  padding: 0.25rem 0.5rem;
-  border-radius: 9999px;
-  min-width: 20px;
-  text-align: center;
-}
-
-/* 드롭다운 메뉴 스타일 */
-.notifications-dropdown {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  margin-top: 0.5rem;
-  width: 320px;
-  background-color: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.5rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  z-index: 50;
-}
-
-.notifications-dropdown[v-show] {
-  display: block;  /* v-show가 true일 때 표시 */
-}
-
-/* 드롭다운 헤더 스타일 */
-.notifications-header {
-  padding: 1rem;
-  border-bottom: 1px solid #e5e7eb;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.notifications-header span {
-  font-weight: 500;
-  color: #1f2937;
-}
-
-.clear-button {
-  font-size: 0.875rem;
-  color: #6b7280;
-  background: none;
-  border: none;
-  cursor: pointer;
-}
-
-.clear-button:hover {
-  color: #4b5563;
-}
-
-/* 알림 목록 스타일 */
-.notifications-list {
-  max-height: 400px;
-  overflow-y: auto;
-}
-
-.notification-item {
-  padding: 1rem;
-  border-bottom: 1px solid #e5e7eb;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.notification-item:hover {
-  background-color: #f3f4f6;
-}
-
-.notification-item.unread {
-  background-color: #f0f9ff;
-}
-
-/* 알림 내용 스타일 */
-.notification-content {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.notification-sender {
-  font-weight: 500;
-  color: #1f2937;
-}
-
-.notification-message {
-  font-size: 0.875rem;
-  color: #4b5563;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  line-height: 1.4;
-}
-
-.notification-time {
-  font-size: 0.75rem;
-  color: #6b7280;
-}
-
-/* 빈 상태 스타일 */
-.empty-notifications {
-  padding: 2rem;
-  text-align: center;
-  color: #6b7280;
-  font-size: 0.875rem;
-}
-
-.relative {
-  position: relative;
-  display: inline-block;
-}
-
-/* 트랜지션 효과 */
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.2s ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
-</style>

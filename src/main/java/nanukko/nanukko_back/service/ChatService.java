@@ -12,6 +12,7 @@ import nanukko.nanukko_back.domain.product.Product;
 import nanukko.nanukko_back.domain.user.User;
 import nanukko.nanukko_back.dto.chat.ChatMessageDTO;
 import nanukko.nanukko_back.dto.chat.ChatRoomDTO;
+import nanukko.nanukko_back.dto.chat.UnreadMessageSummary;
 import nanukko.nanukko_back.dto.page.PageResponseDTO;
 import nanukko.nanukko_back.repository.ProductRepository;
 import nanukko.nanukko_back.repository.UserRepository;
@@ -27,6 +28,7 @@ import java.nio.file.AccessDeniedException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -538,47 +540,50 @@ public class ChatService {
         return new PageResponseDTO<>(updatedMessages.map(ChatMessageDTO::from));
     }
 
-    /*알림 목록 조회 - 최신 메시지의 sender가 로그인한 유저가 아닌 메시지 목록*/
+    /*알림 목록 조회 - 채팅방별 읽지 않은 메시지 요약*/
     @Transactional
-    public List<ChatMessageDTO> getUnreadMessages(String userId) {
-        log.info("읽지 않은 메시지 조회 시작 - userId: {}", userId);
+    public List<UnreadMessageSummary> getUnreadMessages(String userId) {
+        return chatRoomRepository.findActiveRoomsByUserId(userId, Pageable.unpaged())
+                .getContent()
+                .stream()
+                .map(room -> {
+                    long unreadCount = chatMessageRepository
+                            .countByChatRoom_ChatRoomIdAndIsReadFalseAndSender_UserIdNot(
+                                    room.getChatRoomId(), userId);
 
-        // 1. 먼저 사용자가 참여한 활성 채팅방 조회
-        List<ChatRoom> activeChatRooms = chatRoomRepository.findActiveRoomsByUserId(userId, Pageable.unpaged())
-                .getContent();
-        log.info("활성 채팅방 수: {}", activeChatRooms.size());
+                    if (unreadCount > 0) {
+                        // 해당 채팅방의 마지막 메시지 조회
+                        ChatMessages lastMessage = chatMessageRepository
+                                .findFirstByChatRoomOrderByCreatedAtDesc(room)
+                                .orElse(null);
 
-        List<ChatMessageDTO> unreadMessages = new ArrayList<>();
-
-        for (ChatRoom chatRoom : activeChatRooms) {
-            log.info("채팅방 ID: {} 처리 중", chatRoom.getChatRoomId());
-
-            // 2. 각 채팅방의 마지막 메시지 조회
-            Page<ChatMessages> messages = chatMessageRepository
-                    .findByChatRoom_ChatRoomIdOrderByCreatedAtDesc(
-                            chatRoom.getChatRoomId(),
-                            PageRequest.of(0, 1)
-                    );
-
-            if (!messages.isEmpty()) {
-                ChatMessages lastMessage = messages.getContent().get(0);
-                log.info("마지막 메시지 - messageId: {}, sender: {}, isRead: {}",
-                        lastMessage.getChatMessageId(),
-                        lastMessage.getSender().getUserId(),
-                        lastMessage.isRead());
-
-                // 3. 마지막 메시지가 읽지 않은 상대방의 메시지인 경우만 추가
-                if (!lastMessage.isRead() && !lastMessage.getSender().getUserId().equals(userId)) {
-                    ChatMessageDTO dto = ChatMessageDTO.from(lastMessage);
-                    unreadMessages.add(dto);
-                    log.info("읽지 않은 메시지 추가됨 - messageId: {}", dto.getChatMessageId());
-                }
-            }
-        }
-
-        log.info("총 읽지 않은 메시지 수: {}", unreadMessages.size());
-        return unreadMessages;
+                        return UnreadMessageSummary.builder()
+                                .chatRoomId(room.getChatRoomId())
+                                .productName(room.getProduct().getProductName())
+                                .thumbnailImage(room.getProduct().getThumbnailImage())
+                                .senderName(room.getProduct().getSeller().getNickname())
+                                .unreadCount((int) unreadCount)
+                                .lastMessageTime(lastMessage != null ? lastMessage.getCreatedAt() : room.getUpdatedAt())
+                                .build();
+                    }
+                    return null;
+                })
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
     }
+
+    /*실시간 메시지 처리 시 알림 발송*/
+    public void sendMessageNotification(String recipientId, ChatMessageDTO chatMessageDTO){
+        // 수신자가 현재 접속 중이면 알림 발송
+        if(sessionManager.isUserConnected(recipientId)){
+            simpMessagingTemplate.convertAndSendToUser(
+                    recipientId,
+                    "/queue/chat.notification",
+                    chatMessageDTO
+            );
+        }
+    }
+
 
     @Transactional
     public void handleChatRoomEnter(Long chatRoomId, String userId){

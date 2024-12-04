@@ -9,14 +9,18 @@ import nanukko.nanukko_back.config.WebSocketSessionManager;
 import nanukko.nanukko_back.dto.chat.ChatMessageDTO;
 import nanukko.nanukko_back.dto.chat.ChatRoomDTO;
 import nanukko.nanukko_back.dto.chat.ReadMessageRequest;
+import nanukko.nanukko_back.dto.chat.UnreadMessageSummary;
 import nanukko.nanukko_back.dto.page.PageResponseDTO;
+import nanukko.nanukko_back.dto.user.CustomUserDetails;
 import nanukko.nanukko_back.service.ChatService;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.*;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
 
 
 import java.nio.file.AccessDeniedException;
@@ -35,33 +39,19 @@ public class ChatMessageController {
     private final WebSocketSessionManager sessionManager;
 
     /*메시지 전송*/
-    @MessageMapping("/chat/{chatRoomId}") // StompConfig에 설정해놓은 /app과 합쳐져 /app/chat으로 왔을 때 이 컨트롤러 탐(클라이언트에서 메시지를 보낼 주소)
-    @SendTo("/queue/chat/{chatRoomId}") //핸들러에서 처리를 마친 후 반환 값을 /topic/message의 경로로 메시지를 보냄(메시지를 구독중인 클라이언트들에게 브로드캐스트)
-    public ChatMessageDTO sendMessage(
-            @DestinationVariable Long chatRoomId,
-            @Payload ChatMessageDTO msg,
-            Principal principal
-    ) {
-        //        //Thread.sleep(500); // 메시지 처리 시간 시뮬레이션
-        log.info("채팅 메시지 전송: roomId={}, message={}", chatRoomId, msg.getChatMessage());
-
-        return chatService.sendMessage(chatRoomId, msg); // 메시지 전송 + DB 저장
-    }
+//    @MessageMapping("/chat/{chatRoomId}") // StompConfig에 설정해놓은 /app과 합쳐져 /app/chat으로 왔을 때 이 컨트롤러 탐(클라이언트에서 메시지를 보낼 주소)
+//    @SendTo("/queue/chat/{chatRoomId}") //핸들러에서 처리를 마친 후 반환 값을 /topic/message의 경로로 메시지를 보냄(메시지를 구독중인 클라이언트들에게 브로드캐스트)
+//    public ChatMessageDTO sendMessage(
+//            @DestinationVariable Long chatRoomId,
+//            @Payload ChatMessageDTO msg,
+//            Principal principal
+//    ) {
+//        //        //Thread.sleep(500); // 메시지 처리 시간 시뮬레이션
+//        log.info("채팅 메시지 전송: roomId={}, message={}", chatRoomId, msg.getChatMessage());
 //
-//
-//        // 서비스에서는 메시지 저장만 처리
-//        ChatMessageDTO savedMessage = chatService.sendMessage(chatRoomId, msg);
-//
-//        // 상대방에게 알림 전송
-//        String recipientId = chatService.getRecipientId(chatRoomId, msg.getSender());
-//        simpMessagingTemplate.convertAndSendToUser(
-//                recipientId,
-//                "/queue/notifications",
-//                savedMessage
-//        );
-//
-//        return savedMessage;  // @SendTo에 의해 채팅방으로 전송됨
+//        return chatService.sendMessage(chatRoomId, msg); // 메시지 전송 + DB 저장
 //    }
+
 
     /*채팅방 입장*/
     // 채팅방의 이전 메시지 내역 조회 + 안 읽은 메시지 읽음 처리 (채팅방 첫 입장 시 호출)
@@ -127,8 +117,55 @@ public class ChatMessageController {
         return ChatMessageDTO.builder()
                 .messageIds(request.getMessageIds())
                 .updatedMessages(result.getContent())
+                .chatRoom(chatRoomId)
                 .isRead(true)
                 .build();
     }
+
+    /**
+     * 읽지 않은 메시지 요약 조회
+     * 채팅 알림 드롭다운에서 사용
+     */
+    @GetMapping("/api/chat/unread-messages")
+    public ResponseEntity<List<UnreadMessageSummary>> getUnreadMessages(
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        String userId = userDetails.getUsername();
+        List<UnreadMessageSummary> unreadMessages = chatService.getUnreadMessages(userId);
+        log.info("안 읽은 메시지 요약: {}", unreadMessages);
+        return ResponseEntity.ok(unreadMessages);
+    }
+
+    /**
+     * 메시지 전송 시 실시간 알림 처리
+     * 기존 sendMessage 메서드 수정
+     */
+    @MessageMapping("/chat/{chatRoomId}")
+    @SendTo("/queue/chat/{chatRoomId}")
+    public ChatMessageDTO sendMessage(
+            @DestinationVariable Long chatRoomId,
+            @Payload ChatMessageDTO msg,
+            Principal principal) {
+
+        log.info("메시지 전송: roomId={}, message={}", chatRoomId, msg);
+        ChatMessageDTO savedMessage = chatService.sendMessage(chatRoomId, msg);
+
+        // 수신자 알림 처리 추가
+        String recipientId = chatService.getRecipientId(chatRoomId, msg.getSender());
+        sendNotificationToUser(recipientId, savedMessage);
+
+        return savedMessage;
+    }
+
+    /**
+     * 개별 사용자에게 알림 전송
+     */
+    private void sendNotificationToUser(String userId, ChatMessageDTO message) {
+        simpMessagingTemplate.convertAndSendToUser(
+                userId,
+                "/queue/chat.notification",
+                message
+        );
+    }
+
 
 }

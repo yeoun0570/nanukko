@@ -80,14 +80,14 @@ public class ChatController {
         return ResponseEntity.ok(messages);
     }
 
-    @GetMapping("/unread-messages")
-    public ResponseEntity<List<ChatMessageDTO>> getUnreadMessages(
-            @AuthenticationPrincipal CustomUserDetails userDetails
-    ) {
-        String userId = userDetails.getUsername();
-        List<ChatMessageDTO> unreadMessages = chatService.getUnreadMessages(userId);
-        log.info("안 읽은 메시지 {}:", unreadMessages);
-        return ResponseEntity.ok(unreadMessages);
-    }
+//    @GetMapping("/unread-messages")
+//    public ResponseEntity<List<ChatMessageDTO>> getUnreadMessages(
+//            @AuthenticationPrincipal CustomUserDetails userDetails
+//    ) {
+//        String userId = userDetails.getUsername();
+//        List<ChatMessageDTO> unreadMessages = chatService.getUnreadMessages(userId);
+//        log.info("안 읽은 메시지 {}:", unreadMessages);
+//        return ResponseEntity.ok(unreadMessages);
+//    }
 
 }
