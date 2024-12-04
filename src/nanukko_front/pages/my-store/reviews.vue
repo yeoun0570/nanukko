@@ -4,6 +4,7 @@ import StoreScore from "~/components/my-store/reviews/StoreScore.vue";
 import { useApi } from "@/composables/useApi";
 
 const api = useApi();
+const refreshUserProfile = inject('refreshUserProfile');
 
 definePageMeta({
   layout: "mystore",
@@ -44,6 +45,7 @@ const normalizeRating = (rating) => {
 
 onMounted(() => {
   loadReviews();
+  refreshUserProfile();
 });
 </script>
 
@@ -61,7 +63,7 @@ onMounted(() => {
           <div class="review-header">
             <div class="profile-section">
               <img
-                :src="review.thumbnail || '/default-profile.png'"
+                :src="review.thumbnail || '/image/default-profile.png'"
                 alt="상품 썸네일"
                 class="thumbnail-image"
               />

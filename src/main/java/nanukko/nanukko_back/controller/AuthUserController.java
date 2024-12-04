@@ -1,15 +1,15 @@
 package nanukko.nanukko_back.controller;
 
+import lombok.RequiredArgsConstructor;
 import nanukko.nanukko_back.dto.user.CustomUserDetails;
 import nanukko.nanukko_back.dto.user.UserInfoDTO;
+import nanukko.nanukko_back.service.MailService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -17,11 +17,14 @@ import java.util.stream.Collectors;
 
 @RequestMapping("/api/user")
 @RestController
+@RequiredArgsConstructor
 public class AuthUserController {
+
+    private final MailService mailService;
 
     // 사용자 아이디 & 권한 얻을 때 사용, 인증 정보를 처리하는 복잡한 로직이 필요한 경우 사용
     @GetMapping("/auth")
-    public String getAuthenticatedUserInfo(){
+    public String getAuthenticatedUserInfo() {
         String userId = SecurityContextHolder.getContext().getAuthentication().getName();//로그인 성공 후 임시 세션에서 이름 받음
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();//권한 받음
@@ -31,13 +34,13 @@ public class AuthUserController {
 
         String role = auth.getAuthority();// 권한 저장
 
-        return "사용자 정보 "+userId+role;
+        return "사용자 정보 " + userId + role;
 
     }
 
     // 간단한 사용자 정보 추출 및 처리용
     @GetMapping("principal")
-    public ResponseEntity<UserInfoDTO> getAuthenticatedUserInfoDetails(@AuthenticationPrincipal CustomUserDetails userDetails){
+    public ResponseEntity<UserInfoDTO> getAuthenticatedUserInfoDetails(@AuthenticationPrincipal CustomUserDetails userDetails) {
 
         String roles = userDetails.getAuthorities()
                 .stream()
@@ -51,6 +54,12 @@ public class AuthUserController {
                 .role(roles)
                 .build();
         return ResponseEntity.ok(userDto);
+    }
+
+    @PostMapping("find-id")
+    public ResponseEntity<Void> findUserId(@RequestParam String email) {
+        mailService.sendMailFindId(email);
+        return ResponseEntity.ok().build();
     }
 
 

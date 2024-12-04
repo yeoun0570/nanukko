@@ -8,6 +8,9 @@ import { useApi } from "@/composables/useApi";
 
 const api = useApi();
 
+//mystore 레이아웃에서 받은 함수
+const refreshUserProfile = inject("refreshUserProfile");
+
 definePageMeta({
   layout: "mystore",
 });
@@ -63,6 +66,7 @@ const updateUserInfo = async () => {
     alert("정보가 성공적으로 수정되었습니다.");
     isEditing.value = false; // 수정 모드 종료
     loadUserInfo(); // 새로운 정보 로드
+    await refreshUserProfile();
   } catch (err) {
     error.value = "정보 수정 중 오류가 발생했습니다.";
     console.error("수정 실패:", err.response?.data);

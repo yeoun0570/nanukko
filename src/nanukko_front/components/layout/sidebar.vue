@@ -3,26 +3,13 @@ import { useApi } from "@/composables/useApi";
 
 const api = useApi();
 
-// 사용자 프로필 데이터 상태 관리
-const userProfile = ref({});
-
-// 사용자 프로필 데이터 가져오기
-const fetchUserProfile = async () => {
-  try {
-    const response = await api.get("/my-store/simple-info");
-    userProfile.value = response;
-    console.log("사이드바 사용자 정보: ", userProfile.value);
-     // 2로 나눈 후 소수점 첫째자리까지 반올림
-     userProfile.value.reviewRate = Math.round((userProfile.value.reviewRate / 2) * 10) / 10;
-  } catch (error) {
-    console.error("프로필 정보 로드 실패:", error);
-  }
-};
-
+//mystore 레이아웃에서 전달받은 함수와 변수
+const refreshUserProfile = inject("refreshUserProfile");
+const userProfile = inject("userProfile");
 
 // 컴포넌트 마운트 시 프로필 정보 로드
 onMounted(() => {
-  fetchUserProfile();
+  refreshUserProfile();
 });
 </script>
 
@@ -64,7 +51,7 @@ onMounted(() => {
           </div>
         </div>
       </div>
-      <div class="border-section"><br></div>
+      <div class="border-section"><br /></div>
       <!-- 내정보 -->
       <!-- <div class="userInfo">
         <h2 class="click-title" @click="">내정보</h2>
