@@ -153,7 +153,7 @@ const sortedMessages = computed(() => {
 const headerData = computed(() => ({
   productName: props.currentRoom?.productName,
   price: props.currentRoom?.price,
-  thumbnailImage: props.currentRoom?.thumbnailImage,
+  thumbnailImage: props.currentRoom?.productThumbnail,
   status: props.currentRoom?.status,
   condition: props.currentRoom?.condition
 }))

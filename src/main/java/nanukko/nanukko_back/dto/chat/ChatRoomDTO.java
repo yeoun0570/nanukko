@@ -59,12 +59,15 @@ public class ChatRoomDTO {
                 .productName(entity.getProduct().getProductName())  // 상품 이름 추가
                 .price(entity.getProduct().getPrice())//상품 가격
                 .status(entity.getProduct().getStatus().name())
+                .productThumbnail(entity.getProduct().getThumbnailImage()) //사진
                 // 구매자 정보
                 .buyerId(entity.getBuyer().getUserId())
                 .buyerName(entity.getBuyer().getNickname())
+                .buyerProfile(entity.getBuyer().getProfile())
                 // 판매자 정보
                 .sellerId(entity.getProduct().getSeller().getUserId())
                 .sellerName(entity.getProduct().getSeller().getNickname())
+                .sellerProfile(entity.getProduct().getSeller().getProfile())
                 // 채팅 메시지 (있는 경우에만 변환)
                 .chatMessages(entity.getChatMessages() != null ?
                         entity.getChatMessages().stream()

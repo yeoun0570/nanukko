@@ -447,16 +447,16 @@ public class ChatService {
                 .orElseThrow(() -> new EntityNotFoundException("채팅방을 찾을 수 없습니다."));
 
         log.info("원본 채팅방: {}",chatRoom);
-        
+
         // 나가기 시간 기록
         chatRoom.updateLeftAt(userId);
         log.info("나간 시록 기록: {}",chatRoom);
-        
-        
+
+
         // 나감 여부 기록
         chatRoom.updateIsLeft(userId);
         log.info("나감 여부 기록: {}",chatRoom);
-        
+
         chatRoomRepository.save(chatRoom);
 
         // 시스템 메시지 저장 -> 추후에 쓸지도?
@@ -521,13 +521,13 @@ public class ChatService {
                 // 상대방에게 알림 전송
                 String recipientId = getRecipientId(chatRoomId, userId);
                 ChatMessageDTO readNotification = ChatMessageDTO.builder()
-                                .messageIds(messageIds)
-                                        .isRead(true)
-                                                .build();
+                        .messageIds(messageIds)
+                        .isRead(true)
+                        .build();
                 simpMessagingTemplate.convertAndSendToUser(
                         recipientId,
                         "/queue/chat.notification",// 알림 전용 채널로 변경
-                       readNotification
+                        readNotification
                 );
             }
         }

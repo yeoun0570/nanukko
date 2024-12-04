@@ -2,6 +2,7 @@
   position: relative;
   display: inline-flex;
   align-items: center;
+  padding: 4px;
 }
 
 .chat-button {
@@ -12,6 +13,7 @@
   color: #666;
   cursor: pointer;
   transition: color 0.2s;
+  padding-right: 8px;
 }
 
 .chat-button:hover {
@@ -33,7 +35,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transform: translate(25%, -25%);
+  /* transform 값 조정 */
+  transform: translate(25%, -15%);
+  /* z-index 추가 */
+  z-index: 1;
+  /* 뱃지가 잘리지 않도록 보장 */
+  overflow: visible;
 }
 
 .dropdown-menu {

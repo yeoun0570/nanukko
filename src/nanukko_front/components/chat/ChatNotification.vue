@@ -1,22 +1,22 @@
 <template>
   <div class="notification-wrapper" ref="container">
     <!-- 채팅 알림 버튼 -->
-    <button 
+     <!-- 알림 버튼 -->
+     <button 
       class="chat-button"
-      @click="toggleDropdown"
+      @click="handleNotificationClick"
       ref="notificationButton"
     >
       <i class="fas fa-comments"></i>
-      <!-- 읽지 않은 메시지 수 뱃지 -->
-      <span v-if="unreadCount > 0" class="notification-badge">
+      <span v-if="unreadCount > 0 && isAuthenticated" class="notification-badge">
         {{ unreadCount }}
       </span>
     </button>
 
-    <!-- 드롭다운 알림 메뉴 -->
+    <!-- 드롭다운 알림 메뉴 - 로그인된 경우에만 표시 -->
     <Transition name="slide-fade">
       <div
-        v-if="showDropdown"
+        v-if="showDropdown && isAuthenticated"
         class="dropdown-menu"
         ref="dropdownMenu"
       >
@@ -77,6 +77,8 @@ import { useRouter } from 'vue-router'
 import { useAuth } from '~/composables/auth/useAuth'
 import { useStomp } from '~/composables/chat/useStomp'
 import { useApi } from '~/composables/useApi'
+
+const emit = defineEmits(['show-login']);
 
 // 라우터 설정
 const router = useRouter()
@@ -177,6 +179,16 @@ const handleNewMessage = async (message) => {
 const toggleDropdown = () => {
   showDropdown.value = !showDropdown.value
 }
+
+
+// 알림 클릭 핸들러
+const handleNotificationClick = () => {
+  if (!isAuthenticated.value) {
+    emit('show-login');
+    return;
+  }
+  toggleDropdown();
+};
 
 // 채팅방 선택 처리
 const handleRoomSelect = async (room) => {
@@ -303,352 +315,39 @@ onUnmounted(() => {
   document.removeEventListener('click', handleOutsideClick)
 })
 
-// 인증 상태 변화 감시
-watch(isAuthenticated, (newValue) => {
-  if (newValue) {
-    initializeNotifications()
-  } else {
-    chatRooms.value = []
-    unreadCount.value = 0
+// 인증 상태 변화 감시(로그아웃 감지해서 알림 바로 사라질 수 있도록하기)
+// 로그아웃 감지 및 상태 초기화
+watch(() => isAuthenticated.value, (newValue) => {
+  if (!newValue) {
+    // 상태 초기화
+    chatRooms.value = [];
+    unreadCount.value = 0;
+    showDropdown.value = false;
+    
+    // localStorage 정리
+    if (process.client) {
+      localStorage.removeItem('chat-notifications');
+      localStorage.removeItem('chat-notifications-count');
+    }
+    
+    // 구독 해제
+    if (notificationSubscription.value) {
+      stomp.unsubscribe(notificationSubscription.value);
+      notificationSubscription.value = null;
+    }
   }
-})
+}, { immediate: true });
+
+// 컴포넌트 언마운트 시 정리
+onUnmounted(() => {
+  clearAllNotifications();
+  if (notificationSubscription.value) {
+    stomp.unsubscribe(notificationSubscription.value);
+  }
+});
+
 </script>
 
 <style scoped>
 @import '~/assets/chat/chat-notification.css';
 </style>
-
-<!-- <script setup>
-import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
-import { useStomp } from '~/composables/chat/useStomp'
-import { useAuth } from '~/composables/auth/useAuth'
-import { useRouter } from 'vue-router'
-import { useFormatTime } from '~/composables/useFormatTime'
-import { ca } from 'vuetify/locale'
-import { useApi } from '#build/imports'
-
-/**
- * 
- */
-// localStorage 관련 유틸리티 함수들을 별도로 정의
-const storage = {
-  save(key, value) {
-    if (process.client) {  // 클라이언트 사이드인 경우에만 실행
-      localStorage.setItem(key, JSON.stringify(value));
-      updateUnreadCount();// 저장할 때마다 카운트 업데이트
-    }
-  },
-  
-  load(key) {
-    if (process.client) {  // 클라이언트 사이드인 경우에만 실행
-      try {
-        const item = localStorage.getItem(key);
-        const parsedNotifications = item ? JSON.parse(item) : [];
-        notifications.value = parsedNotifications;
-        updateUnreadCount(); // 로드할 때도 카운트 업데이트
-
-        return parsedNotifications;
-      } catch (error) {
-        console.error('로컬 스토리지 로드 실패:', error);
-        return [];
-      }
-    }
-    return [];
-  }
-};
-
-// 컴포넌트 setup 내부
-const notifications = ref([]);  // 초기값은 빈 배열로 설정
-
-// onMounted에서 localStorage 데이터 로드
-onMounted(() => {
-  //저장된 알림 로드
-  notifications.value = storage.load('chat-notifications');
-
-  //저장된 카운트 로드(없으면 계산)
-  const savedCount = localStorage.getItem('chat-notifications-count');
-  if(savedCount !== null){
-    unreadCount.value = parseInt(savedCount, 10);
-  }else{
-    updateUnreadCount();
-  }
-
-  if(isAuthenticated.value){
-    initializeNotifications();
-  }
-});
-
-
-
-
-
-// 필요한 composables 초기화
-const router = useRouter()
-const stomp = useStomp()
-const { userId, isAuthenticated } = useAuth()
-const { formatTime } = useFormatTime()
-const api = useApi()
-
-// 상태 관리를 위한 refs
-const unreadCount = ref(0)
-const showDropdown = ref(false)
-const notificationButton = ref(null)
-const dropdownMenu = ref(null)
-let notificationSubscription = null
-
-// 로컬 스토리지 유틸리티 함수
-function saveNotifications(notifs) {
-  localStorage.setItem('chat-notifications', JSON.stringify(notifs))
-}
-
-function loadNotifications() {
-  try {
-    const saved = localStorage.getItem('chat-notifications')
-    return saved ? JSON.parse(saved) : []
-  } catch (error) {
-    console.error('알림 로드 실패:', error)
-    return []
-  }
-}
-
-// 새 메시지 처리 함수
-const handleNewMessage = (message) => {
-  try {
-    console.log('수신된 알림:', message)
-    const messageData = typeof message === 'string' ? 
-      JSON.parse(message) : 
-      message.body ? JSON.parse(message.body) : message
-
-      // 읽음 처리 알림인 경우 처리하지 않음
-    if (messageData.isRead) {
-      return;
-    }
-
-    // 이미 존재하는 알림인지 확인
-    // 중복 체크를 위한 키 생성
-    const notificationKey = `${messageData.chatRoom}-${messageData.createdAt}`;
-    const isDuplicate = notifications.value.some(n => 
-      `${n.chatRoomId}-${n.createdAt}` === notificationKey
-    );
-
-    if (!isDuplicate && messageData.chatRoom) {
-      const notification = {
-        id: Date.now(),
-        chatRoomId: messageData.chatRoom,
-        message: messageData.chatMessage,
-        sender: messageData.sender,
-        createdAt: messageData.createdAt,
-        isRead: false
-      };
-
-      notifications.value = [notification, ...notifications.value];
-      storage.save('chat-notifications', notifications.value);
-    }
-  } catch (error) {
-    console.error('알림 처리 중 오류:', error);
-  }
-};
-
-
-
-
-//읽음 상태 업데이트
-const updateUnreadCount = () => {
-  const count = notifications.value.filter(n => !n.isRead).length;
-  unreadCount.value = count;
-
-  //localStorage에 카운트도 함께 저장
-  if(process.client){
-    localStorage.setItem('chat-notifications-count', count.toString());
-  }
-}
-
-
-// 알림 확인 시 처리
-const handleNotificationClick = async (notification) => {
-  try {
-    // 알림 읽음 처리
-    markNotificationAsRead(notification);
-    showDropdown.value = false;
-
-
-    // 채팅방으로 이동
-    await navigateToChatRoom(notification.chatRoomId);
-  } catch (error) {
-    console.error('알림 처리 실패:', error);
-  }
-};
-
-//채팅방 이동 
-const navigateToChatRoom = async (roomId) => {
-  try {
-    await router.push({
-      path: '/chat',
-      query: roomId? { roomId: roomId.toString() } : undefined
-    });
-    return true;
-  }catch(error){
-    console.error('라우터 이동 실패', error);
-    return false;
-  }
-}
-
-
-
-
-// 드롭다운 토글 함수
-const toggleDropdown = () => {
-  showDropdown.value = !showDropdown.value
-  unreadCount.value = 0;
-}
-
-// 외부 클릭 핸들러 추가
-onMounted(() => {
-  document.addEventListener('click', (event) => {
-    const dropdown = dropdownMenu.value
-    const button = notificationButton.value
-    
-    if (showDropdown.value && dropdown && !dropdown.contains(event.target) && 
-        button && !button.contains(event.target)) {
-      showDropdown.value = false
-    }
-  })
-})
-
-// 모든 알림 지우기
-const clearAllNotifications = () => {
-  notifications.value = []
-  unreadCount.value = 0
-  if(process.client){
-    localStorage.removeItem('chat-notifications');
-    localStorage.removeItem('chat-notifications-count');
-  }
-  showDropdown.value = false;
-}
-
-// 외부 클릭 핸들러
-const handleOutsideClick = (event) => {
-  if (showDropdown.value && 
-      dropdownMenu.value && 
-      notificationButton.value && 
-      !dropdownMenu.value.contains(event.target) &&
-      !notificationButton.value.contains(event.target)) {
-    showDropdown.value = false
-  }
-}
-
-// 알림 초기화
-const initializeNotifications = async () => {
-  if (!isAuthenticated.value || !userId.value) return
-
-  try {
-    // STOMP 연결
-    if (!stomp.connected.value) {
-      await stomp.connectChat(userId.value)
-    }
-
-    // 개인 알림 채널 구독
-    const destination = `/user/${userId.value}/queue/chat.notification`
-    console.log('알림 구독:', destination)
-    
-    notificationSubscription = await stomp.subscribeToChatRoom(
-      destination,
-      { onMessage: handleNewMessage }
-    )
-  } catch (error) {
-    console.error('알림 초기화 실패:', error)
-  }
-}
-
-
-// 로그인 시 최신 메시지 체크를 위한 함수 추가
-const initializeUnreadMessages = async () => {
-  try {
-    // API 호출을 통해 읽지 않은 최신 메시지 조회
-    const response = await api.get('/chat/unread-messages');
-
-    // response.data가 유효한 배열인지 확인하고 기본값 설정
-    const unreadMessages = Array.isArray(response.data) ? response.data : [];
-
-    // 읽지 않은 메시지들을 알림으로 변환
-    const newNotifications = unreadMessages.map(msg => ({
-      id: Date.now(),
-      chatRoomId: msg.chatRoom,
-      message: msg.chatMessage,
-      sender: msg.sender,
-      createdAt: msg.createdAt,
-      isRead: false
-    }));
-
-    // 알림 상태 업데이트
-    notifications.value = newNotifications;
-    updateUnreadCount();//읽지 않은 메시지 수 갱신
-    saveNotifications(notifications.value);// 알림 상태 저장
-  } catch (error) {
-    console.error('읽지 않은 메시지 조회 실패:', error);
-  }
-};
-
-
-// 알림 확인 시 처리하는 함수
-const markNotificationAsRead = (notification) => {
-  notification.isRead = true;
-  storage.save('chat-notifications', notifications.value);
-  //참고로 updateUnreadCount는 storage.save 내부에서 호출됨
-}
-
-
-
-// 라이프사이클 훅//
-// useAuth의 logout 함수 호출 후 알림 초기화되도록 watch 추가
-watch(isAuthenticated, (newValue) => {
-  if (!newValue) {
-    clearAllNotifications();
-  }
-});
-
-onMounted(async () => {
-  if (isAuthenticated.value) {
-    //로그인하면 알림 초기화
-    await initializeNotifications();
-    await initializeUnreadMessages();
-  }
-  
-  document.addEventListener('click', handleOutsideClick);
-  unreadCount.value = notifications.value.filter(n => !n.isRead).length;
-});
-
-onUnmounted(() => {
-  // 구독 해제
-  if (notificationSubscription) {
-    stomp.unsubscribe(notificationSubscription)
-    notificationSubscription = null
-  }
-  
-  // 이벤트 리스너 제거
-  document.removeEventListener('click', handleOutsideClick)
-})
-
-// 인증 상태 감시
-watch(isAuthenticated, (newValue) => {
-  if (newValue) {
-    initializeNotifications()
-  } else {
-    clearAllNotifications()
-  }
-})
-
-// 알림 상태 변화 감시
-watch(notifications, (newNotifications) => {
-  if (process.client) {
-    storage.save('chat-notifications', newNotifications);
-    updateUnreadCount();
-  }
-}, { deep: true });
-
-watch(notifications, (newValue) => {
-  console.log('알림 목록 변경:', newValue);
-}, { deep: true });
-</script> -->
-
-

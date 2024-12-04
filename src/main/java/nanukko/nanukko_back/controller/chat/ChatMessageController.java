@@ -79,7 +79,7 @@ public class ChatMessageController {
             @DestinationVariable Long chatRoomId,
             @Payload Map<String, Integer> pageInfo,
             @Header("simpUser") Principal principal
-            ) throws AccessDeniedException {
+    ) throws AccessDeniedException {
         String userId = principal.getName();
         chatService.leaveChatRoom(chatRoomId, userId); // 채팅방 나감 처리 후
         Pageable pageable = PageRequest.of(pageInfo.get("page"), pageInfo.get("size"));

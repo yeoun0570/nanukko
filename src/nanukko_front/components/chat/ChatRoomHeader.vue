@@ -72,7 +72,7 @@ const props = defineProps({
     type: Object,
     required: true,
     validator(value) {
-      const requiredFields = ['productName', 'price', 'status', 'condition']
+      const requiredFields = ['productName', 'price', 'status', 'condition', 'thumbnailImage']
       return requiredFields.every(field => field in value)
     }
   },
