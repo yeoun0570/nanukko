@@ -6,6 +6,7 @@ import lombok.*;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDate;
+import java.util.Objects;
 
 @Getter
 @AllArgsConstructor
@@ -41,5 +42,16 @@ public class Kid {
         this.kidGender = kidGender;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Kid kid = (Kid) o;
+        return kidGender == kid.kidGender && Objects.equals(kidBirth, kid.kidBirth);
+    }
 
+    @Override
+    public int hashCode() {
+        return Objects.hash(kidBirth, kidGender);
+    }
 }

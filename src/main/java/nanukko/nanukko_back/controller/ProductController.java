@@ -47,7 +47,7 @@ public class ProductController {
     ) {
         if (userDetails != null) {
             //로그인 : 사용자 자녀 정보 기반 상품 추천 (찜 여부 포함)
-            PageResponseDTO<ProductResponseDto> dto = productService.getMainProducts(pageable);
+            PageResponseDTO<ProductResponseDto> dto = productService.getMainProducts(pageable, userDetails.getUsername());
             return ResponseEntity.ok(dto);
         } else {
             //로그아웃 : 전체 상품 조회
@@ -106,15 +106,22 @@ public class ProductController {
     @GetMapping("/search")
     public ResponseEntity<PageResponseDTO<Product>> searchProducts(
             @RequestParam(required = false, defaultValue = "") @Size(min = 1, max = 100) String query,
-            @PageableDefault(size = 20, sort = "updatedAt", direction = Sort.Direction.DESC) Pageable pageable
+            @PageableDefault(size = 20, sort = "updatedAt", direction = Sort.Direction.DESC) Pageable pageable,
+            @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         // 검색어가 비어있는 경우 빈 결과 반환
         if (query.trim().isEmpty()) {
             return ResponseEntity.ok(PageResponseDTO.empty(pageable));
         }
 
+        User currentUser = null;
+        if (userDetails != null) {
+            String userId = userDetails.getUsername();
+            currentUser = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없음"));
+        }
+
         try {
-            PageResponseDTO<Product> products = productService.searchProducts(query.trim(), pageable);
+            PageResponseDTO<Product> products = productService.searchProducts(query.trim(), pageable, currentUser);
             return ResponseEntity.ok(products);
         } catch (IllegalArgumentException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "잘못된 검색 요청입니다: " + e.getMessage());
