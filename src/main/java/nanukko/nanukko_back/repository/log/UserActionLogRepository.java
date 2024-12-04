@@ -10,12 +10,12 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface UserActionLogRepository extends JpaRepository<UserActionLog, Long> {
-    @Query("SELECT log.product.productId, COUNT(log.product.productId) as count " +
+    @Query("SELECT log.product.productId " +
             "FROM UserActionLog log " +
             "WHERE log.ageGroup = :ageGroup " +
             "AND log.product IS NOT NULL " +
             "GROUP BY log.product.productId " +
-            "ORDER BY count DESC")
-    Page<Long> findPopularProductsByAgeGroup(@Param("ageGroup") int ageGroup, Pageable pageable);
+            "ORDER BY COUNT(log.product.productId) DESC")
+    Page<Long> findPopularProductIdsByAgeGroup(@Param("ageGroup") int ageGroup, Pageable pageable);
 
 }
