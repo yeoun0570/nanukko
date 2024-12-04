@@ -1,10 +1,11 @@
 package nanukko.nanukko_back.controller;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import nanukko.nanukko_back.config.ClovaChatbotConfig;
 import org.apache.tomcat.util.codec.binary.Base64;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.handler.annotation.SendTo;
@@ -18,134 +19,115 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.stream.Collectors;
 
 @Controller
+@Log4j2
+@RequiredArgsConstructor
 public class ClovaChatbotController {
+
+    private final ClovaChatbotConfig chatbotConfig; // 챗봇 설정 주입
+
     @MessageMapping("/sendMessage")
     @SendTo("/topic/public")
-    public String sendMessage(@Payload String chatMessage) throws IOException
-    {
+    public String sendMessage(@Payload String chatMessage) throws IOException {
+        // 초기 로깅
+        log.info("=== 메시지 처리 시작 ===");
+        log.info("받은 메시지: {}", chatMessage);
 
-        URL url = new URL(ClovaChatbotConfig.chatbotUrl);
+        // UTF-8 디코딩
+        String decodedMessage = URLDecoder.decode(chatMessage, StandardCharsets.UTF_8);
+        log.info("디코딩된 메시지: {}", decodedMessage);
 
-        String message =  getReqMessage(chatMessage);
-        String encodeBase64String = makeSignature(message, ClovaChatbotConfig.secretKey);
+        // postback 값 추출 (*T_ 또는 _T_ 제거)
+        String messageContent;
+        if (decodedMessage.startsWith("*T_") || decodedMessage.startsWith("_T_")) {
+            messageContent = decodedMessage.substring(3);
+        } else {
+            messageContent = decodedMessage;
+        }
 
-        //api서버 접속 (서버 -> 서버 통신)
-        HttpURLConnection con = (HttpURLConnection)url.openConnection();
+        // 챗봇 요청 메시지 생성
+        String requestMessage = buildRequestMessage(messageContent);
+        log.info("챗봇 요청 메시지: {}", requestMessage);
+
+        // 챗봇 API URL 설정
+        URL url = new URL(chatbotConfig.getChatbotUrl());
+
+        // API 시그니처 생성
+        String signature = makeSignature(requestMessage, chatbotConfig.getSecretKey());
+
+        // HTTP 연결 설정
+        HttpURLConnection con = (HttpURLConnection) url.openConnection();
         con.setRequestMethod("POST");
         con.setRequestProperty("Content-Type", "application/json;UTF-8");
-        con.setRequestProperty("X-NCP-CHATBOT_SIGNATURE", encodeBase64String);
-
+        con.setRequestProperty("X-NCP-CHATBOT_SIGNATURE", signature);
         con.setDoOutput(true);
-        DataOutputStream wr = new DataOutputStream(con.getOutputStream());
 
-        wr.write(message.getBytes("UTF-8"));
-        wr.flush();
-        wr.close();
-        int responseCode = con.getResponseCode();
-
-        BufferedReader br;
-
-        if(responseCode==200) { // 정상 호출
-            BufferedReader in = new BufferedReader(
-                    new InputStreamReader(
-                            con.getInputStream(), "UTF-8"));
-            String decodedString;
-            String jsonString = "";
-            while ((decodedString = in.readLine()) != null) {
-                jsonString = decodedString;
-            }
-
-            //받아온 값을 세팅하는 부분
-            JSONParser jsonparser = new JSONParser();
-            try {
-                JSONObject json = (JSONObject)jsonparser.parse(jsonString);
-                JSONArray bubblesArray = (JSONArray)json.get("bubbles");
-                JSONObject bubbles = (JSONObject)bubblesArray.get(0);
-                JSONObject data = (JSONObject)bubbles.get("data");
-                String description = "";
-                description = (String)data.get("description");
-                chatMessage = description;
-            } catch (Exception e) {
-                System.out.println("error");
-                e.printStackTrace();
-            }
-
-            in.close();
-        } else {  // 에러 발생
-            chatMessage = con.getResponseMessage();
+        // 요청 전송
+        try (DataOutputStream wr = new DataOutputStream(con.getOutputStream())) {
+            wr.write(requestMessage.getBytes("UTF-8"));
+            wr.flush();
         }
-        return chatMessage;
+
+        // 응답 처리
+        int responseCode = con.getResponseCode();
+        log.info("챗봇 응답 코드: {}", responseCode);
+
+        // 응답 읽기 및 반환
+        if (responseCode == 200) {
+            try (BufferedReader br = new BufferedReader(
+                    new InputStreamReader(con.getInputStream(), "UTF-8"))) {
+                String response = br.lines().collect(Collectors.joining());
+                log.info("챗봇 응답: {}", response);
+                return response;
+            }
+        }
+
+        return con.getResponseMessage(); // 에러 발생시 에러 메시지 반환
     }
 
-    //보낼 메세지를 네이버에서 제공해준 암호화로 변경해주는 메소드
-    public static String makeSignature(String message, String secretKey) {
+    // 챗봇 요청 메시지 생성
+    private String buildRequestMessage(String message) {
+        JSONObject obj = new JSONObject();
+        obj.put("version", "v2");
+        obj.put("userId", "U47b00b58c90f8e47428af8b7bddc1231heo2");
+        obj.put("timestamp", new Date().getTime());
+        if (message == null || message.trim().isEmpty()) {
+            obj.put("event", "open");  // 빈 메시지는 open 이벤트로 처리
+        } else {
+            obj.put("event", "send");
+        }
 
-        String encodeBase64String = "";
+        JSONArray bubbles = new JSONArray();
+        JSONObject bubble = new JSONObject();
+        bubble.put("type", "text");
 
+        JSONObject data = new JSONObject();
+        data.put("description", message);
+        bubble.put("data", data);
+
+        bubbles.add(bubble);
+        obj.put("bubbles", bubbles);
+
+        return obj.toString();
+    }
+
+    // API 시그니처 생성
+    private static String makeSignature(String message, String secretKey) {
         try {
-            byte[] secrete_key_bytes = secretKey.getBytes("UTF-8");
-
-            SecretKeySpec signingKey = new SecretKeySpec(secrete_key_bytes, "HmacSHA256");
+            byte[] secretKeyBytes = secretKey.getBytes("UTF-8");
+            SecretKeySpec signingKey = new SecretKeySpec(secretKeyBytes, "HmacSHA256");
             Mac mac = Mac.getInstance("HmacSHA256");
             mac.init(signingKey);
-
             byte[] rawHmac = mac.doFinal(message.getBytes("UTF-8"));
-            encodeBase64String = Base64.encodeBase64String(rawHmac);
-
-            return encodeBase64String;
-
-        } catch (Exception e){
-            System.out.println(e);
+            return Base64.encodeBase64String(rawHmac);
+        } catch (Exception e) {
+            log.error("시그니처 생성 실패", e);
+            return "";
         }
-
-        return encodeBase64String;
-
     }
-
-    //보낼 메세지를 네이버 챗봇에 포맷으로 변경해주는 메소드
-    public static String getReqMessage(String voiceMessage) {
-
-        String requestBody = "";
-
-        try {
-
-            JSONObject obj = new JSONObject();
-
-            long timestamp = new Date().getTime();
-
-            System.out.println("##"+timestamp);
-
-            obj.put("version", "v2");
-            obj.put("userId", "U47b00b58c90f8e47428af8b7bddc1231heo2");
-            obj.put("timestamp", timestamp);
-
-            JSONObject bubbles_obj = new JSONObject();
-
-            bubbles_obj.put("type", "text");
-
-            JSONObject data_obj = new JSONObject();
-            data_obj.put("description", voiceMessage);
-
-            bubbles_obj.put("type", "text");
-            bubbles_obj.put("data", data_obj);
-
-            JSONArray bubbles_array = new JSONArray();
-            bubbles_array.add(bubbles_obj);
-
-            obj.put("bubbles", bubbles_array);
-            obj.put("event", "send");
-
-            requestBody = obj.toString();
-
-        } catch (Exception e){
-            System.out.println("## Exception : " + e);
-        }
-
-        return requestBody;
-
-    }
-
 }
