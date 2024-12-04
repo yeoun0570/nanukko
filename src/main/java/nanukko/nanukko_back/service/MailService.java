@@ -207,7 +207,32 @@ public class MailService {
             throw new RuntimeException("메일 메시지 생성 실패", e);
         }
     }
+    
+    
+    ///////////////////판매자, 구매자 둘다 사용
 
+    @Async // 이메일 전송은 비동기로 처리
+    @Transactional(readOnly = true) // 읽기 전용 트랜잭션으로 충분
+    public void sendMailFindId(String email) {
+        try {
+            User user = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new IllegalArgumentException("해당 이메일로 등록된 사용자를 찾을 수 없습니다."));
+
+            MimeMessage message = javaMailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, "UTF-8");
+
+            helper.setTo(email);
+            helper.setSubject(String.format("%s님의 아이디 입니다.", user.getNickname()));
+            helper.setText(String.format("%s님의 아이디는 %s 입니다.", user.getNickname(), user.getUserId()));
+
+            javaMailSender.send(message);
+            log.info("아이디 찾기 메일 전송 성공 - userId: {}", user.getUserId());
+
+        } catch (Exception e) {
+            log.info("아이디 찾기 메일 전송 실패 - email: {}", email);
+            throw new RuntimeException("메일 전송 실패", e);
+        }
+    }
 
     ////////////////////////////////////공용으로 쓰기위한 곳
 

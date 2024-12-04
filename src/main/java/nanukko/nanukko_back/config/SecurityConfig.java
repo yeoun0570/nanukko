@@ -107,7 +107,7 @@ public class SecurityConfig {
         // 요청 경로별 권한 설정
         http
                 .authorizeHttpRequests((auth) -> auth
-                        .requestMatchers("/api/login", "/api/logout", "/", "/api/register/**", "/api/reissue", "/ws-stomp/**").permitAll()//적어준 경로에 대해서는 전체 허용
+                        .requestMatchers("/api/login", "/api/logout", "/", "/api/register/**", "/api/reissue", "/ws-stomp/**", "/api/user/find-id").permitAll()//적어준 경로에 대해서는 전체 허용
                         .requestMatchers("/api/admin").hasRole("ADMIN")//적어준 경로에는 ADMIN만 접근 가능
                         .requestMatchers("/api/reissue").permitAll() // access 토큰 만료된 상태로 요청하므로 permit all
                         .requestMatchers("/ws-stomp/**").authenticated()  // WebSocket 엔드포인트 허용
