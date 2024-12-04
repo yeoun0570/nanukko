@@ -28,7 +28,8 @@
     "vue": "latest",
     "vue-router": "latest",
     "vue-toastification": "^2.0.0-rc.5",
-    "vuetify": "^3.7.4"
+    "vuetify": "^3.7.4",
+    "vite": "^5.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.14.0",

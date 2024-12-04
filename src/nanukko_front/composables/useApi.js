@@ -3,7 +3,7 @@
 /**
  * JWT 토큰 검증이 필요없는 공개 API 경로 목록
  */
-const PUBLIC_PATHS = ["/login", "/register", "/reissue", "/logout"];
+const PUBLIC_PATHS = ["/login", "/register", "/reissue", "/logout", "/user/find-id"];
 
 /**
  * @param{string} path - 검사할 API 경로
@@ -34,7 +34,6 @@ export const useApi = () => {
           "Content-Type": "application/json",
         },
       };
-
 
       // 공개 API가 아닌 경우 토큰 추가
       if (!isPublicPath(url)) {
@@ -122,6 +121,14 @@ export const useApi = () => {
           "Content-Type": "application/x-www-form-urlencoded",
         },
         body: formData,
+        ...options,
+      });
+    }
+
+    // 아이디 찾기 요청의 경우
+    if (url === "/find-id") {
+      return commonFetch(url, {
+        method: "POST",
         ...options,
       });
     }

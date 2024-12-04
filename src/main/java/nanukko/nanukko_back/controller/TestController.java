@@ -2,9 +2,8 @@ package nanukko.nanukko_back.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import nanukko.nanukko_back.domain.product.Image;
 import nanukko.nanukko_back.service.FileService;
-import nanukko.nanukko_back.service.ProductService;
+import nanukko.nanukko_back.util.DummyImageUploader;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,6 +18,7 @@ import java.util.List;
 public class TestController {
 
     private final FileService fileService;
+    private final DummyImageUploader dummyImageUploader;
 
     @GetMapping("/test")
     public String getTest() {
@@ -45,6 +45,16 @@ public class TestController {
             return ResponseEntity.status(HttpStatus.CREATED).build();
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @PostMapping("/upload-dummy-images")
+    public ResponseEntity<String> uploadDummyImages() {
+        try {
+            dummyImageUploader.uploadImagesForAllProducts();
+            return ResponseEntity.ok("더미 이미지 업로드 성공");
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("더미 이미지 업로드 실패: " + e.getMessage());
         }
     }
 

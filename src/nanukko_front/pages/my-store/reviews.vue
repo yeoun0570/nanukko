@@ -63,7 +63,7 @@ onMounted(() => {
           <div class="review-header">
             <div class="profile-section">
               <img
-                :src="review.thumbnail || '/default-profile.png'"
+                :src="review.thumbnail || '/image/default-profile.png'"
                 alt="상품 썸네일"
                 class="thumbnail-image"
               />

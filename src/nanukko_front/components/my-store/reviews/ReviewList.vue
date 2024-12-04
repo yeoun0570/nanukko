@@ -13,7 +13,7 @@ defineProps({
       <div class="review-header">
         <div class="profile-section">
           <img
-            :src="review.profile || '/default-profile.png'"
+            :src="review.profile || '/image/default-profile.png'"
             alt="프로필 사진"
             class="profile-image"
           />

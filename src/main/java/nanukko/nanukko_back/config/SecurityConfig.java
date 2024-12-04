@@ -92,7 +92,7 @@ public class SecurityConfig {
         http
                 .cors(httpSecurityCorsConfigurer -> httpSecurityCorsConfigurer.configurationSource(getCorsConfiguration()))
 
-        ;
+                ;
 
         // csrf disable
         http
@@ -103,12 +103,12 @@ public class SecurityConfig {
                 .formLogin((auth) -> auth.disable());//Form 기반 로그인 방식(사용자가 로그인 폼을 제출하면, 서버는 해당 정보를 받아 세션을 생성하고 이증 관리) disable
 
         http//HTTP Basic인증방식 비활성화
-                .httpBasic((auth) -> auth.disable());// 클라이언트 요청 시 사용자 이름과 비밀번호를 인코딩하여 서버에 전달하는 방식, 보안이 취약하며 사용자의 자격 증명을 매번 전송해야해서 JWT방식과 맞지 않음
+                .httpBasic((auth)-> auth.disable());// 클라이언트 요청 시 사용자 이름과 비밀번호를 인코딩하여 서버에 전달하는 방식, 보안이 취약하며 사용자의 자격 증명을 매번 전송해야해서 JWT방식과 맞지 않음
 
         // 요청 경로별 권한 설정
         http
                 .authorizeHttpRequests((auth) -> auth
-                        .requestMatchers("/api/login", "/api/logout", "/", "/api/register/**", "/api/reissue", "/ws-stomp/**").permitAll()//적어준 경로에 대해서는 전체 허용
+                        .requestMatchers("/api/login", "/api/logout", "/", "/api/register/**", "/api/reissue", "/ws-stomp/**", "/api/user/find-id").permitAll()//적어준 경로에 대해서는 전체 허용
                         .requestMatchers("/api/admin").hasRole("ADMIN")//적어준 경로에는 ADMIN만 접근 가능
                         .requestMatchers("/api/reissue").permitAll() // access 토큰 만료된 상태로 요청하므로 permit all
                         .requestMatchers("/ws-stomp/**").authenticated()  // WebSocket 엔드포인트 허용
@@ -117,6 +117,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/notice/connect/**").permitAll()
                         .requestMatchers("/api/files/**").authenticated()
                         .requestMatchers("/api/review/**").authenticated()
+                        .requestMatchers("/api/upload-dummy-images").permitAll()
                         .requestMatchers("/api/chatbot/**").permitAll()
                         .anyRequest().authenticated()//나머지 요청에 대해서는 로그인 한 사용자들만 접근 가능함
                 );
