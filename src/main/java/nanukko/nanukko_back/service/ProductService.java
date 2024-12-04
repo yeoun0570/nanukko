@@ -80,7 +80,7 @@ public class ProductService {
 
         for (Map.Entry<Integer, Set<Kid>> entry : groupToKidsMap.entrySet()) {
             int ageGroup = entry.getKey();
-            Page<Long> popularProductIds = userActionLogRepository.findPopularProductsByAgeGroup(ageGroup, pageable);
+            Page<Long> popularProductIds = userActionLogRepository.findPopularProductIdsByAgeGroup(ageGroup, pageable);
             List<Product> products = productRepository.findAllById(popularProductIds.getContent());
             products.stream()
                     .map(ProductMapper::toDto)
