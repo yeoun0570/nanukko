@@ -3,8 +3,6 @@ package nanukko.nanukko_back.controller;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.validation.Valid;
 import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -45,16 +43,22 @@ public class ProductController {
             @PageableDefault(size = 20, sort = "updatedAt", direction = Sort.Direction.DESC) Pageable pageable,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        if (userDetails != null) {
-            //로그인 : 사용자 자녀 정보 기반 상품 추천 (찜 여부 포함)
-            PageResponseDTO<ProductResponseDto> dto = productService.getMainProducts(pageable, userDetails.getUsername());
-            return ResponseEntity.ok(dto);
-        } else {
-            //로그아웃 : 전체 상품 조회
-            PageResponseDTO<ProductResponseDto> dto = productService.getMainProducts(pageable);
-            return ResponseEntity.ok(dto);
-        }
+        PageResponseDTO<ProductResponseDto> dto;
+        //로그인 : 사용자 자녀 정보 기반 상품 추천 (찜 여부 포함)
+        dto = productService.getMainProducts(pageable, userDetails.getUsername());
+        return ResponseEntity.ok(dto);
+
     }
+
+    @GetMapping("/main/logout")
+    public ResponseEntity<PageResponseDTO<ProductResponseDto>> getMainLogout(
+            @PageableDefault(size = 20, sort = "updatedAt", direction = Sort.Direction.DESC) Pageable pageable
+    ) {
+        PageResponseDTO<ProductResponseDto> dto; //로그아웃 : 전체 상품 조회
+        dto = productService.getMainProducts(pageable);
+        return ResponseEntity.ok(dto);
+    }
+
 
     @PostMapping(value = "/new", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Map> createProduct(
@@ -89,7 +93,7 @@ public class ProductController {
         User currentUser = null;
         if (userDetails != null) {
             String userId = userDetails.getUsername();
-            currentUser = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없음"));
+            currentUser = userRepository.findById(userId).orElse(null);
         }
         ProductResponseDto product = productService.getProductDetail(id, currentUser);
         log.info("ProductResponseDto 전달 : {}", product);

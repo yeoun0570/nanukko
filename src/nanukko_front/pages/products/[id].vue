@@ -11,7 +11,7 @@ import Map from '~/components/products/products-detail/Map.vue';
 const route = useRoute();
 const router = useRouter();
 const toast = useToast();
-const { auth, isAuthenticated } = useAuth();
+const { isAuthenticated } = useAuth();
 const api = useApi();
 const isLoading = ref(true);
 const product = ref(null);
@@ -30,15 +30,10 @@ onMounted(async () => {
 
 // 상품 정보 로드
 const loadProductDetail = async () => {
+    console.log('현재 route.params.id:', route.params.id);
     try {
         const response = await api.get(`/products/${route.params.id}`);
-
-        // if (productResponse.status === 403) {
-        //     throw new Error('권한이 없거나 존재하지 않는 상품입니다.');
-        // }
-
         product.value = response;
-
         await api.post(`/wishlist/${route.params.id}/view`); // 조회수 증가 API 호출
     } catch (error) {
         console.error('상품 정보 로드 실패:', error);
@@ -50,6 +45,7 @@ const loadProductDetail = async () => {
 
 // 연관 상품 로드
 const loadRelatedProducts = async () => {
+    console.log('연관상품 로드 시 route.params.id:', route.params.id);
     try {
         const response = await api.get(`/products/related?productId=${route.params.id}`);
         if (Array.isArray(response)) {
@@ -230,7 +226,8 @@ const handleBuyClick = () => {
             <div class="seller-info">
                 <div class="seller-profile">
                     <div class="profile-image">
-                        <img :src="product.profile || '/default-profile.jpg'" alt="판매자 프로필">
+                        <img :src="product.profile || '/image/default-profile.png'" alt="판매자 프로필"
+                            :style="!product.profile ? 'width: 80%; height: auto;' : ''">
                     </div>
                     <div class="seller-name">
                         {{ product.userId }}
@@ -351,6 +348,10 @@ const handleBuyClick = () => {
     height: 60px;
     border-radius: 50%;
     overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .profile-image img {

@@ -58,7 +58,7 @@
 
 <script setup>
 
-import { ref, onMounted, watch } from 'vue';
+import { ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import TimeAgo from '~/components/common/TimeAgo.vue';
 import { useApi } from "@/composables/useApi";
