@@ -51,7 +51,9 @@
             아이디 찾기
           </button>
           <span class="divider">|</span>
-          <NuxtLink to="/auth/find-password">비밀번호 찾기</NuxtLink>
+          <button class="/auth/find-id" @click="showPasswordModal = true">
+            비밀번호 찾기
+          </button>
         </div>
         <NuxtLink to="/auth/register" class="register-link">회원가입</NuxtLink>
       </div>
@@ -59,6 +61,7 @@
   </div>
 
   <FindIdModal :is-open="showFindIdModal" :on-close="handleCloseModal" />
+  <ResetPasswordRequestModal :isOpen="showPasswordModal" :onClose="handleClosePasswordModal"/>
 </template>
 
 <script setup>
@@ -67,11 +70,14 @@ import { useAuth } from "~/composables/auth/useAuth";
 import { useApi } from "~/composables/useApi";
 import { useRouter } from "vue-router";
 import FindIdModal from "~/components/auth/FindIdModal.vue";
+import ResetPasswordRequestModal from "~/components/auth/ResetPasswordRequestModal.vue";
+import { useAuthStore } from "~/stores/authStore";
 
 // 필요한 composables 초기화
 const router = useRouter();
-const { setToken, isAuthenticated } = useAuth();
+const { setToken } = useAuth();
 const api = useApi();
+const authStore = useAuthStore();
 
 // 로컬 상태 관리
 const userId = ref("");
@@ -86,6 +92,12 @@ const showFindIdModal = ref(false);
 const handleCloseModal = () => {
   showFindIdModal.value = false;
 };
+
+//비밀번호 찾기 모달 닫기 상태
+const showPasswordModal = ref(false);
+const handleClosePasswordModal = () =>{
+  showPasswordModal.value = false
+}
 
 /**
  * 로그인 폼 제출 핸들러
@@ -128,9 +140,12 @@ const handleLogin = async () => {
     // 로그인 성공 처리
     setToken(token); // 토큰 저장
 
+    authStore.setAuthenticated(true, loginData);
+   
+
     // 페이지 이동 (완료될 때까지 대기)
     await router.push("/");
-    window.location.reload();
+    //window.location.reload();
 
     console.log("로그인 완료 후 메인페이지 이동");
   } catch (err) {
@@ -145,5 +160,5 @@ const handleLogin = async () => {
 </script>
 
 <style scoped>
-@import "~/assets/login/login.css";
+@import "~/assets/auth/login.css";
 </style>

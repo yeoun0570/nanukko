@@ -36,8 +36,8 @@
           <!-- 프로필 영역 -->
           <div class="profile-image">
             <img 
-              v-if="room.sellerProfileImage"
-              :src="room.sellerProfileImage"
+              v-if="room.sellerProfile"
+              :src="room.sellerProfile"
               :alt="room.sellerName"
             />
             <div v-else class="profile-placeholder">

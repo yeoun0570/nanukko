@@ -9,6 +9,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 
+import java.util.List;
+import java.util.Optional;
+
 public interface ChatMessageRepository extends JpaRepository<ChatMessages, Long> {
 
     //채팅 목록 들고오기
@@ -26,6 +29,22 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessages, Long>
                     "ORDER BY m.createdAt DESC"
     )
     Page<ChatMessages> findMessagesSinceLastExit(@Param("chatRoomId")Long chatRoomId, @Param("userId") String userId, Pageable pageable);
-    
+
+    // 채팅방의 안 읽은 메시지 수 카운트
+    long countByChatRoom_ChatRoomIdAndIsReadFalseAndSender_UserIdNot(
+            Long chatRoomId,
+            String userId
+    );
+
+    // 채팅방의 마지막 메시지 조회
+    Optional<ChatMessages> findFirstByChatRoomOrderByCreatedAtDesc(ChatRoom chatRoom);
+
+    // 안 읽은 메시지 목록 조회
+    List<ChatMessages> findByChatRoom_ChatRoomIdAndIsReadFalseAndSender_UserIdNot(
+            Long chatRoomId,
+            String userId
+    );
+
+
 }
 
