@@ -2,6 +2,7 @@
 import { useApi } from "@/composables/useApi";
 
 const api = useApi();
+const { $showToast } = useNuxtApp();
 
 const deliveryInfo = ref({
   trackingNumber: "",
@@ -15,7 +16,7 @@ const updateDeliveryStatus = async () => {
       deliveryInfo.value
     );
     console.log("응답 데이터: ", response);
-    alert("배송 상태 수정이 완료되었습니다.");
+    $showToast("배송 상태 수정이 완료되었습니다.");
   } catch (error) {
     console.error("배송 상태 수정 실패: ", error);
   }
@@ -37,12 +38,9 @@ const handleStatusDelivered = () => {
 <template>
   <div class="delivery-container">
     <div class="input-section">
-      <input 
-        @input="handleTrackingNumberChange" 
-        placeholder="운송장 번호를 입력하세요"
-      /> 
+      <input @input="handleTrackingNumberChange" placeholder="운송장 번호를 입력하세요" />
     </div>
-    
+
     <div class="button-group">
       <button @click="handleStatusInTransit">배송 시작</button>
       <button @click="handleStatusDelivered">배송 완료</button>

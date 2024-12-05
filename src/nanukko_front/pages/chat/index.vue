@@ -24,6 +24,7 @@
             :current-room="activeChatRoom"
             :initial-messages="currentMessages"
             :connected="stompState.connected"
+            @close-chat="handleChatClose"
           />
           <div v-else class="empty-state">
             <p>채팅방을 선택해주세요</p>
@@ -51,6 +52,8 @@ const activeChatRoom = ref(null)//활성화된 채팅방 정보
 const {isAuthenticated, userId} = useAuth()
 const stompState = useStomp() //웹 소켓 연결 상태
 const currentMessages = ref([]); // 현재 채팅방의 메시지들
+
+const emit = defineEmits(['close-chat']);
 
 const { 
   chatRooms, //전체 채팅방 목록
@@ -82,9 +85,6 @@ const initializeChat = async () => {
 }
 
 // 채팅방 선택 처리
-// 채팅방 선택 처리
-// 채팅방 선택 처리
-// index.vue의 handleRoomSelect 함수
 const handleRoomSelect = async (chatRoomId) => {
   try {
     activeChatRoom.value = null;
@@ -115,6 +115,13 @@ const handleRoomSelect = async (chatRoomId) => {
     activeChatRoom.value = null;
     currentMessages.value = [];
   }
+};
+
+/**채팅창 닫기 */
+const handleChatClose = async () => {
+  currentRoomId.value = null;
+  activeChatRoom.value = null;
+  await fetchChatRooms(); // 채팅방 목록 새로고침
 };
 
 // 라이프사이클 훅

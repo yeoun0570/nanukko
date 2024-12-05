@@ -1,6 +1,7 @@
 package nanukko.nanukko_back.config;
 
 import lombok.RequiredArgsConstructor;
+import nanukko.nanukko_back.jwt.JWTUtil;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.Message;
@@ -17,12 +18,15 @@ import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketTransportRegistration;
 
+import java.security.Principal;
+
+
 @Configuration
 @EnableWebSocketMessageBroker
 @RequiredArgsConstructor
 public class StompConfig implements WebSocketMessageBrokerConfigurer {
 
-
+    private final JWTUtil jwtUtil;
 
     /*엔드포인트 생성해서 클라이언트가 webSocket에 연결할 수 있도록 함(핸드셰이크를 위한 설정)*/
     @Override
@@ -42,7 +46,7 @@ public class StompConfig implements WebSocketMessageBrokerConfigurer {
     public void configureMessageBroker(MessageBrokerRegistry registry) {
         // /topic: 1:N 메시징에 사용 (채팅방 내 전체 메시지)
         // /queue: 1:1 메시징에 사용 (개인 메시지)
-        registry.enableSimpleBroker("/topic","/queue");//메시지를 전달할 경로 설정하여 메시지를 브로커가 처리하게 함
+        registry.enableSimpleBroker("/topic","/queue","/user");//메시지를 전달할 경로 설정하여 메시지를 브로커가 처리하게 함
 
         /*바로 브로커로 가는 경우가 아니라 메시지의 처리나 가공이 필요한 경우 핸들러를 타게 할 수 있는 설정*/
         // 클라이언트가 메시지를 보낼 때 사용할 프리픽스 설정
@@ -75,8 +79,22 @@ public class StompConfig implements WebSocketMessageBrokerConfigurer {
                         message, StompHeaderAccessor.class);
 
                 if (StompCommand.CONNECT.equals(accessor.getCommand())) {
-                    // 여기에 인증 로직 추가 가능
-                    // 예: JWT 토큰 검증 등
+                    // 연결 시 토큰 검증, JWT 토큰 검증
+                    // 검증 실패시 연결 거부
+                    String token = accessor.getFirstNativeHeader("Authorization");
+                    if (token != null && token.startsWith("Bearer ")) {
+                        token = token.substring(7);
+
+                        // 검증 성공 시 Principal 설정
+                        String finalToken = token;
+                        accessor.setUser(new Principal() {
+                            @Override
+                            public String getName() {
+                                return jwtUtil.getUsername(finalToken);
+                            }
+                        });
+
+                        };
                 }
                 return message;
             }

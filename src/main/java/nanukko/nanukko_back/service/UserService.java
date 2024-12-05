@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import nanukko.nanukko_back.domain.order.Orders;
 import nanukko.nanukko_back.domain.order.PaymentStatus;
+import nanukko.nanukko_back.domain.product.Image;
 import nanukko.nanukko_back.domain.product.Product;
 import nanukko.nanukko_back.domain.product.ProductStatus;
 import nanukko.nanukko_back.domain.product.category.MiddleCategory;
@@ -12,7 +13,10 @@ import nanukko.nanukko_back.domain.user.Kid;
 import nanukko.nanukko_back.domain.user.User;
 import nanukko.nanukko_back.domain.user.UserAddress;
 import nanukko.nanukko_back.domain.wishlist.Wishlist;
+import nanukko.nanukko_back.dto.file.FileDTO;
+import nanukko.nanukko_back.dto.file.FileDirectoryType;
 import nanukko.nanukko_back.dto.page.PageResponseDTO;
+import nanukko.nanukko_back.dto.product.ProductRequestDto;
 import nanukko.nanukko_back.dto.review.ReviewInMyStoreDTO;
 import nanukko.nanukko_back.dto.review.ReviewRegisterDTO;
 import nanukko.nanukko_back.dto.user.*;
@@ -23,9 +27,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
@@ -40,6 +47,7 @@ public class UserService {
     private final MiddleCategoryRepository middleCategoryRepository;
     private final ReviewRepository reviewRepository;
     private final NotificationService notificationService;
+    private final ImageService imageService;
 
     //사용자의 내 정보 조회
     @Transactional(readOnly = true)
@@ -204,73 +212,48 @@ public class UserService {
 
     //사용자의 판매 상품 수정
     @Transactional
-    public UserSetProductDTO modifyProduct(String userId, Long productId, UserSetProductDTO productDTO) {
+    public Product modifyProduct(String userId, ProductRequestDto dto, List<MultipartFile> images) {
         userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
-        Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
 
+        Product product = productRepository.findById(dto.getId())
+                .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
 
         //상품의 판매자와 요청한 사용자가 같은지 확인
         if (!product.getSeller().getUserId().equals(userId)) {
             throw new IllegalArgumentException("상품 수정 권한이 없습니다.");
         }
 
-        //카테고리 조회
-        if (productDTO.getMiddleId() != null) {
-            MiddleCategory middleCategory = middleCategoryRepository.findById(productDTO.getMiddleId())
-                    .orElseThrow(() -> new IllegalArgumentException("카테고리를 찾을 수 없습니다."));
-            product.updateCategory(middleCategory);
-        }
+        //클라우드에 등록된 사진 삭제
+        List<String> fileUrls = Stream.of(
+                        product.getImages().getImage1(),
+                        product.getImages().getImage2(),
+                        product.getImages().getImage3(),
+                        product.getImages().getImage4(),
+                        product.getImages().getImage5()
+                )
+                .filter(url -> url != null) // null 제거
+                .toList();
 
-      /*  //상품 정보 수정
-        product.updateProduct(
-                productDTO.getProductName(),
-                productDTO.getPrice(),
-                productDTO.getStatus(),
-                productDTO.getContent(),
-                productDTO.getCondition(),
-                productDTO.getImages(),
-                productDTO.getThumbnailImage(),
-                productDTO.isPerson(),
-                productDTO.isDeputy(),
-                productDTO.isDeputyGender(),
-                productDTO.isCompanion(),
-                productDTO.isCompanionGender(),
-                productDTO.isFreeShipping(),
-                productDTO.getShippingFee(),
-                LocalDateTime.now()
-        );
+        imageService.deleteFilesByUrls(fileUrls);
 
-        //수정한 상품이 배송비 별도이면 배송비도 수정
-        if (productDTO.isFreeShipping()) {
-            product.updateShippingFee(productDTO.getShippingFee());
-        }*/
+        // 중분류 카테고리 조회, 카테고리 업데이트
+        MiddleCategory middleCategory = middleCategoryRepository.findById(dto.getMiddleId()).orElseThrow(() -> new IllegalArgumentException("카테고리 찾기 실패"));
+        product.updateCategory(middleCategory);
 
-        return convertToUserSetProductDTO(product);
-    }
+        //상품 정보 수정
+        product.updateProduct(dto);
 
-    //상품 등록, 상품 수정에 사용할 VO->DTO 변환기
-    private UserSetProductDTO convertToUserSetProductDTO(Product product) {
-        return UserSetProductDTO.builder()
-                .productId(product.getProductId())
-                .productName(product.getProductName())
-                .images(product.getImages())
-                .thumbnailImage(product.getThumbnailImage())
-                .price(product.getPrice())
-                .majorId(product.getMiddleCategory().getMajor().getMajorId())
-                .majorName(product.getMiddleCategory().getMajor().getMajorName())
-                .middleId(product.getMiddleCategory().getMiddleId())
-                .middleName(product.getMiddleCategory().getMiddleName())
-                .status(product.getStatus())
-                .content(product.getContent())
-                .condition(product.getCondition())
-                .isPerson(product.isPerson())
-                .isDeputy(product.getIsDeputy())
-                .isCompanion(product.getIsCompanion())
-                .freeShipping(product.isFreeShipping())
-                .build();
+        //사진 업로드
+        List<FileDTO> imgUrls = imageService.uploadMultipleFiles(images, FileDirectoryType.SELL, userId);
+        log.info("업로드 이미지 url : {}" , imgUrls);
+        Image image = new Image(imgUrls);
+        product.setImages(image);
+        product.setThumbnailImage(image.getImage1());
+
+        productRepository.save(product);
+        return product;
     }
 
     //사용자의 판매 상품 삭제
@@ -423,6 +406,31 @@ public class UserService {
                 .build());
 
         return new PageResponseDTO<>(reviewPage);
+    }
+
+    //후기 조회 5개까지만
+    @Transactional(readOnly = true)
+    public List<ReviewInMyStoreDTO> getReview(String userId) {
+        User seller = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        // 판매자가 받은 후기 조회 (최신 순, 최대 size 개수만)
+        List<Review> reviews = reviewRepository.findTop5ByProductSellerOrderByCreatedAtDesc(seller);
+
+        // DTO로 변환
+        return reviews.stream()
+                .map(review -> ReviewInMyStoreDTO.builder()
+                        .reviewId(review.getReviewId())
+                        .productId(review.getProduct().getProductId())
+                        .authorId(review.getUser().getUserId())  // 후기 작성자 ID
+                        .authorNickName(review.getUser().getNickname()) // 후기 작성자 이름
+                        .rate(review.getRate())
+                        .productName(review.getProduct().getProductName())
+                        .thumbnail(review.getProduct().getThumbnailImage()) // 후기 작성된 썸네일 이미지
+                        .review(review.getReview())
+                        .reviewRate(seller.getReviewRate())  // 판매자의 전체 평점
+                        .build())
+                .collect(Collectors.toList());
     }
 
     //탈퇴하기

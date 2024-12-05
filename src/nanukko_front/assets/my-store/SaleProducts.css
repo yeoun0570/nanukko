@@ -129,7 +129,8 @@
 }
 
 .modify-btn,
-.remove-btn {
+.remove-btn,
+.delivery-btn {
   padding: 0.5rem 1rem;
   border: none;
   border-radius: 6px;
@@ -154,6 +155,15 @@
 
 .remove-btn:hover {
   background-color: #d32f2f;
+}
+
+.delivery-btn {
+  background-color: #4caf50;
+  color: white;
+}
+
+.delivery-btn:hover {
+  background-color: #0b990f;
 }
 
 /* 반응형 스타일 */

@@ -22,7 +22,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -169,6 +168,35 @@ public class ImageService {
         files.forEach(file ->
                 deleteFile(file.getUploadFilePath(), file.getUploadFileName())
         );
+    }
+
+    // 파일 삭제 url 경로로
+    public void deleteFileByUrl(String fileUrl) {
+        try {
+            // URL에서 경로 추출
+            String objectKey = extractObjectKey(fileUrl);
+            log.info("objectKey - " + objectKey);
+            // 파일 삭제
+            amazonS3Client.deleteObject(ncpConfig.getBucket(), objectKey);
+            log.info("파일 삭제 성공: {}", fileUrl);
+        } catch (AmazonServiceException e) {
+            log.error("파일 삭제 실패: {}", e.getMessage());
+            throw new RuntimeException("파일 삭제 실패", e);
+        }
+    }
+
+    private String extractObjectKey(String fileUrl) {
+        // URL에서 버킷 이름과 도메인을 제거하고 경로 추출
+        String baseUrl = "https://kr.object.ncloudstorage.com/" + ncpConfig.getBucket() + "/";
+        if (!fileUrl.startsWith(baseUrl)) {
+            throw new IllegalArgumentException("올바르지 않은 파일 URL: " + fileUrl);
+        }
+        return fileUrl.substring(baseUrl.length());
+    }
+
+    public void deleteFilesByUrls(List<String> fileUrls) {
+        log.info("=== 기존에 등록된 상품 사진 삭제 시작 ===");
+        fileUrls.forEach(this::deleteFileByUrl);
     }
 
     // 파일의 URL 조회

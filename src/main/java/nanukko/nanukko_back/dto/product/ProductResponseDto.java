@@ -5,7 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
+import java.time.LocalDateTime;
 
 @Data
 @AllArgsConstructor
@@ -13,11 +13,14 @@ import java.util.List;
 @Builder
 public class ProductResponseDto {
     // 기본 정보
-    private Long id;
+    private Long productId;
     private String productName;
     private int price;
     private String content;
     private String condition; // Condition의 String 값
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+    private String status;
 
     // 유저 정보
     private String userId;
@@ -25,6 +28,7 @@ public class ProductResponseDto {
     private String profile;
 
     // 이미지 정보
+    private String thumbnailImage;
     private String image1;
     private String image2;
     private String image3;
@@ -61,4 +65,7 @@ public class ProductResponseDto {
     private Integer favorite_count;
     private Integer view_count;
     private Integer talk_count;
+
+    //판매중 상품 개수
+    private int sellingCount;
 }

@@ -5,7 +5,7 @@
       class="test-chat-button"
       :disabled="loading"
     >
-      {{ loading ? '채팅방 생성 중...' : '테스트 채팅 시작 (Product ID: 8)' }}
+      {{ loading ? '채팅방 생성 중...' : '테스트 채팅 시작 (Product ID: 13)' }}
     </button>
     
     
@@ -49,7 +49,7 @@ const startNewChat = async () => {
 
   try {
     const response = await api.post('/chat/getChat', null, {
-      params: { productId: 8 }
+      params: { productId: 13 }
     })
     
     success.value = response.chatRoomId
@@ -57,7 +57,7 @@ const startNewChat = async () => {
     // 3초 후 채팅 페이지로 이동
     setTimeout(() => {
       router.push('/chat')
-    }, 3000)
+    }, 1500)
     
   } catch (err) {
     error.value = err.message || '채팅방 생성 실패'

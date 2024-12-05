@@ -10,6 +10,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 public interface ReviewRepository extends JpaRepository<Review, Long> {
     // 판매자의 상점 후기 평균 구하기
@@ -21,4 +23,7 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     // 상품으로 후기 존재하는지 체크
     boolean existsByProduct(Product product);
+
+    // 판매자의 리뷰를 최신순으로 최대 size 개 조회
+    List<Review> findTop5ByProductSellerOrderByCreatedAtDesc(User seller);
 }

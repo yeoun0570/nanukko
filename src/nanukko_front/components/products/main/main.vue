@@ -4,7 +4,7 @@
             최근 등록된 장난감 둘러보기
         </div>
         <div v-if="isAuthenticated" class="section-title">
-            {{ userId }}님을 위한 장난감 추천
+            {{ nickname }}님을 위한 장난감 추천
         </div>
 
 
@@ -23,9 +23,9 @@
 
             <div v-else>
                 <div class="product-grid">
-                    <div v-for="product in products.content" :key="product.id" class="product-card"
-                        @click="goToProduct(product.id)">
-                        <div class="card card-fixed-height">
+                    <div v-for="product in products.content" :key="product.productId" class="product-card">
+                        <div class="card card-fixed-height" @click.stop="goToProduct(product.productId)"
+                            style="cursor: pointer">
                             <div class="card-img-wrapper">
                                 <img :src="product.image1 || '/default-image.png'" class="card-img-top"
                                     :alt="product.productName" width="300" height="300" />
@@ -66,7 +66,7 @@ import { useAuth } from "@/composables/auth/useAuth";
 
 const api = useApi();
 const router = useRouter();
-const { isAuthenticated, userId } = useAuth();
+const { isAuthenticated, nickname } = useAuth();
 
 const products = ref({
     content: [],
@@ -82,14 +82,14 @@ const loading = ref(false);
 const error = ref(null);
 
 const fetchProducts = async (page) => {
-
-    console.log("로그인?", isAuthenticated.value === true); //왜 false???
-
     loading.value = true;
     error.value = null;
 
     try {
-        const response = await api.get(`/products/main`, {
+        // 로그인 상태에 따라 다른 엔드포인트 호출
+        const endpoint = isAuthenticated.value ? '/products/main' : '/products/main/logout';
+
+        const response = await api.get(endpoint, {
             params: {
                 page,
                 size: 20,
@@ -119,10 +119,13 @@ const formatPrice = (price) => {
     return new Intl.NumberFormat('ko-KR').format(price);
 };
 
-const goToProduct = (id) => {
-    if (id) {
-        router.push(`/products/${id}`);
+const goToProduct = async (productId) => {
+    if (!productId) {
+        console.error('상품 ID가 없습니다');
+        return;
     }
+
+    await router.push(`/products/${productId}`);
 };
 
 const loadMore = async () => {

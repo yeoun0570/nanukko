@@ -3,8 +3,6 @@ package nanukko.nanukko_back.controller;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.validation.Valid;
 import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -13,9 +11,12 @@ import nanukko.nanukko_back.domain.user.User;
 import nanukko.nanukko_back.dto.page.PageResponseDTO;
 import nanukko.nanukko_back.dto.product.ProductRequestDto;
 import nanukko.nanukko_back.dto.product.ProductResponseDto;
+import nanukko.nanukko_back.dto.review.ReviewInMyStoreDTO;
 import nanukko.nanukko_back.dto.user.CustomUserDetails;
+import nanukko.nanukko_back.dto.user.UserInfoDTO;
 import nanukko.nanukko_back.repository.UserRepository;
 import nanukko.nanukko_back.service.ProductService;
+import nanukko.nanukko_back.service.UserService;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -39,22 +40,29 @@ public class ProductController {
     private final UserRepository userRepository;
     private final ProductService productService;
     private final ObjectMapper objectMapper;
+    private final UserService userService;
 
     @GetMapping("/main")
     public ResponseEntity<PageResponseDTO<ProductResponseDto>> getMain(
             @PageableDefault(size = 20, sort = "updatedAt", direction = Sort.Direction.DESC) Pageable pageable,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        if (userDetails != null) {
-            //로그인 : 사용자 자녀 정보 기반 상품 추천 (찜 여부 포함)
-            PageResponseDTO<ProductResponseDto> dto = productService.getMainProducts(pageable);
-            return ResponseEntity.ok(dto);
-        } else {
-            //로그아웃 : 전체 상품 조회
-            PageResponseDTO<ProductResponseDto> dto = productService.getMainProducts(pageable);
-            return ResponseEntity.ok(dto);
-        }
+        PageResponseDTO<ProductResponseDto> dto;
+        //로그인 : 사용자 자녀 정보 기반 상품 추천 (찜 여부 포함)
+        dto = productService.getMainProducts(pageable, userDetails.getUsername());
+        return ResponseEntity.ok(dto);
+
     }
+
+    @GetMapping("/main/logout")
+    public ResponseEntity<PageResponseDTO<ProductResponseDto>> getMainLogout(
+            @PageableDefault(size = 20, sort = "updatedAt", direction = Sort.Direction.DESC) Pageable pageable
+    ) {
+        PageResponseDTO<ProductResponseDto> dto; //로그아웃 : 전체 상품 조회
+        dto = productService.getMainProducts(pageable);
+        return ResponseEntity.ok(dto);
+    }
+
 
     @PostMapping(value = "/new", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Map> createProduct(
@@ -89,7 +97,7 @@ public class ProductController {
         User currentUser = null;
         if (userDetails != null) {
             String userId = userDetails.getUsername();
-            currentUser = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없음"));
+            currentUser = userRepository.findById(userId).orElse(null);
         }
         ProductResponseDto product = productService.getProductDetail(id, currentUser);
         log.info("ProductResponseDto 전달 : {}", product);
@@ -106,15 +114,22 @@ public class ProductController {
     @GetMapping("/search")
     public ResponseEntity<PageResponseDTO<Product>> searchProducts(
             @RequestParam(required = false, defaultValue = "") @Size(min = 1, max = 100) String query,
-            @PageableDefault(size = 20, sort = "updatedAt", direction = Sort.Direction.DESC) Pageable pageable
+            @PageableDefault(size = 20, sort = "updatedAt", direction = Sort.Direction.DESC) Pageable pageable,
+            @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         // 검색어가 비어있는 경우 빈 결과 반환
         if (query.trim().isEmpty()) {
             return ResponseEntity.ok(PageResponseDTO.empty(pageable));
         }
 
+        User currentUser = null;
+        if (userDetails != null) {
+            String userId = userDetails.getUsername();
+            currentUser = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없음"));
+        }
+
         try {
-            PageResponseDTO<Product> products = productService.searchProducts(query.trim(), pageable);
+            PageResponseDTO<Product> products = productService.searchProducts(query.trim(), pageable, currentUser);
             return ResponseEntity.ok(products);
         } catch (IllegalArgumentException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "잘못된 검색 요청입니다: " + e.getMessage());
@@ -148,5 +163,34 @@ public class ProductController {
         return ResponseEntity.ok(products);
     }
 
+    //상점 페이지
+    @GetMapping("/seller")
+    public ResponseEntity<PageResponseDTO<ProductResponseDto>> getSellerItems(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "8") int size,
+            @RequestParam String userId) {
+
+        if (userRepository.existsByUserIdAndIsCanceledFalse(userId)) { //탈퇴하지않은 회원인 경우, 회원정보가 있는 경우
+            PageRequest pageRequest = PageRequest.of(page, size);
+            PageResponseDTO<ProductResponseDto> dto = productService.getSellerPage(userId, pageRequest);
+            return ResponseEntity.ok(dto);
+        } else {
+            throw new EntityNotFoundException("사용자를 찾을 수 없습니다.");
+        }
+    }
+
+    @GetMapping("/seller-info")
+    public ResponseEntity<UserInfoDTO> getUserInfo(@RequestParam String userId) {
+        UserInfoDTO userInfoDTO = userService.getUserInfo(userId);
+        return ResponseEntity.ok(userInfoDTO);
+    }
+
+    @GetMapping("/seller-reviews")
+    public ResponseEntity<List<ReviewInMyStoreDTO>> getReview(
+            @RequestParam String userId
+    ) {
+        List<ReviewInMyStoreDTO> reviews = userService.getReview(userId);
+        return ResponseEntity.ok(reviews);
+    }
 
 }

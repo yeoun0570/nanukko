@@ -3,7 +3,7 @@
 /**
  * JWT 토큰 검증이 필요없는 공개 API 경로 목록
  */
-const PUBLIC_PATHS = ["/login", "/register", "/reissue", "/logout"];
+const PUBLIC_PATHS = ["/login", "/register", "/reissue", "/logout", "/user/find-id", "/user/find-password", "/user/reset-password"];
 
 /**
  * @param{string} path - 검사할 API 경로
@@ -34,7 +34,6 @@ export const useApi = () => {
           "Content-Type": "application/json",
         },
       };
-
 
       // 공개 API가 아닌 경우 토큰 추가
       if (!isPublicPath(url)) {
@@ -125,6 +124,8 @@ export const useApi = () => {
         ...options,
       });
     }
+
+
 
     // 일반 POST 요청
     return commonFetch(url, {

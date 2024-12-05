@@ -60,7 +60,7 @@ public class ChatMessages {
 
     //최신 메시지를 다시 false로 되돌리기
     public void changeNotLatest(){
-        if(!this.isLatest){//true라면
+        if(this.isLatest){//true라면
             this.isLatest = false;
         }
     }

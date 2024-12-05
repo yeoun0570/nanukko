@@ -60,12 +60,10 @@ dependencies {
     testImplementation 'org.springframework.security:spring-security-test'
 
     // jwt
-        implementation 'io.jsonwebtoken:jjwt-api:0.12.3'
-        implementation 'io.jsonwebtoken:jjwt-impl:0.12.3'
-        implementation 'io.jsonwebtoken:jjwt-jackson:0.12.3'
-        testImplementation 'io.jsonwebtoken:jjwt-api:0.12.3'
-        testRuntimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.3'
-        testRuntimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.3'
+    implementation 'io.jsonwebtoken:jjwt-api:0.12.3'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.3'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.3'
+
 
 
     implementation 'org.apache.httpcomponents:httpclient:4.5.13'
@@ -90,6 +88,8 @@ dependencies {
     //TwelveMonkeys 이미지 플러그인
     implementation 'com.twelvemonkeys.imageio:imageio-webp:3.9.4'
 
+    //JSON Simple
+    implementation 'com.googlecode.json-simple:json-simple:1.1.1'
 
 }
 

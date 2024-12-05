@@ -7,14 +7,18 @@ public class ProductMapper {
     // Product 엔티티를 ProductResponseDto로 매핑
     public static ProductResponseDto toDto(Product product) {
         return ProductResponseDto.builder()
-                .id(product.getProductId())
+                .productId(product.getProductId())
                 .productName(product.getProductName())
                 .price(product.getPrice())
                 .content(product.getContent())
                 .condition(product.getCondition().toString())
+                .createdAt(product.getCreatedAt())
+                .updatedAt(product.getUpdatedAt())
+                .status(product.getStatus().toString())
                 .userId(product.getSeller().getUserId())
                 .reviewRate(product.getSeller().getReviewRate())
                 .profile(product.getSeller().getProfile())
+                .thumbnailImage(product.getThumbnailImage())
                 .image1(product.getImages().getImage1())
                 .image2(product.getImages().getImage2())
                 .image3(product.getImages().getImage3())
@@ -39,4 +43,23 @@ public class ProductMapper {
                 .talk_count(product.getTalkCount())
                 .build();
     }
+
+    public static ProductResponseDto toDtoSimple(Product product) {
+        return ProductResponseDto.builder()
+                .productId(product.getProductId())
+                .productName(product.getProductName())
+                .price(product.getPrice())
+                .createdAt(product.getCreatedAt())
+                .updatedAt(product.getUpdatedAt())
+                .status(product.getStatus().toString())
+                .userId(product.getSeller().getUserId())
+                .reviewRate(product.getSeller().getReviewRate())
+                .profile(product.getSeller().getProfile())
+                .thumbnailImage(product.getThumbnailImage())
+                .image1(product.getImages().getImage1())
+                .address(product.getAddress())
+                .build();
+    }
+
+
 }

@@ -15,20 +15,23 @@
   "dependencies": {
     "@flaticon/flaticon-uicons": "^3.3.1",
     "@mdi/font": "^7.4.47",
+    "@pinia/nuxt": "^0.8.0",
+    "@nuxtjs/axios": "^5.13.6",
     "@stomp/stompjs": "^7.0.0",
     "axios": "^1.7.7",
     "buffer": "^6.0.3",
     "estree-walker": "^3.0.3",
     "jwt-decode": "^4.0.0",
     "nuxt": "^3.13.2",
+    "pinia": "^2.2.8",
     "sass": "^1.81.0",
     "sass-loader": "^16.0.3",
     "sockjs-client": "^1.5.2",
     "uuid": "^11.0.3",
     "vue": "latest",
     "vue-router": "latest",
-    "vue-toastification": "^2.0.0-rc.5",
-    "vuetify": "^3.7.4"
+    "vuetify": "^3.7.4",
+    "vite": "^5.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.14.0",
