@@ -104,8 +104,6 @@ watch(() => authStore.isAuthenticated, (newValue) => {
           <ChatNotification @click="navigateToChat" />
         </li>
         <li class="notification-cotainer">
-          <Notification />
-
         </li>
         <li class="notification-cotainer"><Notification /></li>
         <button v-if="!authStore.isAuthenticated">
