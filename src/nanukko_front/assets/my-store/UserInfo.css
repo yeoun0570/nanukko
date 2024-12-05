@@ -51,9 +51,9 @@
 /* 구분선 */
 hr {
   border: none;
-  height: 2px;
+  height: 1px;
   background: linear-gradient(to right, #f1f3f5, #dee2e6, #f1f3f5);
-  margin: 2rem 0;
+  margin: 0.5rem 0;
 }
 
 /* 로딩 상태 */

@@ -1,5 +1,6 @@
 <script setup>
 import { useApi } from '@/composables/useApi';
+const { $showToast } = useNuxtApp();
 
 const api = useApi();
 
@@ -27,12 +28,12 @@ const findId = async () => {
         email: email.value,
       },
     });
-    alert("이메일이 성공적으로 전송되었습니다.");
+    $showToast("이메일이 성공적으로 전송되었습니다.");
     email.value = ""; // 입력 필드 초기화
     props.onClose();
   } catch (error) {
     console.error("아이디 찾기 실패:", error);
-    alert("이메일 전송에 실패했습니다. 다시 시도해주세요.");
+    $showToast("이메일 전송에 실패했습니다. 다시 시도해주세요.");
   } finally {
     isLoading.value = false;
   }
@@ -56,23 +57,13 @@ const handleOverlayClick = (event) => {
       <div class="modal-body">
         <div class="form-group">
           <label for="email">이메일</label>
-          <input
-            id="email"
-            type="email"
-            v-model="email"
-            placeholder="가입시 등록한 이메일을 입력해주세요"
-            required
-          />
+          <input id="email" type="email" v-model="email" placeholder="가입시 등록한 이메일을 입력해주세요" required />
         </div>
 
         <p class="info-text">* 입력하신 이메일로 아이디 정보가 발송됩니다.</p>
 
         <div class="button-group">
-          <button
-            class="submit-button"
-            @click="findId"
-            :disabled="!email || isLoading"
-          >
+          <button class="submit-button" @click="findId" :disabled="!email || isLoading">
             {{ isLoading ? "전송 중..." : "이메일 전송" }}
           </button>
           <button class="cancel-button" @click="onClose">취소</button>
@@ -156,7 +147,7 @@ const handleOverlayClick = (event) => {
   justify-content: flex-end;
 }
 
-.submit-button, 
+.submit-button,
 .cancel-button {
   padding: 10px 20px;
   border: none;

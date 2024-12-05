@@ -23,8 +23,8 @@
 
             <div v-else>
                 <div class="product-grid">
-                    <div v-for="product in products.content" :key="product.id" class="product-card">
-                        <div class="card card-fixed-height" @click.stop="goToProduct(product.id)"
+                    <div v-for="product in products.content" :key="product.productId" class="product-card">
+                        <div class="card card-fixed-height" @click.stop="goToProduct(product.productId)"
                             style="cursor: pointer">
                             <div class="card-img-wrapper">
                                 <img :src="product.image1 || '/default-image.png'" class="card-img-top"
@@ -119,13 +119,13 @@ const formatPrice = (price) => {
     return new Intl.NumberFormat('ko-KR').format(price);
 };
 
-const goToProduct = async (id) => {
-    if (!id) {
+const goToProduct = async (productId) => {
+    if (!productId) {
         console.error('상품 ID가 없습니다');
         return;
     }
 
-    await router.push(`/products/${id}`);
+    await router.push(`/products/${productId}`);
 };
 
 const loadMore = async () => {

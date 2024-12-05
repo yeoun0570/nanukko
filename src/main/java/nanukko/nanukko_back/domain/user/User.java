@@ -61,6 +61,7 @@ public class User {
     private LocalDate userBirth; //생년월일
 
     @NotNull
+    @Column(unique = true)
     private String email; //이메일
 
     @Embedded

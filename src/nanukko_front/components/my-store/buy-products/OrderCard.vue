@@ -2,9 +2,8 @@
 import { useApi } from "@/composables/useApi";
 
 const api = useApi();
-
 const hasReview = ref(false);
-
+const { $showToast } = useNuxtApp();
 const props = defineProps({
   order: {
     type: Object,
@@ -42,7 +41,7 @@ const confirmPurchase = async () => {
 
     // status만 확인하여 ESCROW_RELEASED면 성공으로 처리
     if (response.status === "ESCROW_RELEASED") {
-      alert("구매가 확정되었습니다.");
+      $showToast("구매가 확정되었습니다.");
       emit("order-updated");
     } else {
       throw new Error(`잘못된 상태: ${response.status}`);
@@ -51,7 +50,7 @@ const confirmPurchase = async () => {
     console.error("구매 확정 중 오류:", error);
     // 실제 에러인 경우에만 사용자에게 알림
     if (error.response?.status === 400 || error.response?.status === 500) {
-      alert(
+      $showToast(
         error.response?.data?.message || "구매 확정 중 오류가 발생했습니다."
       );
     }
@@ -76,7 +75,7 @@ const cancelOrder = async () => {
     if (response.status === "CANCELED") {
       // 실제 취소가 성공했을 때만
       console.log("결제 취소 완료:", response);
-      alert("결제가 취소되었습니다. 전체 금액이 환불됩니다.");
+      $showToast("결제가 취소되었습니다. 전체 금액이 환불됩니다.");
       emit("order-updated");
       // 취소 후 메인 페이지나 상품 페이지로 이동
       //navigateTo("/"); // 또는 상품 상세 페이지로 이동
@@ -86,9 +85,9 @@ const cancelOrder = async () => {
 
     // 서버에서 전달된 에러 메시지 표시
     if (error.response?.data?.message) {
-      alert(error.response.data.message);
+      $showToast(error.response.data.message);
     } else {
-      alert("결제 취소 중 오류가 발생했습니다.");
+      $showToast("결제 취소 중 오류가 발생했습니다.");
     }
   }
 };
@@ -136,29 +135,16 @@ onMounted(() => {
         </p>
       </div>
       <div class="button-container">
-        <button
-          v-if="order.status === 'DELIVERED'"
-          @click="confirmPurchase"
-          class="confirm-btn"
-        >
+        <button v-if="order.status === 'DELIVERED'" @click="confirmPurchase" class="confirm-btn">
           구매 확정
         </button>
-        <button
-          v-if="order.status === 'ESCROW_HOLDING'"
-          @click="cancelOrder"
-          class="cancel-btn"
-        >
+        <button v-if="order.status === 'ESCROW_HOLDING'" @click="cancelOrder" class="cancel-btn">
           결제 취소
         </button>
-        <button
-          v-if="order.status === 'ESCROW_RELEASED'"
-          @click="goToWriteReview"
-          :class="{
-            'review-btn': !hasReview,
-            'review-completed-btn': hasReview,
-          }"
-          :disabled="hasReview"
-        >
+        <button v-if="order.status === 'ESCROW_RELEASED'" @click="goToWriteReview" :class="{
+          'review-btn': !hasReview,
+          'review-completed-btn': hasReview,
+        }" :disabled="hasReview">
           {{ hasReview ? "후기 작성 완료" : "후기 작성" }}
         </button>
       </div>

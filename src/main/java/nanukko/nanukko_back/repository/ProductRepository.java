@@ -24,7 +24,7 @@ import java.util.Optional;
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Long> {
     //마이페이지 판매 상품을 페이징처리하여 조회하기 위해 사용될 메서드
-    Page<Product> findBySellerAndStatusAndIsDeletedFalseOrderByCreatedAtDesc (User seller, ProductStatus status, Pageable pageable);
+    Page<Product> findBySellerAndStatusAndIsDeletedFalseOrderByCreatedAtDesc(User seller, ProductStatus status, Pageable pageable);
 
     //비관적 락을 사용한 상품 조회 메서드
     @Lock(LockModeType.PESSIMISTIC_WRITE)
@@ -83,5 +83,24 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     //사용자의 자신의 상품 개수
     int countBySeller(User user);
+
+    @Query("SELECT COUNT(p) FROM Product p WHERE p.seller.userId = :userId AND p.status = :status")
+    int countBySellerAndStatus(@Param("userId") String userId, @Param("status") ProductStatus status);
+
+
+    //seller Page 사용자가 올린 모든 상품, status에 따라 정렬
+    @Query("""
+            SELECT p FROM Product p 
+            LEFT JOIN FETCH p.seller s
+            WHERE s.userId = :userId 
+            ORDER BY
+            CASE p.status 
+                WHEN 'SELLING' THEN 1
+                WHEN 'RESERVED' THEN 2
+                WHEN 'SOLD_OUT' THEN 3
+            END,
+            p.updatedAt DESC
+            """)
+    Page<Product> findByUserId(@Param("userId") String userId, Pageable pageable);
 
 }

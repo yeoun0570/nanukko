@@ -4,21 +4,14 @@ import Notification from "../notification/Notification.vue";
 import { useAuth } from "~/composables/auth/useAuth";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "~/stores/authStore";
-
-//import { useToast } from "vue-toastification";
 import ChatNotification from "../chat/ChatNotification.vue";
 
-//import VueToastification from 'vue-toastification'
-
-
 const router = useRouter();
+const { isAuthenticated, logout } = useAuth();
+const { $showToast } = useNuxtApp();
 const authStore = useAuthStore();
 
 
-const showLoginAlert = () => {
-  alert("채팅을 이용하려면 로그인이 필요합니다.");
-  router.push("/auth/login");
-};
 
 const navigateToChat = () => {
   router.push("/chat");
@@ -31,16 +24,8 @@ const shouldRerender = ref(0); //리렌더링을 트리거하기 위한 키
 
 // 로그아웃
 const doLogout = () => {
-
   authStore.logout();
-  //알림 팝업
-  // toast.info("로그아웃되었습니다.", {
-  //   timeout: 3000, // 3초 동안 유지
-  //   position: "bottom-center", // 화면 중앙 하단
-  //   icon: "🔒", // 커스텀 아이콘
-  //   hideProgressBar: true, // 진행 바 숨기기
-  // });
-
+  $showToast('로그아웃 되었습니다!');
   router.push("/auth/login");
 };
 
@@ -89,23 +74,14 @@ watch(() => authStore.isAuthenticated, (newValue) => {
         <!-- 검색어 입력 필드 -->
         <input type="text" placeholder="검색어를 입력해주세요" v-model="searchQuery" @keyup.enter="onSearch" />
         <!-- 검색 버튼 -->
-        <button @click="onSearch"><i class="fi fi-rr-search"></i></button>
+        <button @click="onSearch" class="search-button"><i class="fi fi-rr-search"></i></button>
         <!-- 클릭 시 검색 실행 -->
       </div>
 
       <!-- 액션 섹션 (채팅, 알림, 로그인, 마이페이지 링크) -->
       <ul class="header-actions">
         <li>
-          <!-- <button v-if="isAuthenticated" @click="navigateToChat">채팅</button>
-          <button v-else @click="showLoginAlert">채팅</button> -->
-
-
-
           <ChatNotification @click="navigateToChat" />
-        </li>
-        <li class="notification-cotainer">
-          <Notification />
-
         </li>
         <li class="notification-cotainer"><Notification /></li>
         <button v-if="!authStore.isAuthenticated">
@@ -123,6 +99,25 @@ watch(() => authStore.isAuthenticated, (newValue) => {
 </template>
 
 <style>
+.fi-rr-search {
+  display: flex;
+  align-items: center;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+}
+
+.logo img {
+  vertical-align: middle;
+}
+
+.link-style {
+  text-decoration: none;
+  color: #000000;
+}
+
 /* 헤더 전체 레이아웃 */
 .header {
   display: flex;

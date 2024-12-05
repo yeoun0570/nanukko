@@ -1,16 +1,15 @@
 <script setup>
 import { ref, computed, defineAsyncComponent } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { useToast } from 'vue-toastification';
 import { useAuth } from "~/composables/auth/useAuth";
 import { useApi } from "@/composables/useApi";
 import ProductImage from '~/components/products/products-detail/ProductImage.vue';
 import ProductMiniSummary from '~/components/products/products-detail/ProductMiniSummary.vue';
 import Map from '~/components/products/products-detail/Map.vue';
 
+const { $showToast } = useNuxtApp();
 const route = useRoute();
 const router = useRouter();
-const toast = useToast();
 const { isAuthenticated } = useAuth();
 const api = useApi();
 const isLoading = ref(true);
@@ -37,7 +36,7 @@ const loadProductDetail = async () => {
         await api.post(`/wishlist/${route.params.id}/view`); // 조회수 증가 API 호출
     } catch (error) {
         console.error('상품 정보 로드 실패:', error);
-        toast.error('존재하지 않는 상품입니다.');
+        $showToast('존재하지 않는 상품입니다.');
         await router.push('/');
         return;
     }
@@ -83,8 +82,8 @@ const productImages = computed(() => {
 
 // 버튼 클릭 시
 const handleWishClick = async () => {
-    if (!isAuthenticated) {
-        //에러 toast 추가 !!!
+    if (!isAuthenticated.value) {
+        $showToast('로그인이 필요한 서비스입니다. 로그인 화면으로 이동합니다.');
 
         setTimeout(() => {
             router.push('/auth/login')
@@ -104,39 +103,44 @@ const handleWishClick = async () => {
                     ? product.value.favorite_count + 1
                     : product.value.favorite_count - 1
             };
-
-            toast.success(response.message);
         }
     } catch (error) {
         console.error('위시리스트 에러:', error); // 에러 로깅
         if (error.response?.status === 401) {
-            toast.warning('로그인이 필요한 서비스입니다.');
+            $showToast('로그인이 필요한 서비스입니다. 로그인 화면으로 이동합니다.');
             router.push('auth/login');
         } else {
-            toast.error('처리 중 오류가 발생했습니다.');
+            $showToast('처리 중 오류가 발생했습니다.');
+
         }
     }
 };
 
-const handleChatClick = () => {
-    if (!isAuthenticated) {
-        //에러 toast 추가 !!!
-
+const handleChatClick = async () => {
+    if (!isAuthenticated.value) {
+        $showToast('로그인이 필요한 서비스입니다. 로그인 화면으로 이동합니다.');
         setTimeout(() => {
             router.push('/auth/login')
         }, 1500)
         return
     }
 
-    router.push({
-        path: '/chat',
-        query: { productId: route.params.id }
-    });
+    try {
+        const response = await api.post('/chat/getChat', null, {
+            params: { productId: route.params.id }
+        })
+
+        setTimeout(() => {
+            router.push('/chat')
+        }, 1500)
+    } catch (err) {
+        console.error('채팅방 생성 실패')
+    }
 }
 
 const handleBuyClick = () => {
-    if (!isAuthenticated) {
-        //에러 toast 추가 !!!
+    if (!isAuthenticated.value) {
+        $showToast('로그인이 필요한 서비스입니다. 로그인 화면으로 이동합니다.');
 
         setTimeout(() => {
             router.push('/auth/login')
@@ -149,6 +153,23 @@ const handleBuyClick = () => {
         query: { productId: route.params.id }
     });
 };
+
+const GotoSeller = () => {
+    router.push({
+        path: '/seller/seller',
+        query: { userId: product.value.userId }
+    });
+}
+
+const getStatusText = (status) => {
+    const statusMap = {
+        'SELLING': '판매중',
+        'RESERVED': '예약중',
+        'SOLD_OUT': '판매완료'
+    };
+
+    return statusMap[status] || status;
+};
 </script>
 
 <template>
@@ -160,11 +181,17 @@ const handleBuyClick = () => {
 
             <div class="product-content">
                 <div class="product-info">
-                    <p class="product-name">{{ product.productName }}</p>
+                    <div class="name-status-container">
+                        <p class="product-name">{{ product.productName }}</p>
+                        <div class="status-badge" :class="{
+                            'selling': product.status === 'SELLING',
+                            'reserved': product.status === 'RESERVED',
+                            'sold-out': product.status === 'SOLD_OUT'
+                        }">{{ getStatusText(product.status) }}</div>
+                    </div>
                     <p class="product-price">
                         {{ formattedPrice }}<span class="price-unit">원</span>
                     </p>
-                    <hr>
                     <div class="product-stats">
                         <div class="stat-item">
                             <v-icon>mdi-heart</v-icon>
@@ -193,7 +220,7 @@ const handleBuyClick = () => {
                     </button>
                     <button class="action-button chat" @click="handleChatClick">
                         <v-icon>mdi-chat</v-icon>
-                        <span>채팅하기</span>
+                        <span>채팅</span>
                     </button>
                     <button class="action-button buy" @click="handleBuyClick">
                         <v-icon>mdi-gift-open</v-icon>
@@ -203,9 +230,30 @@ const handleBuyClick = () => {
             </div>
         </div>
 
+        <!-- 판매자 -->
+        <div class="seller-section card-container" v-if="product.userId">
+            <div class="seller-info">
+                <div class="seller-profile" @click="GotoSeller">
+                    <div class="profile-image">
+                        <img :src="product.profile || '/image/default-profile.png'" alt="판매자 프로필"
+                            :style="!product.profile ? 'width: 80%; height: auto;' : ''">
+                    </div>
+                    <div class="seller-name" @click="GotoSeller">
+                        {{ product.userId }}
+                        <div class="seller-stats">
+                            <div class="selling-count">판매중인 상품 {{ product.sellingCount }}개</div>
+                            <div class="seller-rating" v-if="product.reviewRate != null">
+                                평점 {{ product.reviewRate.toFixed(1) }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- 상품 설명 -->
         <div class="product-description">
-            <h3>상품 설명</h3>
+            <h3 class="section-title">상품 설명</h3>
             <p>{{ product.content }}</p>
         </div>
 
@@ -221,30 +269,14 @@ const handleBuyClick = () => {
             <Map :lat="Number(product.latitude)" :lon="Number(product.longitude)" />
         </div>
 
-        <!-- 판매자 -->
-        <div class="seller-section card-container" v-if="product.userId">
-            <div class="seller-info">
-                <div class="seller-profile">
-                    <div class="profile-image">
-                        <img :src="product.profile || '/image/default-profile.png'" alt="판매자 프로필"
-                            :style="!product.profile ? 'width: 80%; height: auto;' : ''">
-                    </div>
-                    <div class="seller-name">
-                        {{ product.userId }}
-                        <div class="seller-rating" v-if="product.reviewRate != null">
-                            평점: {{ product.reviewRate.toFixed(1) }}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+
 
         <!-- 연관 상품 섹션 -->
         <div class="related-products card-container">
-            <h3>연관 상품</h3>
+            <h3 class="section-title">연관 상품</h3>
             <div class="products-row">
-                <div v-for="relatedProduct in relatedProducts" :key="relatedProduct.id" class="related-product-card"
-                    @click="goToProduct(relatedProduct.id)">
+                <div v-for="relatedProduct in relatedProducts" :key="relatedProduct.productId"
+                    class="related-product-card" @click="goToProduct(relatedProduct.productId)">
                     <div class="product-image">
                         <img :src="relatedProduct.image1" :alt="relatedProduct.productName">
                     </div>
@@ -270,12 +302,65 @@ const handleBuyClick = () => {
 </template>
 
 <style scoped>
+/* 미디어 쿼리 추가 */
+@media screen and (max-width: 768px) {
+    .product-page-top {
+        gap: 1rem;
+        /* 작은 화면에서는 간격 줄임 */
+    }
+
+    .product-image,
+    .product-content {
+        flex: 1 1 100%;
+        /* 화면이 작아지면 전체 너비 사용 */
+    }
+
+    .product-image {
+        height: 400px;
+        /* 작은 화면에서는 이미지 높이 줄임 */
+    }
+}
+
+.name-status-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+    width: 100%;
+    max-width: 100%;
+}
+
+.status-badge {
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 0.925em;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.status-badge.selling {
+    background-color: #e6f3ff;
+    color: #0066cc;
+}
+
+.status-badge.reserved {
+    background-color: #fff3e6;
+    color: #cc7700;
+}
+
+.status-badge.sold-out {
+    background-color: #f5f5f5;
+    color: #666666;
+}
+
 .product-actions {
     display: flex;
     justify-content: center;
-    gap: 1rem;
-    padding: 1.25rem 0;
+    gap: 1.3rem;
+    padding: 46px 0;
     width: 100%;
+    max-width: 100%;
+    flex-wrap: nowrap;
 }
 
 .action-button {
@@ -289,6 +374,9 @@ const handleBuyClick = () => {
     font-size: 1rem;
     cursor: pointer;
     transition: all 0.2s ease;
+    white-space: nowrap;
+    min-width: fit-content;
+    flex-shrink: 0;
 }
 
 .action-button:hover {
@@ -314,9 +402,9 @@ const handleBuyClick = () => {
 
 /* 판매자 정보 스타일 */
 .seller-rating {
-    font-size: 0.9rem;
+    font-size: 1.1rem;
     color: #666;
-    margin-top: 0.3rem;
+    margin-top: 0rem;
 }
 
 .error {
@@ -329,6 +417,8 @@ const handleBuyClick = () => {
     margin-top: 2rem;
     padding: 1.5rem;
     background-color: white;
+    border: 1px solid #ededed;
+    border-radius: 8px;
 }
 
 .seller-info {
@@ -339,19 +429,34 @@ const handleBuyClick = () => {
 .seller-profile {
     display: flex;
     align-items: center;
-    gap: 1rem;
-    min-width: 200px;
+    gap: 1.5rem;
+    min-width: 100px;
+}
+
+.seller-stats {
+    display: flex;
+    gap: 0.8rem;
+    margin-top: 0.6rem;
+    font-size: 1rem;
+    color: #666;
+}
+
+.selling-count {
+    font-size: 1.1rem;
+    color: #666;
 }
 
 .profile-image {
-    width: 60px;
-    height: 60px;
+    width: 85px;
+    height: 85px;
     border-radius: 50%;
     overflow: hidden;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.04);
     display: flex;
     justify-content: center;
     align-items: center;
+    margin: 0;
+    background-color: white;
 }
 
 .profile-image img {
@@ -361,7 +466,7 @@ const handleBuyClick = () => {
 }
 
 .seller-name {
-    font-size: 1.1rem;
+    font-size: 1.225rem;
     font-weight: 500;
 }
 
@@ -395,12 +500,13 @@ const handleBuyClick = () => {
     margin-top: 2rem;
     padding: 1.5rem;
     background-color: white;
+    border-radius: 0.5rem;
 }
 
 .related-products h3 {
-    margin-bottom: 1.5rem;
-    font-size: 1.25rem;
-    font-weight: 600;
+    font-size: 1.45rem;
+    margin-bottom: 1rem;
+    letter-spacing: 1px;
 }
 
 .products-row {
@@ -456,42 +562,56 @@ const handleBuyClick = () => {
     max-width: 1200px;
     margin: 0 auto;
     padding: 20px;
+    box-sizing: border-box;
 }
 
 .product-page-top {
     display: flex;
     gap: 2rem;
-    /* max-height: 500px; */
+    width: 100%;
+    flex-wrap: wrap;
 }
 
 .product-image {
-    flex: 0 0 500px;
+    flex: 1;
     height: 500px;
     border: none;
 }
 
 .product-content {
-    flex: 0 0 60%;
+    flex: 1;
     display: flex;
     flex-direction: column;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 .product-info {
-    margin-bottom: 1.5rem;
+    background: none;
+    padding: 1.5rem 20px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+
 }
 
 .product-name {
-    font-size: 1.125rem;
+    font-size: 1.5rem;
     margin-bottom: 0.5rem;
+    flex: 1;
+    min-width: 0;
+    word-break: break-all;
 }
 
 .product-price {
-    font-size: 1.5rem;
+    font-size: 1.95rem;
     font-weight: bold;
+    letter-spacing: 1px;
 }
 
 .price-unit {
-    font-size: 1rem;
+    font-size: 1.45rem;
     margin-left: 0.3125rem;
 }
 
@@ -499,8 +619,8 @@ const handleBuyClick = () => {
     display: flex;
     gap: 1rem;
     color: #ccc;
-    font-size: 0.875rem;
-    margin-top: 1rem;
+    font-size: 1rem;
+    margin-top: 0.825rem;
 }
 
 .stat-item {
@@ -522,9 +642,26 @@ hr {
     border-radius: 0.5rem;
 }
 
-.product-description h3 {
+.section-title {
     font-size: 1.25rem;
+    font-weight: bold;
+    color: #333;
     margin-bottom: 1rem;
+}
+
+.product-description h3 {
+    font-size: 1.45rem;
+    margin-bottom: 1rem;
+    letter-spacing: 1px;
+}
+
+.product-description p {
+    white-space: pre-wrap;
+    line-height: 1.6;
+    color: #333;
+    font-size: 1.35rem;
+    margin: 1rem 0;
+    word-break: break-word;
 }
 
 .loading {
