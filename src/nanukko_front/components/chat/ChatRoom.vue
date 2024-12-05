@@ -1,26 +1,16 @@
 <template>
   <div class="chat-container">
     <!-- 헤더 컴포넌트 -->
-    <ChatRoomHeader 
-      :product="headerData"
-      :connected="connected"
-      :room-id="roomId"
-      :user-id="userId"
-      @close-chat="handleCloseChat"
-      @leave-room="handleLeaveRoom"
-    />
+    <ChatRoomHeader :product="headerData" :connected="connected" :room-id="roomId" :user-id="userId"
+      @close-chat="handleCloseChat" @leave-room="handleLeaveRoom" />
 
     <!-- 메인 메시지 영역 -->
-    <main 
-      ref="messageContainer" 
-      class="chat-messages"
-      @scroll.passive="handleScroll"
-    >
+    <main ref="messageContainer" class="chat-messages" @scroll.passive="handleScroll">
       <!-- 로딩 상태 -->
       <div v-if="isLoading" class="chat-loading">
         <span>로딩 중...</span>
       </div>
-      
+
       <!-- 빈 상태 -->
       <div v-if="!isLoading && !messages.length" class="chat-empty">
         대화를 시작해보세요!
@@ -35,53 +25,45 @@
             <span class="date-text">{{ formatDate(date) }}</span>
             <div class="date-line"></div>
           </div>
-          
+
           <!-- 메시지 목록 -->
-<!-- 메시지 목록 -->
-<template v-for="message in group" :key="message.chatMessageId || `${message.createdAt}-${message.sender}`">
-      <div 
-        class="message-wrapper"
-        :class="{ 
-          'message-sent': isSentByCurrentUser(message),
-          'message-received': !isSentByCurrentUser(message)
-        }"
-      >
-    <div class="message-bubble">
-      <!-- 이미지 메시지 -->
-      <div v-if="message.image" class="image-message">
-        <img 
-          :src="message.image"
-          alt="Shared image"
-          class="chat-image"
-          @click="openImageViewer(message.image)"
-          @error="handleImageError"
-        />
-        <p v-if="message.chatMessage" class="message-text">
-          {{ message.chatMessage }}
-          {{ message.image }}
-          <span>이미지</span>
-        </p>
-      </div>
-      <!-- 일반 텍스트 메시지 -->
-      <p v-else-if="message.chatMessage" class="message-text">
-        {{ message.chatMessage }}
-      </p>
-      <!-- 이미지 로드 실패 시 폴백 -->
-      <p v-else-if="message.type === 'IMAGE'" class="message-text error">
-        이미지를 불러올 수 없습니다
-      </p>
-    </div>
-    
-    <div class="message-info">
-      <span class="message-time">
-        {{ formatMessageTime(message.createdAt) }}
-      </span>
-      <span v-if="isSentByCurrentUser(message)" class="message-status">
-        {{ message.isRead ? '읽음' : '안읽음' }}
-      </span>
-    </div>
-  </div>
-</template>
+          <!-- 메시지 목록 -->
+          <template v-for="message in group" :key="message.chatMessageId || `${message.createdAt}-${message.sender}`">
+            <div class="message-wrapper" :class="{
+              'message-sent': isSentByCurrentUser(message),
+              'message-received': !isSentByCurrentUser(message)
+            }">
+              <div class="message-bubble">
+                <!-- 이미지 메시지 -->
+                <div v-if="message.image" class="image-message">
+                  <img :src="message.image" alt="Shared image" class="chat-image"
+                    @click="openImageViewer(message.image)" @error="handleImageError" />
+                  <p v-if="message.chatMessage" class="message-text">
+                    {{ message.chatMessage }}
+                    {{ message.image }}
+                    <span>이미지</span>
+                  </p>
+                </div>
+                <!-- 일반 텍스트 메시지 -->
+                <p v-else-if="message.chatMessage" class="message-text">
+                  {{ message.chatMessage }}
+                </p>
+                <!-- 이미지 로드 실패 시 폴백 -->
+                <p v-else-if="message.type === 'IMAGE'" class="message-text error">
+                  이미지를 불러올 수 없습니다
+                </p>
+              </div>
+
+              <div class="message-info">
+                <span class="message-time">
+                  {{ formatMessageTime(message.createdAt) }}
+                </span>
+                <span v-if="isSentByCurrentUser(message)" class="message-status">
+                  {{ message.isRead ? '읽음' : '안읽음' }}
+                </span>
+              </div>
+            </div>
+          </template>
         </template>
       </template>
     </main>
@@ -97,16 +79,9 @@
     </div>
 
     <!-- 입력 컴포넌트 -->
-    <ChatMessageInput
-      :user-id="userId"
-      :room-id="roomId"
-      :connected="connected"
-      :is-loading="isLoading"
-      @send-message="handleSendMessage"
-      @send-image="handleSendImage"
-      @send-location="handleSendLocation"
-      @show-preview="showPreview"
-    />
+    <ChatMessageInput :user-id="userId" :room-id="roomId" :connected="connected" :is-loading="isLoading"
+      @send-message="handleSendMessage" @send-image="handleSendImage" @send-location="handleSendLocation"
+      @show-preview="showPreview" />
   </div>
 </template>
 
@@ -120,6 +95,8 @@ import { useFormatTime } from '~/composables/useFormatTime'
 import { useStomp } from '~/composables/chat/useStomp'
 import { useChatRooms } from '~/composables/chat/useChatRooms'
 import { useRouter } from 'vue-router'
+
+const { $showToast } = useNuxtApp();
 
 // Props 정의
 const props = defineProps({
@@ -165,7 +142,7 @@ const { formatTime } = useFormatTime();
 
 // Computed Properties
 const sortedMessages = computed(() => {
-  return [...messages.value].sort((a, b) => 
+  return [...messages.value].sort((a, b) =>
     new Date(a.createdAt) - new Date(b.createdAt)
   );
 });
@@ -187,12 +164,12 @@ const handleSendMessage = async (messageData) => {
       isRead: false,
       createdAt: new Date().toISOString()
     };
-    
+
     console.log('메시지 전송:', fullMessageData);
     await stomp.sendMessage(props.roomId, fullMessageData);
   } catch (error) {
     console.error('메시지 전송 실패:', error);
-    alert('메시지 전송에 실패했습니다. 다시 시도해주세요.');
+    $showToast('메시지 전송에 실패했습니다. 다시 시도해주세요.');
   }
 };
 
@@ -201,9 +178,9 @@ const handleSendMessage = async (messageData) => {
 // messages 배열 업데이트 로직만 수정
 const handleNewMessage = async (message) => {
   try {
-    let messageData = typeof message === 'string' ? JSON.parse(message) : 
-                     message.body ? JSON.parse(message.body) : message;
-    
+    let messageData = typeof message === 'string' ? JSON.parse(message) :
+      message.body ? JSON.parse(message.body) : message;
+
     console.log('처리할 메시지 데이터:', messageData);
 
     // 읽음 상태 업데이트 메시지 처리
@@ -219,7 +196,7 @@ const handleNewMessage = async (message) => {
 
     // 새 메시지 처리
     const newMessage = {
-      chatMessageId: messageData.chatMessageId ,
+      chatMessageId: messageData.chatMessageId,
       sender: messageData.sender,
       chatRoom: messageData.chatRoom || props.roomId,
       chatMessage: messageData.chatMessage,
@@ -230,11 +207,11 @@ const handleNewMessage = async (message) => {
     };
 
     // 중복 체크
-    const isDuplicate = messages.value.some(msg => 
-      (msg.chatMessageId && msg.chatMessageId === newMessage.chatMessageId) || 
-      (msg.chatMessage === newMessage.chatMessage && 
-       msg.sender === newMessage.sender && 
-       msg.createdAt === newMessage.createdAt)
+    const isDuplicate = messages.value.some(msg =>
+      (msg.chatMessageId && msg.chatMessageId === newMessage.chatMessageId) ||
+      (msg.chatMessage === newMessage.chatMessage &&
+        msg.sender === newMessage.sender &&
+        msg.createdAt === newMessage.createdAt)
     );
 
     if (!isDuplicate) {
@@ -243,7 +220,7 @@ const handleNewMessage = async (message) => {
       // 상대방 메시지 즉시 읽음 처리
       if (!isSentByCurrentUser(newMessage)) {
         await markMessageAsRead(newMessage.chatMessageId);
-        
+
         // 읽지 않은 모든 메시지 처리
         const unreadMessages = messages.value
           .filter(msg => !msg.isRead && !isSentByCurrentUser(msg))
@@ -354,7 +331,7 @@ const handleImageError = (event) => {
 
 // 유틸리티 함수들
 const formatMessageTime = timestamp => timestamp ? formatTime(timestamp) : '';
-const isSentByCurrentUser = message => 
+const isSentByCurrentUser = message =>
   message?.sender?.toString() === props.userId?.toString();
 const scrollToBottom = (smooth = false) => {
   if (messageContainer.value) {
@@ -452,7 +429,7 @@ onUnmounted(() => {
 });
 
 // Watchers
-watch([() => props.roomId, () => props.connected], 
+watch([() => props.roomId, () => props.connected],
   async ([newRoomId, isConnected]) => {
     if (newRoomId && isConnected) {
       messages.value = [];
@@ -464,7 +441,7 @@ watch([() => props.roomId, () => props.connected],
         console.error('채팅방 초기화 실패:', error);
       }
     }
-  }, 
+  },
   { immediate: true }
 );
 
@@ -488,7 +465,7 @@ const handleCloseChat = () => {
 };
 
 // ChatRoom.vue
-const handleLeaveRoom = async ({ chatRoomId}) => {
+const handleLeaveRoom = async ({ chatRoomId }) => {
   try {
     // 1. STOMP를 통해 채팅방 나가기 요청
     await stomp.sendMessage(`leave/${chatRoomId}`, {
@@ -504,7 +481,7 @@ const handleLeaveRoom = async ({ chatRoomId}) => {
 
   } catch (error) {
     console.error('채팅방 나가기 실패:', error);
-    alert('채팅방 나가기에 실패했습니다.');
+    $showToast('채팅방 나가기에 실패했습니다.');
   }
 };
 </script>
@@ -513,6 +490,4 @@ const handleLeaveRoom = async ({ chatRoomId}) => {
 
 <style scoped>
 @import '~/assets/chat/chat-room.css';
-
-
 </style>

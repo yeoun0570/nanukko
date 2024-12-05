@@ -1,16 +1,15 @@
 <script setup>
 import { ref, computed, defineAsyncComponent } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { useToast } from 'vue-toastification';
 import { useAuth } from "~/composables/auth/useAuth";
 import { useApi } from "@/composables/useApi";
 import ProductImage from '~/components/products/products-detail/ProductImage.vue';
 import ProductMiniSummary from '~/components/products/products-detail/ProductMiniSummary.vue';
 import Map from '~/components/products/products-detail/Map.vue';
 
+const { $showToast } = useNuxtApp();
 const route = useRoute();
 const router = useRouter();
-const toast = useToast();
 const { isAuthenticated } = useAuth();
 const api = useApi();
 const isLoading = ref(true);
@@ -37,7 +36,7 @@ const loadProductDetail = async () => {
         await api.post(`/wishlist/${route.params.id}/view`); // 조회수 증가 API 호출
     } catch (error) {
         console.error('상품 정보 로드 실패:', error);
-        toast.error('존재하지 않는 상품입니다.');
+        $showToast('존재하지 않는 상품입니다.');
         await router.push('/');
         return;
     }
@@ -83,8 +82,8 @@ const productImages = computed(() => {
 
 // 버튼 클릭 시
 const handleWishClick = async () => {
-    if (!isAuthenticated) {
-        //에러 toast 추가 !!!
+    if (!isAuthenticated.value) {
+        $showToast('로그인이 필요한 서비스입니다. 로그인 화면으로 이동합니다.');
 
         setTimeout(() => {
             router.push('/auth/login')
@@ -104,24 +103,22 @@ const handleWishClick = async () => {
                     ? product.value.favorite_count + 1
                     : product.value.favorite_count - 1
             };
-
-            toast.success(response.message);
         }
     } catch (error) {
         console.error('위시리스트 에러:', error); // 에러 로깅
         if (error.response?.status === 401) {
-            toast.warning('로그인이 필요한 서비스입니다.');
+            $showToast('로그인이 필요한 서비스입니다. 로그인 화면으로 이동합니다.');
             router.push('auth/login');
         } else {
-            toast.error('처리 중 오류가 발생했습니다.');
+            $showToast('처리 중 오류가 발생했습니다.');
+
         }
     }
 };
 
 const handleChatClick = async () => {
-
-    if (!isAuthenticated) {
-        error.value = '로그인이 필요합니다'
+    if (!isAuthenticated.value) {
+        $showToast('로그인이 필요한 서비스입니다. 로그인 화면으로 이동합니다.');
         setTimeout(() => {
             router.push('/auth/login')
         }, 1500)
@@ -142,8 +139,8 @@ const handleChatClick = async () => {
 }
 
 const handleBuyClick = () => {
-    if (!isAuthenticated) {
-        //에러 toast 추가 !!!
+    if (!isAuthenticated.value) {
+        $showToast('로그인이 필요한 서비스입니다. 로그인 화면으로 이동합니다.');
 
         setTimeout(() => {
             router.push('/auth/login')
@@ -223,7 +220,7 @@ const getStatusText = (status) => {
                     </button>
                     <button class="action-button chat" @click="handleChatClick">
                         <v-icon>mdi-chat</v-icon>
-                        <span>채팅하기</span>
+                        <span>채팅</span>
                     </button>
                     <button class="action-button buy" @click="handleBuyClick">
                         <v-icon>mdi-gift-open</v-icon>
@@ -278,8 +275,8 @@ const getStatusText = (status) => {
         <div class="related-products card-container">
             <h3 class="section-title">연관 상품</h3>
             <div class="products-row">
-                <div v-for="relatedProduct in relatedProducts" :key="relatedProduct.id" class="related-product-card"
-                    @click="goToProduct(relatedProduct.id)">
+                <div v-for="relatedProduct in relatedProducts" :key="relatedProduct.productId"
+                    class="related-product-card" @click="goToProduct(relatedProduct.productId)">
                     <div class="product-image">
                         <img :src="relatedProduct.image1" :alt="relatedProduct.productName">
                     </div>

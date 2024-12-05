@@ -118,11 +118,12 @@ const getCompanionDeputyLabel = (isCompanion, isDeputy) => {
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
-    padding: 48px 20px;
+    padding: 38px 20px;
     border-top: 1px solid #eee;
     border-bottom: 1px solid #eee;
     font-size: 1.05rem;
     min-width: 480px;
+    margin-top: 10px;
 }
 
 .summary-row {

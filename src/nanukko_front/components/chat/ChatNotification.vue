@@ -1,40 +1,24 @@
 <template>
   <div class="relative">
     <!-- 채팅 아이콘과 알림 카운트 -->
-    <button 
-      class="chat-button"
-      @click="handleChatClick"
-    >
+    <button class="chat-button" @click="handleChatClick">
       <i class="fas fa-comments"></i>
-      <span 
-        v-if="unreadCount > 0" 
-        class="notification-badge"
-      >
+      <span v-if="unreadCount > 0" class="notification-badge">
         {{ unreadCount }}
       </span>
     </button>
 
     <!-- 알림 드롭다운 -->
-    <div 
-      v-if="showNotifications && notifications.length > 0" 
-      class="notifications-dropdown"
-    >
+    <div v-if="showNotifications && notifications.length > 0" class="notifications-dropdown">
       <div class="notifications-header">
         새 메시지
-        <button 
-          @click="clearNotifications" 
-          class="clear-button"
-        >
+        <button @click="clearNotifications" class="clear-button">
           모두 지우기
         </button>
       </div>
       <div class="notifications-list">
-        <div 
-          v-for="notification in notifications" 
-          :key="notification.id"
-          class="notification-item"
-          @click="goToChatRoom(notification.chatRoomId)"
-        >
+        <div v-for="notification in notifications" :key="notification.id" class="notification-item"
+          @click="goToChatRoom(notification.chatRoomId)">
           <div class="notification-sender">{{ notification.senderName }}</div>
           <div class="notification-message">{{ notification.message }}</div>
           <div class="notification-time">
@@ -53,6 +37,7 @@ import { useAuth } from '~/composables/auth/useAuth'
 import { useRouter } from 'vue-router'
 import { useFormatTime } from '~/composables/useFormatTime'
 
+const { $showToast } = useNuxtApp();
 const router = useRouter()
 const stomp = useStomp()
 const { userId, isAuthenticated } = useAuth()
@@ -80,7 +65,7 @@ const initializeNotifications = async () => {
     // 경로 수정: /user/{userId}/queue/notifications
     const destination = `/user/${userId}/queue/notifications`
     console.log('알림 구독 경로:', destination)
-    
+
     notificationSubscription = await stomp.subscribeToChatRoom(
       destination,
       {
@@ -96,8 +81,8 @@ const initializeNotifications = async () => {
 const handleNewMessage = (message) => {
   console.log('새 메시지 수신:', message)
   try {
-    const messageData = typeof message === 'string' ? 
-      JSON.parse(message) : 
+    const messageData = typeof message === 'string' ?
+      JSON.parse(message) :
       message.body ? JSON.parse(message.body) : message
 
     // 이미 나간 채팅방에서 온 메시지인 경우도 포함
@@ -121,7 +106,7 @@ const goToChatRoom = async (chatRoomId) => {
   try {
     await router.push(`/chat?roomId=${chatRoomId}`)
     showNotifications.value = false
-    
+
     // 해당 알림 삭제 및 카운트 감소
     notifications.value = notifications.value.filter(
       notif => notif.chatRoomId !== chatRoomId
@@ -137,7 +122,7 @@ const goToChatRoom = async (chatRoomId) => {
 // 채팅 버튼 클릭 처리
 const handleChatClick = () => {
   if (!isAuthenticated) {
-    alert('채팅을 이용하려면 로그인이 필요합니다.')
+    $showToast('채팅을 이용하려면 로그인이 필요합니다.')
     router.push('/auth/login')
     return
   }

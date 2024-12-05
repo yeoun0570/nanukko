@@ -8,6 +8,7 @@ import { useApi } from "@/composables/useApi";
 import ClovaChatbot from "~/components/chatbot/ClovaChatbot.vue";
 
 const api = useApi();
+const { $showToast } = useNuxtApp();
 
 //mystore 레이아웃에서 받은 함수
 const refreshUserProfile = inject("refreshUserProfile");
@@ -64,7 +65,7 @@ const updateUserInfo = async () => {
     console.log("수정된 정보: ", updateData);
 
     await api.post(`/my-store/modify`, updateData);
-    alert("정보가 성공적으로 수정되었습니다.");
+    $showToast("정보가 성공적으로 수정되었습니다.");
     isEditing.value = false; // 수정 모드 종료
     loadUserInfo(); // 새로운 정보 로드
     await refreshUserProfile();
@@ -116,35 +117,20 @@ onMounted(() => {
     <hr color="black" />
     <br />
     <div class="info-container">
-      <ProfileImage
-        v-model:profile="userInfo.profile"
-        v-model:isEditing="isEditing"
-        @update:profile="handleProfileUpdate"
-      ></ProfileImage>
+      <ProfileImage v-model:profile="userInfo.profile" v-model:isEditing="isEditing"
+        @update:profile="handleProfileUpdate"></ProfileImage>
       <div class="section-header">
         <p class="section-title">우리 부모님은요</p>
         <button v-if="!isEditing" @click="toggleEdit" class="edit-button">
           수정
         </button>
       </div>
-      <LoginInfo
-        :userId="userInfo.userId"
-        :password="userInfo.password"
-      ></LoginInfo>
-      <BasicInfo
-        v-model:nickname="userInfo.nickname"
-        v-model:email="userInfo.email"
-        v-model:mobile="userInfo.mobile"
-        v-model:userBirth="userInfo.userBirth"
-        v-model:isEditing="isEditing"
-      ></BasicInfo>
+      <LoginInfo :userId="userInfo.userId" :password="userInfo.password"></LoginInfo>
+      <BasicInfo v-model:nickname="userInfo.nickname" v-model:email="userInfo.email" v-model:mobile="userInfo.mobile"
+        v-model:userBirth="userInfo.userBirth" v-model:isEditing="isEditing"></BasicInfo>
       <!-- 주소 수정은 따로 지도 API로 구현 -->
-      <AddressInfo
-        v-model:addrMain="userInfo.addrMain"
-        v-model:addrDetail="userInfo.addrDetail"
-        v-model:addrZipcode="userInfo.addrZipcode"
-        v-model:isEditing="isEditing"
-      ></AddressInfo>
+      <AddressInfo v-model:addrMain="userInfo.addrMain" v-model:addrDetail="userInfo.addrDetail"
+        v-model:addrZipcode="userInfo.addrZipcode" v-model:isEditing="isEditing"></AddressInfo>
       <div class="section-header">
         <p class="section-title">우리 아이는요</p>
       </div>
@@ -159,12 +145,7 @@ onMounted(() => {
     </div>
     <br />
 
-    <NuxtLink
-      v-if="!isEditing"
-      :to="`/my-store/remove?userId=${userInfo.userId}`"
-      class="remove-user"
-      >탈퇴하기</NuxtLink
-    >
+    <NuxtLink v-if="!isEditing" :to="`/my-store/remove?userId=${userInfo.userId}`" class="remove-user">탈퇴하기</NuxtLink>
   </div>
   <div v-else>로딩중...</div>
 

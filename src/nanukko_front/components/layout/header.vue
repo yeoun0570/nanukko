@@ -3,19 +3,12 @@ import { ref } from "vue";
 import Notification from "../notification/Notification.vue";
 import { useAuth } from "~/composables/auth/useAuth";
 import { useRouter } from "vue-router";
-//import { useToast } from "vue-toastification";
 import ChatNotification from "../chat/ChatNotification.vue";
 
-//import VueToastification from 'vue-toastification'
-
-
 const router = useRouter();
-const { userId, nickname, isAuthenticated, logout } = useAuth();
+const { isAuthenticated, logout } = useAuth();
+const { $showToast } = useNuxtApp();
 
-const showLoginAlert = () => {
-  alert("채팅을 이용하려면 로그인이 필요합니다.");
-  router.push("/auth/login");
-};
 
 const navigateToChat = () => {
   router.push("/chat");
@@ -24,20 +17,10 @@ const navigateToProducts = () => {
   router.push('/products/new')
 };
 
-//const toast = VueToastification.useToast
-
 // 로그아웃
 const doLogout = () => {
-
   logout();
-  //알림 팝업
-  // toast.info("로그아웃되었습니다.", {
-  //   timeout: 3000, // 3초 동안 유지
-  //   position: "bottom-center", // 화면 중앙 하단
-  //   icon: "🔒", // 커스텀 아이콘
-  //   hideProgressBar: true, // 진행 바 숨기기
-  // });
-
+  $showToast('로그아웃 되었습니다!');
   router.push("/auth/login");
 };
 
@@ -71,7 +54,7 @@ const onSearch = () => {
         <!-- 검색어 입력 필드 -->
         <input type="text" placeholder="검색어를 입력해주세요" v-model="searchQuery" @keyup.enter="onSearch" />
         <!-- 검색 버튼 -->
-        <button @click="onSearch"><i class="fi fi-rr-search"></i></button>
+        <button @click="onSearch" class="search-button"><i class="fi fi-rr-search"></i></button>
         <!-- 클릭 시 검색 실행 -->
       </div>
 
@@ -79,17 +62,17 @@ const onSearch = () => {
       <ul class="header-actions">
         <li>
           <!-- <button v-if="isAuthenticated" @click="navigateToChat">채팅</button>
-          <button v-else @click="showLoginAlert">채팅</button> -->
+          <button v-else @click="showLogin$showToast">채팅</button> -->
           <ChatNotification @click="navigateToChat" />
         </li>
         <li class="notification-cotainer">
           <Notification />
         </li>
         <button v-if="!isAuthenticated">
-          <NuxtLink to="/auth/login">로그인</NuxtLink>
+          <NuxtLink to="/auth/login" class="link-style">로그인</NuxtLink>
         </button>
         <button v-if="isAuthenticated">
-          <NuxtLink to="/my-store">마이페이지</NuxtLink>
+          <NuxtLink to="/my-store" class="link-style">마이페이지</NuxtLink>
         </button>
         <button v-if="isAuthenticated" @click="doLogout">로그아웃</button>
         <!-- 판매 글 작성을 위한 페이지로 이동하는 링크 -->
@@ -100,6 +83,25 @@ const onSearch = () => {
 </template>
 
 <style>
+.fi-rr-search {
+  display: flex;
+  align-items: center;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+}
+
+.logo img {
+  vertical-align: middle;
+}
+
+.link-style {
+  text-decoration: none;
+  color: #000000;
+}
+
 /* 헤더 전체 레이아웃 */
 .header {
   display: flex;

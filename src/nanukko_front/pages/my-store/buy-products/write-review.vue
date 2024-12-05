@@ -3,6 +3,7 @@ import StarRating from "~/components/my-store/buy-products/StarRating.vue";
 import { useApi } from '@/composables/useApi';
 
 const api = useApi();
+const { $showToast } = useNuxtApp();
 
 definePageMeta({
   layout: "mystore",
@@ -20,7 +21,7 @@ const reviewInfo = ref({
 
 onMounted(() => {
   if (!reviewInfo.value.orderId) {
-    alert("잘못된 접근입니다.");
+    $showToast("잘못된 접근입니다.");
     navigateTo("/my-store/buy-products");
   }
 });
@@ -28,11 +29,11 @@ onMounted(() => {
 const writeReview = async () => {
   try {
     if (!reviewInfo.value.review.trim()) {
-      alert("리뷰 내용을 입력해주세요.");
+      $showToast("리뷰 내용을 입력해주세요.");
       return;
     }
     if (reviewInfo.value.rate === 0) {
-      alert("별점을 선택해주세요.");
+      $showToast("별점을 선택해주세요.");
       return;
     }
 
@@ -44,11 +45,11 @@ const writeReview = async () => {
     console.log("리뷰 데이터: ", reviewData);
 
     await api.post(`/review/write`, reviewData);
-    alert("리뷰가 작성되었습니다.");
+    $showToast("리뷰가 작성되었습니다.");
     navigateTo("/my-store/buy-products");
   } catch (error) {
     console.error("리뷰 작성 실패: ", error);
-    alert(error.response?.data?.message || "리뷰 작성에 실패했습니다.");
+    $showToast(error.response?.data?.message || "리뷰 작성에 실패했습니다.");
   }
 };
 
@@ -63,11 +64,7 @@ const back = () => {
 
     <!-- 상품 정보 표시 -->
     <div class="product-info">
-      <img
-        :src="reviewInfo.thumbnailImage"
-        :alt="reviewInfo.productName"
-        class="product-image"
-      />
+      <img :src="reviewInfo.thumbnailImage" :alt="reviewInfo.productName" class="product-image" />
       <h3>{{ reviewInfo.productName }}</h3>
     </div>
 
@@ -80,12 +77,7 @@ const back = () => {
     <!-- 리뷰 내용 입력 -->
     <div class="review-input">
       <label>리뷰 내용</label>
-      <textarea
-        v-model="reviewInfo.review"
-        placeholder="상품은 만족하셨나요? 솔직한 후기를 남겨주세요."
-        rows="5"
-        required
-      ></textarea>
+      <textarea v-model="reviewInfo.review" placeholder="상품은 만족하셨나요? 솔직한 후기를 남겨주세요." rows="5" required></textarea>
     </div>
 
     <div class="button-group">

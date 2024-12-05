@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
-const config = useRuntimeConfig();
 
+const { $showToast } = useNuxtApp();
 const props = defineProps({
     initialAddress: {
         type: String,
@@ -52,7 +52,7 @@ const getCoordinates = (addr) => {
 // 주소 검색 팝업 열기
 const openAddressSearch = () => {
     if (!window.daum?.Postcode) {
-        alert('주소 검색 서비스를 불러오는 중입니다. 잠시 후 다시 시도해주세요.');
+        $showToast('주소 검색 서비스를 불러오는 중입니다. 잠시 후 다시 시도해주세요.');
         return;
     }
 
@@ -89,7 +89,7 @@ const openAddressSearch = () => {
                     longitude: null
                 });
 
-                alert(typeof error === 'string' ? error : '주소의 좌표를 찾을 수 없습니다.');
+                $showToast(typeof error === 'string' ? error : '주소의 좌표를 찾을 수 없습니다.');
             }
         }
     }).open();

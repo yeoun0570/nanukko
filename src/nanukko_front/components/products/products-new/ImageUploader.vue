@@ -1,5 +1,6 @@
 <script setup>
-import { ref, watch } from 'vue';
+
+const { $showToast } = useNuxtApp();
 
 const props = defineProps({
     images: {
@@ -14,7 +15,7 @@ const handleImageUpload = (event) => {
     const files = Array.from(event.target.files);
 
     if (files.length + props.images.length > 5) {
-        alert("최대 5장까지 이미지를 업로드할 수 있습니다.");
+        $showToast("최대 5장까지 이미지를 업로드할 수 있습니다.");
         return;
     }
 

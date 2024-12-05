@@ -1,13 +1,8 @@
 <script setup>
 import { useURL } from "~/composables/useURL";
-import { useAuth } from "~/composables/auth/useAuth";
 
 const { axiosInstance } = useURL();
-const auth = useAuth();
-
-// token을 ref로 선언
-const token = ref(null);
-
+const { $showToast } = useNuxtApp();
 const props = defineProps({
   profile: String,
   isEditing: Boolean,
@@ -17,7 +12,6 @@ const emit = defineEmits(["update:profile"]);
 const fileInput = ref(null);
 // profile prop이 변경될 때마다 previewUrl 업데이트
 const previewUrl = ref(props.profile);
-const isHoverd = ref(false);
 
 // profile prop 변경 감지
 watch(
@@ -44,7 +38,7 @@ const handleFileSelect = async (event) => {
   // 허용되는 이미지 형식 검사
   const allowedTypes = ["image/jpeg", "image/png"];
   if (!allowedTypes.includes(file.type)) {
-    alert("지원하지 않는 파일 형식입니다. JPG, PNG 형식만 업로드 가능합니다.");
+    $showToast("지원하지 않는 파일 형식입니다. JPG, PNG 형식만 업로드 가능합니다.");
     event.target.value = ""; // 파일 선택 초기화
     return;
   }
@@ -83,7 +77,7 @@ const handleFileSelect = async (event) => {
     }
   } catch (error) {
     console.error("프로필 이미지 업로드 실패: ", error);
-    alert("이미지 업로드에 실패했습니다.");
+    $showToast("이미지 업로드에 실패했습니다.");
   }
 };
 
@@ -95,24 +89,16 @@ const removeProfileImage = async () => {
     emit("update:profile", null);
   } catch (error) {
     console.error("프로필 이미지 삭제 실패: ", error);
-    alert("이미지 삭제에 실패했습니다.");
+    $showToast("이미지 삭제에 실패했습니다.");
   }
 };
 </script>
 
 <template>
   <div class="profile-container">
-    <div
-      class="profile-image"
-      @mouseenter="isHovered = true"
-      @mouseleave="isHovered = false"
-      @click="triggerFileInput"
-    >
+    <div class="profile-image" @mouseenter="isHovered = true" @mouseleave="isHovered = false" @click="triggerFileInput">
       <!-- 기본 프로필 이미지 또는 업로드된 이미지 표시 -->
-      <img
-        :src="previewUrl || '/image/default-profile.png'"
-        alt="프로필 이미지"
-      />
+      <img :src="previewUrl || '/image/default-profile.png'" alt="프로필 이미지" />
 
       <!-- 수정 모드일 때 오버레이 표시 -->
       <div v-if="isEditing && isHovered" class="image-overlay">
@@ -120,21 +106,11 @@ const removeProfileImage = async () => {
       </div>
 
       <!-- 삭제 버튼 (수정 모드이고 프로필 이미지가 있을 때만 표시) -->
-      <button
-        v-if="isEditing && previewUrl"
-        class="remove-button"
-        @click.stop="removeProfileImage"
-      >
+      <button v-if="isEditing && previewUrl" class="remove-button" @click.stop="removeProfileImage">
         <i class="fas fa-times"></i>
       </button>
 
-      <input
-        ref="fileInput"
-        type="file"
-        class="hidden-input"
-        accept="image/*"
-        @change="handleFileSelect"
-      />
+      <input ref="fileInput" type="file" class="hidden-input" accept="image/*" @change="handleFileSelect" />
     </div>
   </div>
 </template>

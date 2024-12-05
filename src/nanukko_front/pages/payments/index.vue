@@ -8,6 +8,7 @@ import { useAuth } from "~/composables/auth/useAuth";
 
 const api = useApi();
 const auth = useAuth();
+const { $showToast } = useNuxtApp();
 
 //추후에 상세페이지에서 라우팅 받으면 받아야 될 값
 const route = useRoute();
@@ -28,7 +29,7 @@ const loadOrderPage = async () => {
     orderData.value = response;
     console.log(orderData.value.status);
     if (response.status !== "SELLING") {
-      alert("판매중인 상품이 아닙니다.");
+      $showToast("판매중인 상품이 아닙니다.");
       // 이전 페이지로 돌아가기
       navigateTo('/');
       return;
@@ -54,7 +55,7 @@ const startPayment = async () => {
 
     console.log("구매자 검증: ", orderData.value, ", ", auth.userId.value);
     if (orderData.value.sellerId === auth.userId.value) {
-      alert("자신의 상품은 구매할 수 없습니다.");
+      $showToast("자신의 상품은 구매할 수 없습니다.");
       return;
     }
 
@@ -90,9 +91,9 @@ const startPayment = async () => {
     if (error.response?.data) {
       // 백엔드의 예외 메시지를 그대로 표시
       if (error.response?.data?.message) {
-        alert(error.response.data.message);
+        $showToast(error.response.data.message);
       } else {
-        alert("결제 처리 중 오류가 발생했습니다.");
+        $showToast("결제 처리 중 오류가 발생했습니다.");
       }
     }
   } finally {

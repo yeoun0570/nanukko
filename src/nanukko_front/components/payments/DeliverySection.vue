@@ -1,6 +1,7 @@
 <script setup>
 import { useApi } from "@/composables/useApi";
 
+const { $showToast } = useNuxtApp();
 const api = useApi();
 
 const props = defineProps({
@@ -64,7 +65,7 @@ const updateUserAddr = async () => {
   try {
     const response = await api.post("/payments/modify-address", updateData);
     isEditing.value = false;
-    alert("주소가 변경되었습니다.")
+    $showToast("주소가 변경되었습니다.")
   } catch (error) {
     console.error("사용자 배송지 정보 수정 실패: ", error);
   }
@@ -86,23 +87,14 @@ const updateUserAddr = async () => {
         <span class="address">
           ({{ deliveryData.addrZipcode }}) {{ deliveryData.addrMain }}
         </span>
-        <button
-          v-if="isEditing"
-          @click="openAddressSearch"
-          class="search-address-btn"
-        >
+        <button v-if="isEditing" @click="openAddressSearch" class="search-address-btn">
           주소 검색
         </button>
         <span class="address" v-if="!isEditing">{{
           deliveryData.addrDetail
         }}</span>
-        <input
-          v-if="isEditing"
-          v-model="localAddrDetail"
-          @input="handleAddrDetailChange"
-          placeholder="상세 주소를 입력하세요."
-          class="detail-input"
-        />
+        <input v-if="isEditing" v-model="localAddrDetail" @input="handleAddrDetailChange" placeholder="상세 주소를 입력하세요."
+          class="detail-input" />
         <p class="phone">{{ deliveryData.mobile }}</p>
       </div>
     </div>
