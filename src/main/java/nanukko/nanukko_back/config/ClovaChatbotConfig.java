@@ -9,8 +9,8 @@ import org.springframework.context.annotation.Configuration;
 public class ClovaChatbotConfig {
 
     @Value("${clova.chatbot.url}")
-    public static String chatbotUrl;
+    private String chatbotUrl; //네이버 클로버 챗봇 API 엔드포인트 URL
 
     @Value("${clova.chatbot.secret}")
-    public static String secretKey;
+    private String secretKey; //API 인증을 위한 시크릿 키
 }
