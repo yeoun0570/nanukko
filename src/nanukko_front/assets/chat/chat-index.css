@@ -1,9 +1,10 @@
 .chat-layout {
-  display: flex;
-  min-height: calc(100vh - 80px); /* 헤더 높이 등을 고려한 조정 */
   width: 100%;
+  max-width: 1200px;
+  display: flex;
+  justify-self: center;
+  min-height: calc(100vh - 80px); /* 헤더 높이 등을 고려한 조정 */
   background-color: white;
-  margin-top: 80px; /* 헤더 공간 확보 */
 }
 
 .chat-list-section {
@@ -17,7 +18,7 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  background-color: #f8f9fa;
+  background-color: white;
 }
 
 /* 반응형 디자인 */
