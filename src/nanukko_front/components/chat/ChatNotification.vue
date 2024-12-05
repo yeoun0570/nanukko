@@ -219,6 +219,20 @@ const updateUnreadCount = () => {
   });
 }
 
+const clearAllNotifications = () => {
+  // Clear all notifications and reset state
+  chatRooms.value = []
+  unreadCount.value = 0
+  showDropdown.value = false
+  
+  // Clear localStorage items if needed
+  if (process.client) {
+    localStorage.removeItem('chat-notifications')
+    localStorage.removeItem('chat-notifications-count')
+  }
+}
+
+
 // 알림 초기화
 // ChatNotification.vue의 initializeNotifications 함수 수정
 const initializeNotifications = async () => {

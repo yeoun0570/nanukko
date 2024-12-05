@@ -131,4 +131,9 @@ public class User {
         this.isCanceled = true;
         this.updatedAt = LocalDateTime.now();
     }
+
+    //비밀번호 재설정
+    public void resetPassword(String newPassword){
+        this.password = newPassword;
+    }
 }

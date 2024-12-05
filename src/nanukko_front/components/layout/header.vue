@@ -3,6 +3,8 @@ import { ref } from "vue";
 import Notification from "../notification/Notification.vue";
 import { useAuth } from "~/composables/auth/useAuth";
 import { useRouter } from "vue-router";
+import { useAuthStore } from "~/stores/authStore";
+
 //import { useToast } from "vue-toastification";
 import ChatNotification from "../chat/ChatNotification.vue";
 
@@ -10,7 +12,8 @@ import ChatNotification from "../chat/ChatNotification.vue";
 
 
 const router = useRouter();
-const { userId, nickname, isAuthenticated, logout } = useAuth();
+const authStore = useAuthStore();
+
 
 const showLoginAlert = () => {
   alert("채팅을 이용하려면 로그인이 필요합니다.");
@@ -24,12 +27,12 @@ const navigateToProducts = () => {
   router.push('/products/new')
 };
 
-//const toast = VueToastification.useToast
+const shouldRerender = ref(0); //리렌더링을 트리거하기 위한 키
 
 // 로그아웃
 const doLogout = () => {
 
-  logout();
+  authStore.logout();
   //알림 팝업
   // toast.info("로그아웃되었습니다.", {
   //   timeout: 3000, // 3초 동안 유지
@@ -53,10 +56,25 @@ const onSearch = () => {
     });
   }
 };
+
+// 컴포넌트 마운트 시 상태 초기화
+onMounted(async () => {
+  if (process.client) {
+    await nextTick()
+    authStore.initialize()
+  }
+})
+
+// 인증 상태 변화 감시
+watch(() => authStore.isAuthenticated, (newValue) => {
+  shouldRerender.value++; //값을 변경하여 리렌더링
+  console.log('Authentication state changed:', newValue);
+}, { immediate: true });
+
 </script>
 
 <template>
-  <header class="header">
+  <header class="header" :key="shouldRerender">
     <!-- 로고, 검색창, 액션 항목을 포함하는 컨테이너 -->
     <div class="header-container">
       <!-- 로고 섹션 -->
@@ -81,7 +99,7 @@ const onSearch = () => {
           <!-- <button v-if="isAuthenticated" @click="navigateToChat">채팅</button>
           <button v-else @click="showLoginAlert">채팅</button> -->
 
-        
+
 
           <ChatNotification @click="navigateToChat" />
         </li>
@@ -89,15 +107,16 @@ const onSearch = () => {
           <Notification />
 
         </li>
-        <button v-if="!isAuthenticated">
+        <li class="notification-cotainer"><Notification /></li>
+        <button v-if="!authStore.isAuthenticated">
           <NuxtLink to="/auth/login">로그인</NuxtLink>
         </button>
-        <button v-if="isAuthenticated">
+        <button v-if="authStore.isAuthenticated">
           <NuxtLink to="/my-store">마이페이지</NuxtLink>
         </button>
-        <button v-if="isAuthenticated" @click="doLogout">로그아웃</button>
+        <button v-if="authStore.isAuthenticated" @click="doLogout">로그아웃</button>
         <!-- 판매 글 작성을 위한 페이지로 이동하는 링크 -->
-        <button v-if="isAuthenticated" @click="navigateToProducts" class="sell-button">판매하기</button>
+        <button v-if="authStore.isAuthenticated" @click="navigateToProducts" class="sell-button">판매하기</button>
       </ul>
     </div>
   </header>
@@ -254,7 +273,7 @@ const onSearch = () => {
   /* 줄 수를 설정할 수 있으며 넘치는 텍스트는 ...로 대체 */
   -webkit-box-orient: vertical;
   /* 다중으로 줄이 설정될 때 세로로 표시하도록 설정 */
-  overflow: hidden;
+  overflow: visible;
   /* 넘치는 내용들을 숨김처리 */
   margin-right: 0.5rem;
   /* 오른쪽 여백 */

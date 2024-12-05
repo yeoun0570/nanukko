@@ -45,6 +45,7 @@ export default defineNuxtConfig({
   // 모듈 설정
   modules: [
     // 필요한 모듈들 추가
+    '@pinia/nuxt',
   ],
 
   // Vite 설정
