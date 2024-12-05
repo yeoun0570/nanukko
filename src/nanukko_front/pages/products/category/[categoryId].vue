@@ -3,8 +3,7 @@ import { ref, watch, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useApi } from "@/composables/useApi";
 import { useURL } from "~/composables/useURL";
-import TimeAgo from '~/components/common/TimeAgo.vue';
-
+import ProductList from '@/components/products/ProductList.vue';
 
 const axiosInstance = useURL();
 const api = useApi();
@@ -110,10 +109,6 @@ const fetchMiddleCategoriesProducts = async () => {
     }
 };
 
-const formatPrice = (price) => {
-    return price?.toLocaleString() ?? '0';
-};
-
 const goToProduct = (productId) => {
     router.push(`/products/${productId}`);
 };
@@ -144,7 +139,6 @@ const changePage = (newPage) => {
                 {{ category.middleName }}
                 <span class="count">{{ category.count || '' }}</span>
             </button>
-
         </div>
 
         <h2 class="search-title">
@@ -153,51 +147,8 @@ const changePage = (newPage) => {
             <span class="total-count">전체 상품 수 : {{ products.totalElements }}</span>
         </h2>
 
-        <div v-if="loading" class="loading-container">
-            <div class="loading">로딩 중...</div>
-        </div>
-
-        <div v-else-if="products.content?.length === 0" class="no-results">
-            상품이 없습니다.
-        </div>
-
-        <div v-else class="product-grid">
-            <div v-for="product in products.content" :key="product.productId" class="product-card"
-                @click="goToProduct(product.productId)">
-                <div class="card card-fixed-height">
-                    <div class="card-img-wrapper">
-                        <img :src="product.thumbnailImage" class="card-img-top" :alt="product.productName" width="300"
-                            height="300" />
-                    </div>
-
-                    <div class="card-body">
-                        <div>
-                            <small class="card-title">{{ product.productName }}</small>
-                            <div class="flex-between-center">
-                                <span class="card-price mb-0">{{ formatPrice(product.price) }}원</span>
-                                <span class="small-text-muted">
-                                    <TimeAgo :timestamp="product.updatedAt" />
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="card-footer">
-                        <span class="small-text-muted">{{ product.address || '지역정보 없음' }}</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div v-if="products.content?.length > 0" class="pagination-container">
-            <button :disabled="products.first" @click="changePage(pageNumber - 1)" class="page-button">
-                이전
-            </button>
-            <span class="page-info">{{ pageNumber + 1 }} / {{ products.totalPages }}</span>
-            <button :disabled="products.last" @click="changePage(pageNumber + 1)" class="page-button">
-                다음
-            </button>
-        </div>
+        <ProductList :products="products" :loading="loading" :page-number="pageNumber" @product-click="goToProduct"
+            @page-change="changePage" />
     </div>
 </template>
 
