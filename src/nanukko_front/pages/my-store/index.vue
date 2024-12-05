@@ -5,7 +5,6 @@ import KidsInfo from "~/components/my-store/userInfo/KidsInfo.vue";
 import LoginInfo from "~/components/my-store/userInfo/LoginInfo.vue";
 import ProfileImage from "~/components/my-store/userInfo/ProfileImage.vue";
 import { useApi } from "@/composables/useApi";
-import ClovaChatbot from "~/components/chatbot/ClovaChatbot.vue";
 
 const api = useApi();
 
