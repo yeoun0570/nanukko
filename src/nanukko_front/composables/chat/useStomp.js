@@ -233,24 +233,6 @@ export function useStomp() {
     });
   };
 
-    /**클로바 메시지 전송 */
-    const sendClovaMessage = async (message) => {
-      if (!client.value?.active) {
-        throw new Error('STOMP connection 끊김')
-      }
-  
-      const destination = '/app/sendMessage'
-      console.log('메시지 전송:', destination, message)
-  
-      return client.value.publish({
-        destination,
-        body: JSON.stringify(message),
-        headers: {
-          'content-type': 'application/json'
-        }
-      })
-    }
-
   /**연결 해제 */
   const disconnect = async () => {
     if (client.value?.active) {

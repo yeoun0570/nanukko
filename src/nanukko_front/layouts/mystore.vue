@@ -42,6 +42,7 @@ onMounted(() => {
       </main>
     </div>
     <Footer />
+    <ChatbotWidget/>
   </div>
 </template>
 

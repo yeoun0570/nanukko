@@ -167,8 +167,6 @@ onMounted(() => {
     >
   </div>
   <div v-else>로딩중...</div>
-
-  <ClovaChatbot />
 </template>
 
 <style>
