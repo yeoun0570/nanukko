@@ -159,5 +159,20 @@ public class ProductController {
         return ResponseEntity.ok(products);
     }
 
+    @GetMapping("/seller")
+    public ResponseEntity<PageResponseDTO<ProductResponseDto>> getSellerItems(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam String userId) {
+
+        if (userRepository.existsByUserIdAndIsCanceledFalse(userId)) { //탈퇴하지않은 회원인 경우, 회원정보가 있는 경우
+            PageRequest pageRequest = PageRequest.of(page, size);
+            PageResponseDTO<ProductResponseDto> dto = productService.getSellerPage(userId, pageRequest);
+            return ResponseEntity.ok(dto);
+        } else {
+            throw new EntityNotFoundException("사용자를 찾을 수 없습니다.");
+        }
+    }
+
 
 }
