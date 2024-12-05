@@ -19,6 +19,7 @@ import nanukko.nanukko_back.dto.page.PageResponseDTO;
 import nanukko.nanukko_back.dto.product.ProductRequestDto;
 import nanukko.nanukko_back.dto.product.ProductResponseDto;
 import nanukko.nanukko_back.repository.*;
+import nanukko.nanukko_back.repository.chat.ChatRoomRepository;
 import nanukko.nanukko_back.repository.log.UserActionLogRepository;
 import nanukko.nanukko_back.util.ProductMapper;
 import org.springframework.data.domain.Page;
@@ -26,7 +27,6 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -49,6 +49,7 @@ public class ProductService {
     private final WishlistRepository wishlistRepository;
     private final ImageService imageService;
     private final UserActionLogRepository userActionLogRepository;
+    private final ChatRoomRepository chatRoomRepository;
 
     public PageResponseDTO<ProductResponseDto> getMainProducts(Pageable pageable) { //미로그인 사용자 상품 리스트 (최근 등록 순)
         Page<Product> result = productRepository.findAllByIsDeletedFalse(pageable);
@@ -174,6 +175,8 @@ public class ProductService {
         dto.setIsWished(isWished);
         int count = productRepository.countBySellerAndStatus(dto.getUserId(), ProductStatus.SELLING);
         dto.setSellingCount(count);
+        int talkCount = chatRoomRepository.countChatRoomsByProductId(productId);
+        dto.setTalk_count(talkCount);
         //Click 이벤트 로그 저장
         if (user != null) {
             saveLog(user, product);
