@@ -1,26 +1,16 @@
 <template>
   <div class="chat-container">
     <!-- 채팅방 헤더 -->
-    <ChatRoomHeader 
-      :product="headerData"
-      :connected="connected"
-      :room-id="roomId"
-      :user-id="userId"
-      @close-chat="handleCloseChat"
-      @leave-room="handleLeaveRoom"
-    />
+    <ChatRoomHeader :product="headerData" :connected="connected" :room-id="roomId" :user-id="userId"
+      @close-chat="handleCloseChat" @leave-room="handleLeaveRoom" />
 
     <!-- 메시지 영역 -->
-    <main 
-      ref="messageContainer" 
-      class="chat-messages"
-      @scroll.passive="handleScroll"
-    >
+    <main ref="messageContainer" class="chat-messages" @scroll.passive="handleScroll">
       <!-- 로딩 상태 -->
       <div v-if="isLoading" class="chat-loading">
         <span>로딩 중...</span>
       </div>
-      
+
       <!-- 빈 상태 -->
       <div v-if="!isLoading && !messages.length" class="chat-empty">
         대화를 시작해보세요!
@@ -35,33 +25,25 @@
             <span class="date-text">{{ formatDate(date) }}</span>
             <div class="date-line"></div>
           </div>
-          
+
           <!-- 메시지 목록 -->
           <template v-for="message in group" :key="message.chatMessageId">
-            <div 
-              class="message-wrapper"
-              :class="{ 
-                'message-sent': isSentByCurrentUser(message),
-                'message-received': !isSentByCurrentUser(message)
-              }"
-            >
+            <div class="message-wrapper" :class="{
+              'message-sent': isSentByCurrentUser(message),
+              'message-received': !isSentByCurrentUser(message)
+            }">
               <div class="message-bubble">
                 <!-- 이미지 메시지 -->
                 <div v-if="message.image" class="image-message">
-                  <img 
-                    :src="message.image"
-                    alt="Shared image"
-                    class="chat-image"
-                    @click="openImageViewer(message.image)"
-                    @error="handleImageError"
-                  />
+                  <img :src="message.image" alt="Shared image" class="chat-image"
+                    @click="openImageViewer(message.image)" @error="handleImageError" />
                 </div>
                 <!-- 텍스트 메시지 -->
                 <p v-if="message.chatMessage" class="message-text">
                   {{ message.chatMessage }}
                 </p>
               </div>
-              
+
               <div class="message-info">
                 <span class="message-time">
                   {{ formatMessageTime(message.createdAt) }}
@@ -87,14 +69,8 @@
     </div>
 
     <!-- 메시지 입력 영역 -->
-    <ChatMessageInput
-      :user-id="userId"
-      :room-id="roomId"
-      :connected="connected"
-      :is-loading="isLoading"
-      @send-message="handleSendMessage"
-      @send-image="handleSendImage"
-    />
+    <ChatMessageInput :user-id="userId" :room-id="roomId" :connected="connected" :is-loading="isLoading"
+      @send-message="handleSendMessage" @send-image="handleSendImage" />
   </div>
 </template>
 
@@ -105,6 +81,7 @@ import { useFormatTime } from '~/composables/useFormatTime'
 import ChatRoomHeader from '~/components/chat/ChatRoomHeader.vue'
 import ChatMessageInput from './ChatMessageInput.vue'
 
+const { $showToast } = useNuxtApp();
 // Props 정의
 const props = defineProps({
   roomId: {
@@ -145,7 +122,7 @@ const { formatTime } = useFormatTime()
 
 // 메시지 정렬 및 헤더 데이터 계산
 const sortedMessages = computed(() => {
-  return [...messages.value].sort((a, b) => 
+  return [...messages.value].sort((a, b) =>
     new Date(a.createdAt) - new Date(b.createdAt)
   )
 })
@@ -161,8 +138,8 @@ const headerData = computed(() => ({
 // 메시지 송수신 처리
 const handleNewMessage = async (message) => {
   try {
-    let messageData = typeof message === 'string' ? JSON.parse(message) : 
-                     message.body ? JSON.parse(message.body) : message;
+    let messageData = typeof message === 'string' ? JSON.parse(message) :
+      message.body ? JSON.parse(message.body) : message;
 
     console.log('수신된 메시지 데이터:', messageData);
 
@@ -188,11 +165,11 @@ const handleNewMessage = async (message) => {
     };
 
     // 중복 체크
-    const isDuplicate = messages.value.some(msg => 
-      (msg.chatMessageId && msg.chatMessageId === newMessage.chatMessageId) || 
-      (msg.chatMessage === newMessage.chatMessage && 
-       msg.sender === newMessage.sender && 
-       msg.createdAt === newMessage.createdAt)
+    const isDuplicate = messages.value.some(msg =>
+      (msg.chatMessageId && msg.chatMessageId === newMessage.chatMessageId) ||
+      (msg.chatMessage === newMessage.chatMessage &&
+        msg.sender === newMessage.sender &&
+        msg.createdAt === newMessage.createdAt)
     );
 
     if (!isDuplicate) {
@@ -203,9 +180,9 @@ const handleNewMessage = async (message) => {
         try {
 
           console.log('Sending read status update:', {
-      chatRoomId: props.roomId,
-      newMessage,
-    });
+            chatRoomId: props.roomId,
+            newMessage,
+          });
 
 
           await stomp.sendMessage(`${props.roomId}/read-realtime`, {
@@ -276,7 +253,7 @@ const initializeChat = async () => {
 
 // 유틸리티 함수들
 const formatMessageTime = timestamp => timestamp ? formatTime(timestamp) : ''
-const isSentByCurrentUser = (message) => {return message?.sender === props.userId;};
+const isSentByCurrentUser = (message) => { return message?.sender === props.userId; };
 const scrollToBottom = (smooth = false) => {
   if (messageContainer.value) {
     nextTick(() => {
@@ -328,12 +305,12 @@ const handleSendMessage = async (messageData) => {
       isRead: false,
       createdAt: new Date().toISOString()
     };
-    
+
     console.log('메시지 전송:', fullMessageData);
     await stomp.sendMessage(`${props.roomId}`, fullMessageData);
   } catch (error) {
     console.error('메시지 전송 실패:', error);
-    alert('메시지 전송에 실패했습니다. 다시 시도해주세요.');
+    $showToast('메시지 전송에 실패했습니다. 다시 시도해주세요.');
   }
 };
 
@@ -352,7 +329,7 @@ const handleSendImage = async (messageData) => {
     await stomp.sendMessage(`${props.roomId}`, fullMessageData);
   } catch (error) {
     console.error('이미지 전송 실패:', error);
-    alert('이미지 전송에 실패했습니다. 다시 시도해주세요.');
+    $showToast('이미지 전송에 실패했습니다. 다시 시도해주세요.');
   }
 };
 
@@ -423,7 +400,7 @@ const handleLeaveRoom = async ({ chatRoomId }) => {
     emit('close-chat')
   } catch (error) {
     console.error('채팅방 나가기 실패:', error)
-    alert('채팅방 나가기에 실패했습니다.')
+    $showToast('채팅방 나가기에 실패했습니다.')
   }
 }
 
@@ -447,7 +424,7 @@ onUnmounted(() => {
 })
 
 // 감시자
-watch([() => props.roomId, () => props.connected], 
+watch([() => props.roomId, () => props.connected],
   async ([newRoomId, isConnected]) => {
     if (newRoomId && isConnected) {
       messages.value = []
@@ -459,7 +436,7 @@ watch([() => props.roomId, () => props.connected],
         console.error('채팅방 초기화 실패:', error)
       }
     }
-  }, 
+  },
   { immediate: true }
 )
 

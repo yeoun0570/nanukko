@@ -9,35 +9,19 @@
       <div class="modal-body">
         <div class="form-group">
           <label for="userId">아이디</label>
-          <input
-            id="userId"
-            type="text"
-            v-model="userId"
-            placeholder="아이디를 입력해주세요"
-            required
-          />
+          <input id="userId" type="text" v-model="userId" placeholder="아이디를 입력해주세요" required />
         </div>
 
         <div class="form-group">
           <label for="email">이메일</label>
-          <input
-            id="email"
-            type="email"
-            v-model="email"
-            placeholder="가입시 등록한 이메일을 입력해주세요"
-            required
-          />
+          <input id="email" type="email" v-model="email" placeholder="가입시 등록한 이메일을 입력해주세요" required />
         </div>
 
         <p class="info-text">* 입력하신 이메일로 비밀번호 재설정 링크가 발송됩니다.</p>
         <p class="info-text">* 재설정 링크는 15분간 유효합니다.</p>
 
         <div class="button-group">
-          <button
-            class="submit-button"
-            @click="findPassword"
-            :disabled="!isValid || isLoading"
-          >
+          <button class="submit-button" @click="findPassword" :disabled="!isValid || isLoading">
             {{ isLoading ? "전송 중..." : "이메일 전송" }}
           </button>
           <button class="cancel-button" @click="onClose">취소</button>
@@ -52,6 +36,7 @@ import { ref, computed } from 'vue';
 import { useApi } from '@/composables/useApi';
 
 const api = useApi();
+const { $showToast } = useNuxtApp();
 
 const props = defineProps({
   isOpen: {
@@ -77,21 +62,21 @@ const findPassword = async () => {
 
   // 요청 데이터 객체 생성
   const requestData = {
-      email: email.value,
-      userId: userId.value
-    };
+    email: email.value,
+    userId: userId.value
+  };
 
 
   try {
     isLoading.value = true;
     await api.post('/user/find-password', requestData);
-    
-    alert("비밀번호 재설정 링크가 이메일로 전송되었습니다.");
+
+    $showToast("비밀번호 재설정 링크가 이메일로 전송되었습니다.");
     resetForm();
     props.onClose();
   } catch (error) {
     console.error("비밀번호 찾기 실패:", error);
-    alert("이메일 전송에 실패했습니다. 입력하신 정보를 확인해주세요.");
+    $showToast("이메일 전송에 실패했습니다. 입력하신 정보를 확인해주세요.");
   } finally {
     isLoading.value = false;
   }
@@ -184,7 +169,7 @@ const handleOverlayClick = (event) => {
   margin-top: 20px;
 }
 
-.submit-button, 
+.submit-button,
 .cancel-button {
   padding: 10px 20px;
   border: none;
