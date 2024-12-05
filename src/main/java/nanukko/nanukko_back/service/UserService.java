@@ -31,6 +31,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Service
@@ -405,6 +406,31 @@ public class UserService {
                 .build());
 
         return new PageResponseDTO<>(reviewPage);
+    }
+
+    //후기 조회 5개까지만
+    @Transactional(readOnly = true)
+    public List<ReviewInMyStoreDTO> getReview(String userId) {
+        User seller = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        // 판매자가 받은 후기 조회 (최신 순, 최대 size 개수만)
+        List<Review> reviews = reviewRepository.findTop5ByProductSellerOrderByCreatedAtDesc(seller);
+
+        // DTO로 변환
+        return reviews.stream()
+                .map(review -> ReviewInMyStoreDTO.builder()
+                        .reviewId(review.getReviewId())
+                        .productId(review.getProduct().getProductId())
+                        .authorId(review.getUser().getUserId())  // 후기 작성자 ID
+                        .authorNickName(review.getUser().getNickname()) // 후기 작성자 이름
+                        .rate(review.getRate())
+                        .productName(review.getProduct().getProductName())
+                        .thumbnail(review.getProduct().getThumbnailImage()) // 후기 작성된 썸네일 이미지
+                        .review(review.getReview())
+                        .reviewRate(seller.getReviewRate())  // 판매자의 전체 평점
+                        .build())
+                .collect(Collectors.toList());
     }
 
     //탈퇴하기
