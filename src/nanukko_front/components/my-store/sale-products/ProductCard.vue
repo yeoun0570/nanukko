@@ -2,8 +2,8 @@
 import DeliveryRegistrationModal from "~/components/delivery/DeliveryRegistrationModal.vue";
 import { useApi } from '@/composables/useApi';
 
+const { $showToast } = useNuxtApp();
 const api = useApi();
-
 const router = useRouter();
 const showDeliveryModal = ref(false);
 
@@ -40,15 +40,15 @@ const removeProduct = async () => {
         },
       }
     );
-    alert("상품 삭제에 성공했습니다.");
+    $showToast("상품 삭제에 성공했습니다.");
     emit("product-updated");
   } catch (error) {
     console.log("상품 삭제에 실패했습니다: ", error);
     console.error("에러 응답:", error.response?.data); // 에러 응답 확인용 로그
     if (error.response?.data?.message) {
-      alert(error.response.data.message);
+      $showToast(error.response.data.message);
     } else {
-      alert("상품 삭제에 실패했습니다.");
+      $showToast("상품 삭제에 실패했습니다.");
     }
   }
 };

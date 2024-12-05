@@ -2,10 +2,7 @@
   <div class="chat-input-container">
     <div class="input-wrapper">
       <!-- 메뉴 토글 버튼 -->
-      <button 
-        class="menu-button"
-        @click="isMenuOpen = !isMenuOpen"
-      >
+      <button class="menu-button" @click="isMenuOpen = !isMenuOpen">
         <i class="fas" :class="isMenuOpen ? 'fa-times' : 'fa-plus'"></i>
       </button>
 
@@ -13,17 +10,9 @@
       <div v-if="isMenuOpen" class="additional-menu">
         <!-- 이미지 업로드 -->
         <div class="image-upload-container">
-          <input
-            ref="fileInput"
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            class="hidden"
-            @change="handleFileSelect"
-          />
-          <button 
-            class="menu-item"
-            @click="triggerFileInput"
-          >
+          <input ref="fileInput" type="file" accept="image/jpeg,image/png,image/webp" class="hidden"
+            @change="handleFileSelect" />
+          <button class="menu-item" @click="triggerFileInput">
             <i class="fas fa-image"></i>
           </button>
           <!-- 이미지 미리보기 -->
@@ -36,30 +25,17 @@
         </div>
 
         <!-- 위치 공유 -->
-        <button 
-          class="menu-item"
-          @click="handleLocationShare"
-        >
+        <button class="menu-item" @click="handleLocationShare">
           <i class="fas fa-map-marker-alt"></i>
         </button>
       </div>
 
       <!-- 메시지 입력창 -->
-      <input
-        v-model="message"
-        type="text"
-        class="message-input"
-        placeholder="메시지를 입력하세요..."
-        :disabled="!connected || isLoading"
-        @keyup.enter="handleSendMessage"
-      />
+      <input v-model="message" type="text" class="message-input" placeholder="메시지를 입력하세요..."
+        :disabled="!connected || isLoading" @keyup.enter="handleSendMessage" />
 
       <!-- 전송 버튼 -->
-      <button
-        class="send-button"
-        :disabled="!canSend"
-        @click="handleSendMessage"
-      >
+      <button class="send-button" :disabled="!canSend" @click="handleSendMessage">
         전송
       </button>
     </div>
@@ -71,6 +47,7 @@ import { ref, computed } from 'vue';
 import { useURL } from '~/composables/useURL';
 import { useAuth } from '~/composables/auth/useAuth';
 
+const { $showToast } = useNuxtApp();
 const { axiosInstance } = useURL();
 const { getToken } = useAuth();
 
@@ -94,8 +71,8 @@ const isUploading = ref(false);
 
 // 전송 가능 상태 확인
 const canSend = computed(() => {
-  return props.connected && !props.isLoading && !isUploading.value && 
-        (message.value.trim() || selectedFile.value);
+  return props.connected && !props.isLoading && !isUploading.value &&
+    (message.value.trim() || selectedFile.value);
 });
 
 // 파일 입력 트리거
@@ -111,14 +88,14 @@ const handleFileSelect = async (event) => {
   // 파일 유효성 검사
   const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
   if (!allowedTypes.includes(file.type)) {
-    alert('지원하지 않는 파일 형식입니다. JPG, PNG, WebP 형식만 업로드 가능합니다.');
+    $showToast('지원하지 않는 파일 형식입니다. JPG, PNG, WebP 형식만 업로드 가능합니다.');
     event.target.value = '';
     return;
   }
 
   // 파일 크기 제한 (10MB)
   if (file.size > 10 * 1024 * 1024) {
-    alert('파일 크기는 10MB를 초과할 수 없습니다.');
+    $showToast('파일 크기는 10MB를 초과할 수 없습니다.');
     event.target.value = '';
     return;
   }
@@ -184,14 +161,14 @@ const handleSendMessage = async () => {
         if (imageUrl) {
           messageData = {
             ...messageData,
-            messageType: 'IMAGE', 
+            messageType: 'IMAGE',
             image: imageUrl,
             chatMessage: message.value.trim() || ''
           };
         }
       } catch (error) {
         console.error('이미지 업로드 실패:', error);
-        alert('이미지 업로드에 실패했습니다.');
+        $showToast('이미지 업로드에 실패했습니다.');
         return;
       }
     }
@@ -203,14 +180,14 @@ const handleSendMessage = async () => {
 
   } catch (error) {
     console.error('메시지 전송 실패:', error);
-    alert('메시지 전송에 실패했습니다. 다시 시도해주세요.');
+    $showToast('메시지 전송에 실패했습니다. 다시 시도해주세요.');
   }
 };
 
 // 위치 공유 처리
 const handleLocationShare = () => {
   if (!navigator.geolocation) {
-    alert('위치 정보를 사용할 수 없습니다.');
+    $showToast('위치 정보를 사용할 수 없습니다.');
     return;
   }
 
@@ -223,12 +200,12 @@ const handleLocationShare = () => {
         chatMessage: '위치를 공유했습니다.',
         createdAt: new Date().toISOString()
       };
-      
+
       emit('send-message', messageData);
       isMenuOpen.value = false;
     },
     () => {
-      alert('위치 정보를 가져오는데 실패했습니다.');
+      $showToast('위치 정보를 가져오는데 실패했습니다.');
     }
   );
 };

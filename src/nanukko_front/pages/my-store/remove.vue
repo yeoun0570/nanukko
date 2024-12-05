@@ -4,6 +4,7 @@ import { useApi } from '@/composables/useApi';
 const api = useApi();
 
 const route = useRoute();
+const { $showToast } = useNuxtApp();
 
 const userId = route.query.userId;
 
@@ -34,7 +35,7 @@ const removeUser = async () => {
     console.log("Response:", response);
     console.log("userInfo: ", userInfo.value);
     if (response.canceled) {
-      alert("회원 탈퇴가 완료되었습니다.");
+      $showToast("회원 탈퇴가 완료되었습니다.");
       await navigateTo("/login");
     }
   } catch (error) {
@@ -44,9 +45,9 @@ const removeUser = async () => {
     if (error.response?.data) {
       // 백엔드의 예외 메시지를 그대로 표시
       if (error.response?.data?.message) {
-        alert(error.response.data.message);
+        $showToast(error.response.data.message);
       } else {
-        alert("회원 탈퇴 처리 중 오류가 발생했습니다.");
+        $showToast("회원 탈퇴 처리 중 오류가 발생했습니다.");
       }
     }
   }

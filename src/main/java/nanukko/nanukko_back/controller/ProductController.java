@@ -11,9 +11,12 @@ import nanukko.nanukko_back.domain.user.User;
 import nanukko.nanukko_back.dto.page.PageResponseDTO;
 import nanukko.nanukko_back.dto.product.ProductRequestDto;
 import nanukko.nanukko_back.dto.product.ProductResponseDto;
+import nanukko.nanukko_back.dto.review.ReviewInMyStoreDTO;
 import nanukko.nanukko_back.dto.user.CustomUserDetails;
+import nanukko.nanukko_back.dto.user.UserInfoDTO;
 import nanukko.nanukko_back.repository.UserRepository;
 import nanukko.nanukko_back.service.ProductService;
+import nanukko.nanukko_back.service.UserService;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -37,6 +40,7 @@ public class ProductController {
     private final UserRepository userRepository;
     private final ProductService productService;
     private final ObjectMapper objectMapper;
+    private final UserService userService;
 
     @GetMapping("/main")
     public ResponseEntity<PageResponseDTO<ProductResponseDto>> getMain(
@@ -159,5 +163,34 @@ public class ProductController {
         return ResponseEntity.ok(products);
     }
 
+    //상점 페이지
+    @GetMapping("/seller")
+    public ResponseEntity<PageResponseDTO<ProductResponseDto>> getSellerItems(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "8") int size,
+            @RequestParam String userId) {
+
+        if (userRepository.existsByUserIdAndIsCanceledFalse(userId)) { //탈퇴하지않은 회원인 경우, 회원정보가 있는 경우
+            PageRequest pageRequest = PageRequest.of(page, size);
+            PageResponseDTO<ProductResponseDto> dto = productService.getSellerPage(userId, pageRequest);
+            return ResponseEntity.ok(dto);
+        } else {
+            throw new EntityNotFoundException("사용자를 찾을 수 없습니다.");
+        }
+    }
+
+    @GetMapping("/seller-info")
+    public ResponseEntity<UserInfoDTO> getUserInfo(@RequestParam String userId) {
+        UserInfoDTO userInfoDTO = userService.getUserInfo(userId);
+        return ResponseEntity.ok(userInfoDTO);
+    }
+
+    @GetMapping("/seller-reviews")
+    public ResponseEntity<List<ReviewInMyStoreDTO>> getReview(
+            @RequestParam String userId
+    ) {
+        List<ReviewInMyStoreDTO> reviews = userService.getReview(userId);
+        return ResponseEntity.ok(reviews);
+    }
 
 }

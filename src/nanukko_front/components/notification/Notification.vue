@@ -320,19 +320,10 @@ onUnmounted(() => {
 
 <template>
   <div class="notification-wrapper" @click.stop>
-    <NotificationIcon
-      :unread-count="unreadCount"
-      :show-badge="!showNotifications"
-      @toggle="toggleNotfications"
-    />
+    <NotificationIcon :unread-count="unreadCount" :show-badge="!showNotifications" @toggle="toggleNotfications" />
     <transition name="slide-fade">
-      <NotificationList
-        v-if="showNotifications"
-        :notifications="notifications"
-        @select="handleNotificationClick"
-        @markAllAsRead="markAllAsRead"
-        @removeAll="handleRemoveAll"
-      />
+      <NotificationList v-if="showNotifications" :notifications="notifications" @select="handleNotificationClick"
+        @markAllAsRead="markAllAsRead" @removeAll="handleRemoveAll" />
     </transition>
   </div>
 </template>

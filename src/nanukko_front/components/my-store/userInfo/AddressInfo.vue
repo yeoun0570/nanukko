@@ -31,12 +31,6 @@ const handleAddrDetailChange = (event) => {
 // 주소 검색 팝업 열기
 const openAddressSearch = () => {
   console.log("openAddressSearch called");
-
-  // if (!window.daum?.Postcode) {
-  //   alert("주소 검색 서비스를 불러오는 중입니다. 잠시 후 다시 시도해주세요.");
-  //   return;
-  // }
-
   console.log("Daum Postcode API is available. Opening search popup...");
   console.log("window.daum:", window.daum);
   new window.daum.Postcode({
@@ -56,23 +50,14 @@ const openAddressSearch = () => {
     <div class="info-item">
       <label>주소:</label>
       <span>({{ addrZipcode }}) {{ addrMain }}</span>
-      <button
-        v-if="isEditing"
-        @click="openAddressSearch"
-        class="search-address-btn"
-      >
+      <button v-if="isEditing" @click="openAddressSearch" class="search-address-btn">
         주소 검색
       </button>
     </div>
     <div class="info-item">
       <label>상세 주소:</label>
-      <input
-        v-if="isEditing"
-        v-model="localAddrDetail"
-        @input="handleAddrDetailChange"
-        placeholder="상세 주소를 입력하세요."
-        class="detail-input"
-      />
+      <input v-if="isEditing" v-model="localAddrDetail" @input="handleAddrDetailChange" placeholder="상세 주소를 입력하세요."
+        class="detail-input" />
       <span v-else class="detail-text">{{ addrDetail }}</span>
     </div>
   </div>

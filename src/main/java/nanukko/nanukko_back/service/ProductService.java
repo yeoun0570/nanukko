@@ -9,6 +9,7 @@ import nanukko.nanukko_back.domain.log.UserActionLog;
 import nanukko.nanukko_back.domain.product.Condition;
 import nanukko.nanukko_back.domain.product.Image;
 import nanukko.nanukko_back.domain.product.Product;
+import nanukko.nanukko_back.domain.product.ProductStatus;
 import nanukko.nanukko_back.domain.product.category.MiddleCategory;
 import nanukko.nanukko_back.domain.user.Kid;
 import nanukko.nanukko_back.domain.user.User;
@@ -25,6 +26,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -170,7 +172,8 @@ public class ProductService {
         boolean isWished = user != null && wishlistRepository.existsByUserAndProduct(user, product);
         ProductResponseDto dto = ProductMapper.toDto(product);
         dto.setIsWished(isWished);
-
+        int count = productRepository.countBySellerAndStatus(dto.getUserId(), ProductStatus.SELLING);
+        dto.setSellingCount(count);
         //Click 이벤트 로그 저장
         if (user != null) {
             saveLog(user, product);
@@ -225,6 +228,14 @@ public class ProductService {
         log.info("연관 상품 Dto : " + dto);
         return dto;
     }
+
+    public PageResponseDTO<ProductResponseDto> getSellerPage(String userId, Pageable pageable) {
+        Page<Product> result = productRepository.findByUserId(userId, pageable);
+        Page<ProductResponseDto> dto = result.map(ProductMapper::toDtoSimple);
+        return new PageResponseDTO<>(dto);
+    }
+
+
 
     ///////////////////공통 메서드//////////////////////
     private Product getProductById(Long productId) { //공통 메서드

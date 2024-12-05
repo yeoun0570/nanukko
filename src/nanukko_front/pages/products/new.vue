@@ -1,15 +1,14 @@
 <script setup>
-import { useToast } from 'vue-toastification';
 import { useRouter } from 'vue-router';
 import { useURL } from "~/composables/useURL";
 import { useAuth } from "~/composables/auth/useAuth";
 import ImageUploader from '~/components/products/products-new/ImageUploader.vue';
 import ProductForm from '~/components/products/products-new/ProductForm.vue';
 
-const toast = useToast();
 const router = useRouter();
 const auth = useAuth();
 const { axiosInstance } = useURL();
+const { $showToast } = useNuxtApp();
 
 onMounted(() => {
     axiosInstance.interceptors.request.use((config) => {
@@ -70,30 +69,30 @@ const submitProduct = async () => {
         if (!product.value.productName || !product.value.middleCategory.middleId ||
             !product.value.price || !product.value.content ||
             !product.value.condition) {
-            alert('필수 정보를 모두 입력해주세요.');
+            $showToast('필수 정보를 모두 입력해주세요.');
             return;
         }
 
         if (product.value.images.length === 0) {
-            alert('최소 1장의 상품 이미지를 등록해주세요.');
+            $showToast('최소 1장의 상품 이미지를 등록해주세요.');
             return;
         }
 
         // 배송 방식 검증
         if (!product.value.isPerson && !product.value.isShipping) {
-            alert('최소 하나의 거래 방식을 선택해주세요.');
+            $showToast('최소 하나의 거래 방식을 선택해주세요.');
             return;
         }
 
         // 배송 선택 시 배송비 검증
         if (product.value.isShipping && !product.value.freeShipping && product.value.shippingFee === 0) {
-            alert('배송비를 입력해주세요.');
+            $showToast('배송비를 입력해주세요.');
             return;
         }
 
         // 직거래 선택 시 주소 및 좌표 검증
         if (product.value.isPerson && (!product.value.address || product.value.latitude === null || product.value.longitude === null)) {
-            alert('거래 장소를 입력해주세요.');
+            $showToast('거래 장소를 입력해주세요.');
             return;
         }
 
@@ -175,8 +174,7 @@ const submitProduct = async () => {
 
         const response = await axiosInstance.post(`/products/new`, formData, config);
 
-        //toast
-        toast.success('상품이 등록되었습니다.');
+        $showToast('상품이 등록되었습니다.');
 
         // 요청 완료 후 로깅
         console.log('===== API 응답 =====');
@@ -195,13 +193,14 @@ const submitProduct = async () => {
             console.error('응답 데이터:', error.response.data);
             console.error('응답 헤더:', error.response.headers);
         }
-        toast.error('상품 등록에 실패했습니다.');
+        $showToast('상품 등록에 실패했습니다.');
     }
 };
 
 
 const handleCancel = () => {
-    toast.confirmCancel('작성중인 내용이 모두 삭제됩니다. 취소하시겠습니까?');
+    const confirmCancel = window.confirm('작성중인 내용이 모두 삭제됩니다. 취소하시겠습니까?');
+
     if (confirmCancel) {
         router.push('/');
     }
@@ -212,8 +211,6 @@ const handleCancel = () => {
 <template>
     <div class="product-new">
         <h1 class="title">상품등록</h1>
-        <hr>
-
         <form @submit.prevent="submitProduct" class="product-form">
             <ImageUploader :images="product.images" @update:images="images => product.images = images" />
 

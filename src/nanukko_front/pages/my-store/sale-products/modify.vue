@@ -1,16 +1,16 @@
 <script setup>
-import { useToast } from 'vue-toastification';
 import { useRouter, useRoute } from 'vue-router';
 import { useURL } from "~/composables/useURL";
 import { useAuth } from "~/composables/auth/useAuth";
 import ImageUploader from '~/components/products/products-new/ImageUploader.vue';
 import ProductForm from '~/components/products/products-new/ProductForm.vue';
 
-const toast = useToast();
 const router = useRouter();
 const route = useRoute();
 const auth = useAuth();
 const { axiosInstance } = useURL();
+const { $showToast } = useNuxtApp();
+
 
 const product = ref({
   productName: '',
@@ -57,42 +57,33 @@ onMounted(async () => {
   await loadProductData();
 });
 
-
-// 이미지 업데이트 핸들러
-const updateImages = (images) => {
-  if (Array.isArray(images)) {
-    product.value.images = images;
-  } else {
-    product.value.images = [];
-  }
-};
 const handleSubmit = async () => {
   try {
     // 필수 필드 검증
     if (!product.value.productName || !product.value.middleCategory.middleId ||
       !product.value.price || !product.value.content ||
       !product.value.condition) {
-      alert('필수 정보를 모두 입력해주세요.');
+      $showToast('필수 정보를 모두 입력해주세요.');
       return;
     }
 
     if (product.value.images.length === 0) {
-      alert('최소 1장의 상품 이미지를 등록해주세요.');
+      $showToast('최소 1장의 상품 이미지를 등록해주세요.');
       return;
     }
 
     if (!product.value.isPerson && !product.value.isShipping) {
-      alert('최소 하나의 거래 방식을 선택해주세요.');
+      $showToast('최소 하나의 거래 방식을 선택해주세요.');
       return;
     }
 
     if (product.value.isShipping && !product.value.freeShipping && product.value.shippingFee === 0) {
-      alert('배송비를 입력해주세요.');
+      $showToast('배송비를 입력해주세요.');
       return;
     }
 
     if (product.value.isPerson && (!product.value.address || product.value.latitude === null || product.value.longitude === null)) {
-      alert('거래 장소를 입력해주세요.');
+      $showToast('거래 장소를 입력해주세요.');
       return;
     }
 
@@ -149,24 +140,20 @@ const handleSubmit = async () => {
     }
 
     const response = await axiosInstance.post('/my-store/sale-products/modify', formData);
-    console.log('수정 응답:', response.data);
-    toast.success('상품이 수정되었습니다.');
+    $showToast('상품이 수정되었습니다.');
     router.push('/my-store/sale-products');
 
   } catch (error) {
-    console.error('상품 수정 실패:', error);
-    console.error('에러 상세:', error.response?.data);
-    toast.error(error.response?.data?.message || '상품 수정에 실패했습니다.');
+    $showToast('상품 수정에 실패했습니다.');
   }
 };
 
 const handleCancel = () => {
-  toast.confirmCancel('수정중인 내용이 모두 취소됩니다. 취소하시겠습니까?');
-  if (confirmCancel) {
+  const confirmResult = confirm('수정중인 내용이 모두 취소됩니다. 취소하시겠습니까?');
+  if (confirmResult) {
     router.push('/my-store/sale-products');
   }
 };
-
 
 const loadProductData = async () => {
   try {
@@ -225,7 +212,7 @@ const loadProductData = async () => {
 
   } catch (error) {
     console.error('상품 정보 로드 실패:', error);
-    toast.error('상품 정보를 불러오는데 실패했습니다.');
+    $showToast('로그아웃 되었습니다!');
     router.push('/my-store/sale-products');
   }
 };

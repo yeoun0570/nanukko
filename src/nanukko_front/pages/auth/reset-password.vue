@@ -20,19 +20,9 @@
         <div class="form-group">
           <label for="newPassword">새 비밀번호</label>
           <div class="password-input">
-            <input
-              :type="showPassword ? 'text' : 'password'"
-              id="newPassword"
-              v-model="newPassword"
-              :class="{ 'error': passwordError }"
-              placeholder="새로운 비밀번호를 입력하세요"
-              required
-            />
-            <button 
-              type="button" 
-              class="toggle-password"
-              @click="() => togglePasswordVisibility('password')"
-            >
+            <input :type="showPassword ? 'text' : 'password'" id="newPassword" v-model="newPassword"
+              :class="{ 'error': passwordError }" placeholder="새로운 비밀번호를 입력하세요" required />
+            <button type="button" class="toggle-password" @click="() => togglePasswordVisibility('password')">
               <i :class="showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
             </button>
           </div>
@@ -41,19 +31,9 @@
         <div class="form-group">
           <label for="confirmPassword">비밀번호 확인</label>
           <div class="password-input">
-            <input
-              :type="showConfirmPassword ? 'text' : 'password'"
-              id="confirmPassword"
-              v-model="confirmPassword"
-              :class="{ 'error': confirmPasswordError }"
-              placeholder="비밀번호를 다시 입력하세요"
-              required
-            />
-            <button 
-              type="button" 
-              class="toggle-password"
-              @click="() => togglePasswordVisibility('confirm')"
-            >
+            <input :type="showConfirmPassword ? 'text' : 'password'" id="confirmPassword" v-model="confirmPassword"
+              :class="{ 'error': confirmPasswordError }" placeholder="비밀번호를 다시 입력하세요" required />
+            <button type="button" class="toggle-password" @click="() => togglePasswordVisibility('confirm')">
               <i :class="showConfirmPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
             </button>
           </div>
@@ -69,11 +49,7 @@
           </ul>
         </div>
 
-        <button 
-          type="submit" 
-          class="submit-button"
-          :disabled="!isFormValid || isSubmitting"
-        >
+        <button type="submit" class="submit-button" :disabled="!isFormValid || isSubmitting">
           {{ isSubmitting ? "처리 중..." : "비밀번호 변경" }}
         </button>
       </form>
@@ -89,6 +65,7 @@ import { usePasswordReset } from '~/composables/auth/usePasswordReset';
 const route = useRoute();
 const router = useRouter();
 const token = ref(route.query.token);
+const { $showToast } = useNuxtApp();
 
 const {
   newPassword,
@@ -111,11 +88,11 @@ const handleSubmit = async () => {
   try {
     const success = await resetPassword(token.value);
     if (success) {
-      alert('비밀번호가 성공적으로 변경되었습니다. 새 비밀번호로 로그인해주세요.');
+      $showToast('비밀번호가 성공적으로 변경되었습니다. 새 비밀번호로 로그인해주세요.');
       router.push('/auth/login');
     }
   } catch (error) {
-    alert('비밀번호 변경에 실패했습니다. 링크가 만료되었거나 유효하지 않을 수 있습니다.');
+    $showToast('비밀번호 변경에 실패했습니다. 링크가 만료되었거나 유효하지 않을 수 있습니다.');
   }
 };
 

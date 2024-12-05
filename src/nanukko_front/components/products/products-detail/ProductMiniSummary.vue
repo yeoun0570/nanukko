@@ -116,17 +116,20 @@ const getCompanionDeputyLabel = (isCompanion, isDeputy) => {
 <style scoped>
 .mini-summary-wrapper {
     width: 100%;
-    padding: 1.25rem 0;
+    max-width: 100%;
+    box-sizing: border-box;
+    padding: 38px 20px;
     border-top: 1px solid #eee;
     border-bottom: 1px solid #eee;
-    margin: 1rem 0;
-    font-size: 0.875rem;
+    font-size: 1.05rem;
+    min-width: 480px;
+    margin-top: 10px;
 }
 
 .summary-row {
     display: grid;
     grid-template-columns: 15% 35% 15% 35%;
-    min-height: 2rem;
+    min-height: 2.35rem;
     align-items: center;
     position: relative;
 }
@@ -140,7 +143,7 @@ const getCompanionDeputyLabel = (isCompanion, isDeputy) => {
     color: #333;
 }
 
-@media (max-width: 768px) {
+/* @media (max-width: 768px) {
     .summary-row {
         grid-template-columns: 25% 75%;
     }
@@ -149,5 +152,5 @@ const getCompanionDeputyLabel = (isCompanion, isDeputy) => {
     .summary-row>div:nth-child(4) {
         margin-top: 0.5rem;
     }
-}
+} */
 </style>
