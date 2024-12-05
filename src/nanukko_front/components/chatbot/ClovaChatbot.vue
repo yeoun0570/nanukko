@@ -32,48 +32,33 @@ const scrollToBottom = () => {
 
 // 버튼 클릭시 실행되는 핸들러 함수
 const handleButtonClick = async (button) => {
-  if (isLoading.value) return; // 로딩 중에는 추가 클릭 방지
+  if (isLoading.value) return;
 
   try {
     console.log("=== 버튼 클릭 처리 시작 ===");
     console.log("클릭된 버튼 전체 데이터:", button);
     console.log("버튼 텍스트:", button.text);
     console.log("버튼 postback:", button.postback);
-    isLoading.value = true;
+    console.log("버튼 postbackFull:", button.postbackFull);
 
-    // 선택한 버튼의 텍스트를 사용자 메시지로 추가
+    // 버튼 텍스트를 UI에 추가
     messages.value.push({
       type: "user",
       content: button.text,
     });
 
-    // 버튼 UI 초기화
-    currentButtons.value = [];
-    isWaitingForButtonResponse.value = false;
+    // 전송할 메시지 결정 (postbackFull, postback, text 순으로 우선)
+    const messageToSend = button.postbackFull || button.text;
+    console.log("masseageToSend: ", messageToSend);
 
-    // UTF-8로 인코딩하여 전송
-    const textEncoder = new TextEncoder();
-    const postback = button.postback || `_T_${button.text}`;
-    const encodedPostback = textEncoder.encode(postback);
-    console.log("전송 전 postback:", postback);
-    console.log("인코딩된 postback:", encodedPostback);
-
-    console.log("sendClovaMessage 호출 직전 데이터:", postback);
-    await sendClovaMessage(postback, {
-      headers: {
-        "Content-Type": "application/json;charset=UTF-8",
-      },
-    });
+    // WebSocket으로 메시지 전송
+    await sendClovaMessage(messageToSend);
 
     console.log("sendClovaMessage 호출 완료");
-    scrollToBottom();
-
-    // 스크롤 위치 조정
     scrollToBottom();
   } catch (error) {
     console.error("버튼 응답 전송 실패:", error);
   } finally {
-    console.log("=== 버튼 클릭 처리 종료 ===");
     isLoading.value = false;
   }
 };
@@ -91,10 +76,6 @@ const sendChatMessage = async () => {
       content: currentMessage.value,
     });
 
-    // WebSocket을 통해 메시지 전송
-    // await sendClovaMessage("", {
-    //   message: currentMessage.value,
-    // });
     await sendClovaMessage(currentMessage.value);
 
     // 입력창 초기화
@@ -110,49 +91,26 @@ const sendChatMessage = async () => {
 // 챗봇 응답 메시지 파싱 함수
 const parseResponse = (response) => {
   try {
-    console.log("=== 응답 파싱 시작 ===");
-    console.log("원본 응답:", response);
-    // JSON 형식으로 파싱 시도
-    // response가 이미 객체인 경우 파싱 건너뛰기
-    const parsed =
-      typeof response === "string" ? JSON.parse(response) : response;
-    console.log("파싱된 응답:", parsed);
+    // response가 이미 객체인 경우
+    const data = typeof response === "string" ? JSON.parse(response) : response;
+    const responseJson = {
+      text: data.bubbles[0].data.description,
+    };
 
-    console.log(parsed.button);
+    console.log("quickButtons: ", data.quickButtons);
 
-    // 텍스트 메시지가 있으면 채팅창에 추가
-    if (parsed.text) {
-      console.log("표시할 텍스트:", parsed.text);
-      messages.value.push({
-        type: "bot",
-        content: parsed.text,
-      });
-    }
-
-    // 버튼 옵션이 있으면 버튼 UI 표시
-    if (parsed.buttons) {
-      console.log("버튼 데이터:", parsed.buttons);
-      // 버튼 데이터 형식 통일
-      currentButtons.value = parsed.buttons.map((button) => ({
-        text: button.text || button.title,
-        postback:
-          button.postback ||
-          button.data?.action?.data?.postbackFull ||
-          `_T_${button.text || button.title}`,
+    if (data.quickButtons) {
+      responseJson.buttons = data.quickButtons.map((btn) => ({
+        text: btn.title,
+        postback: btn.data.action.data.postbackFull,
       }));
-      isWaitingForButtonResponse.value = true;
-      console.log("처리된 버튼 데이터:", currentButtons.value);
     }
 
-    scrollToBottom();
+    console.log("responseJson: ",responseJson);
+    return responseJson;
   } catch (e) {
     console.error("응답 파싱 에러:", e);
-    // JSON 파싱 실패시 일반 텍스트로 처리
-    messages.value.push({
-      type: "bot",
-      content: response,
-    });
-    scrollToBottom();
+    return null;
   }
 };
 
@@ -165,7 +123,25 @@ const setupWebSocket = async () => {
     // 채팅방 구독 및 메시지 수신 처리 설정
     await subscribeToChatRoom("/topic/public", {
       onMessage: (response) => {
-        parseResponse(response);
+        const parsedResponse = parseResponse(response);
+        if (parsedResponse) {
+          // 메시지 추가
+          messages.value.push({
+            type: "bot",
+            content: parsedResponse.text,
+          });
+
+          // 버튼 업데이트
+          if (parsedResponse.buttons && parsedResponse.buttons.length > 0) {
+            currentButtons.value = parsedResponse.buttons;
+            isWaitingForButtonResponse.value = true;
+          } else {
+            // 버튼이 없으면 초기화
+            currentButtons.value = [];
+            isWaitingForButtonResponse.value = false;
+          }
+        }
+        scrollToBottom();
       },
     });
     // 빈 메시지를 보내되, 서버에서 event: 'open'으로 처리

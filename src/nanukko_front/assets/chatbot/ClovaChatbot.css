@@ -69,11 +69,11 @@
 .button-responses {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  margin: 1rem 0;
+  gap: 8px;
+  margin: 16px 0;
+  width: 100%;
 }
 
-/* 응답 버튼 스타일 */
 .response-button {
   padding: 8px 16px;
   border: 1px solid #ddd;
@@ -83,12 +83,10 @@
   transition: all 0.2s;
 }
 
-/* 버튼 호버 효과 */
 .response-button:hover {
   background: #f5f5f5;
 }
 
-/* 비활성화된 버튼 스타일 */
 .response-button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
