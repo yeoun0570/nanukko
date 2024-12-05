@@ -1,243 +1,367 @@
 <template>
-  <div class="relative">
-    <!-- 채팅 아이콘과 알림 카운트 -->
-    <button class="chat-button" @click="handleChatClick">
+  <div class="notification-wrapper" ref="container">
+    <!-- 채팅 알림 버튼 -->
+     <!-- 알림 버튼 -->
+     <button 
+      class="chat-button"
+      @click="handleNotificationClick"
+      ref="notificationButton"
+    >
       <i class="fas fa-comments"></i>
-      <span v-if="unreadCount > 0" class="notification-badge">
+      <span v-if="unreadCount > 0 && isAuthenticated" class="notification-badge">
         {{ unreadCount }}
       </span>
     </button>
 
-    <!-- 알림 드롭다운 -->
-    <div v-if="showNotifications && notifications.length > 0" class="notifications-dropdown">
-      <div class="notifications-header">
-        새 메시지
-        <button @click="clearNotifications" class="clear-button">
-          모두 지우기
-        </button>
-      </div>
-      <div class="notifications-list">
-        <div v-for="notification in notifications" :key="notification.id" class="notification-item"
-          @click="goToChatRoom(notification.chatRoomId)">
-          <div class="notification-sender">{{ notification.senderName }}</div>
-          <div class="notification-message">{{ notification.message }}</div>
-          <div class="notification-time">
-            {{ formatTime(notification.createdAt) }}
+    <!-- 드롭다운 알림 메뉴 - 로그인된 경우에만 표시 -->
+    <Transition name="slide-fade">
+      <div
+        v-if="showDropdown && isAuthenticated"
+        class="dropdown-menu"
+        ref="dropdownMenu"
+      >
+        <!-- 알림 헤더 -->
+        <div class="dropdown-header">
+          <h3>새 메시지</h3>
+        </div>
+        
+        <!-- 알림 메시지 목록 -->
+        <div class="messages-container">
+          <!-- 로딩 상태 -->
+          <div v-if="loading" class="loading-state">
+            <i class="fas fa-spinner fa-spin"></i>
           </div>
+
+          <!-- 메시지 목록 -->
+          <template v-else>
+            <!-- 빈 상태 표시 -->
+            <div v-if="chatRooms.length === 0" class="empty-state">
+              <p>새로운 메시지가 없습니다</p>
+            </div>
+
+            <!-- 메시지 아이템 -->
+            <div 
+              v-else
+              v-for="room in chatRooms" 
+              :key="room.chatRoomId"
+              class="message-item"
+              @click="handleRoomSelect(room)"
+            >
+              <div class="message-content">
+                <p class="product-name" :title="room.productName">
+                  {{ room.productName }}
+                </p>
+                <span class="unread-badge" v-if="room.unreadCount > 0">
+                  {{ room.unreadCount }}
+                </span>
+              </div>
+              <div class="message-time">
+                {{ formatMessageTime(room.lastMessageTime) }}
+              </div>
+            </div>
+          </template>
+        </div>
+
+        <!-- 바로가기 푸터 -->
+        <div class="dropdown-footer" @click="navigateToChat">
+          채팅방 전체보기
         </div>
       </div>
-    </div>
+    </Transition>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
-import { useStomp } from '~/composables/chat/useStomp'
-import { useAuth } from '~/composables/auth/useAuth'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { useFormatTime } from '~/composables/useFormatTime'
+import { useAuth } from '~/composables/auth/useAuth'
+import { useStomp } from '~/composables/chat/useStomp'
+import { useApi } from '~/composables/useApi'
 
-const { $showToast } = useNuxtApp();
+const emit = defineEmits(['show-login']);
+
+// 라우터 설정
 const router = useRouter()
+const { isAuthenticated, userId } = useAuth()
 const stomp = useStomp()
-const { userId, isAuthenticated } = useAuth()
-const { formatTime } = useFormatTime()
+const api = useApi()
 
 // 상태 관리
-const unreadCount = ref(0)
-const notifications = ref([])
-const showNotifications = ref(false)
+const chatRooms = ref([]) // 채팅방 목록
+const unreadCount = ref(0) // 읽지 않은 메시지 수
+const showDropdown = ref(false) // 드롭다운 표시 여부
+const loading = ref(false) // 로딩 상태
+const container = ref(null) // 컨테이너 ref
+const notificationSubscription = ref(null) // 웹소켓 구독 정보
 
-// STOMP 구독 정보 저장
-let notificationSubscription = null
+// 시간 포맷팅 함수
+const formatMessageTime = (timestamp) => {
+  if (!timestamp) return ''
+  const date = new Date(timestamp)
+  const now = new Date()
+  const diff = now - date
+  
+  if (diff < 60000) return '방금 전'
+  if (diff < 3600000) return `${Math.floor(diff / 60000)}분 전`
+  if (diff < 86400000) {
+    return date.toLocaleTimeString('ko-KR', { 
+      hour: 'numeric', 
+      minute: '2-digit',
+      hour12: true 
+    })
+  }
+  return date.toLocaleDateString('ko-KR', { 
+    month: 'short', 
+    day: 'numeric' 
+  })
+}
 
-// 알림 초기화 및 STOMP 연결
-const initializeNotifications = async () => {
-  if (!isAuthenticated || !userId) return
-
+// 채팅방 목록 로드
+const loadChatRooms = async () => {
+  loading.value = true
   try {
-    // STOMP 연결이 없으면 연결
-    if (!stomp.connected.value) {
-      await stomp.connectChat(userId)
+    const response = await api.get('/chat/unread-messages')
+    chatRooms.value = response || []
+    updateUnreadCount()
+  } catch (error) {
+    console.error('채팅방 목록 로드 실패:', error)
+  } finally {
+    loading.value = false
+  }
+}
+
+// 새 메시지 처리
+const handleNewMessage = async (message) => {
+  try {
+    const messageData = typeof message === 'string' ? 
+      JSON.parse(message) : 
+      message.body ? JSON.parse(message.body) : message
+
+    console.log('채팅 알림 메시지 데이터:', messageData);
+
+    // 읽음 처리 메시지인 경우
+    if (messageData.messageIds && Array.isArray(messageData.messageIds)) {
+      console.log('Processing read status update:', {
+        messageIds: messageData.messageIds,
+        chatRoomId: messageData.chatRoom
+      });
+
+      chatRooms.value = chatRooms.value.map(room => {
+        if (room.chatRoomId === messageData.chatRoom) {
+          console.log('Updating room:', room.chatRoomId, 
+            'current unreadCount:', room.unreadCount,
+            'messages marked as read:', messageData.messageIds.length);
+          
+          return {
+            ...room,
+            unreadCount: Math.max(0, (room.unreadCount || 0) - messageData.messageIds.length)
+          };
+        }
+        return room;
+      });
+
+      console.log('Updated chatRooms:', chatRooms.value);
+      
+      updateUnreadCount();
+      return;
     }
 
-    // 개인 알림 채널 구독
-    // 경로 수정: /user/{userId}/queue/notifications
-    const destination = `/user/${userId}/queue/notifications`
-    console.log('알림 구독 경로:', destination)
+    // 새 메시지인 경우 기존 로직 실행
+    if (!messageData.isRead) {
+      await loadChatRooms();
+    }
+  } catch (error) {
+    console.error('메시지 처리 실패:', error);
+  }
+};
 
-    notificationSubscription = await stomp.subscribeToChatRoom(
-      destination,
-      {
-        onMessage: handleNewMessage
-      }
-    )
+// 드롭다운 토글
+const toggleDropdown = () => {
+  showDropdown.value = !showDropdown.value
+}
+
+
+// 알림 클릭 핸들러
+const handleNotificationClick = () => {
+  if (!isAuthenticated.value) {
+    emit('show-login');
+    return;
+  }
+  toggleDropdown();
+};
+
+// 채팅방 선택 처리
+const handleRoomSelect = async (room) => {
+  showDropdown.value = false
+  router.push(`/chat?roomId=${room.chatRoomId}`)
+}
+
+// 채팅 목록으로 이동
+const navigateToChat = () => {
+  showDropdown.value = false
+  router.push('/chat')
+}
+
+// 읽지 않은 메시지 수 업데이트
+const updateUnreadCount = () => {
+  const previousCount = unreadCount.value;
+  unreadCount.value = chatRooms.value.reduce(
+    (sum, room) => sum + (room.unreadCount || 0), 
+    0
+  );
+  console.log('Updated unread count:', {
+    previous: previousCount,
+    current: unreadCount.value,
+    rooms: chatRooms.value.map(r => ({
+      id: r.chatRoomId,
+      unread: r.unreadCount
+    }))
+  });
+}
+
+const clearAllNotifications = () => {
+  // Clear all notifications and reset state
+  chatRooms.value = []
+  unreadCount.value = 0
+  showDropdown.value = false
+  
+  // Clear localStorage items if needed
+  if (process.client) {
+    localStorage.removeItem('chat-notifications')
+    localStorage.removeItem('chat-notifications-count')
+  }
+}
+
+
+// 알림 초기화
+// ChatNotification.vue의 initializeNotifications 함수 수정
+const initializeNotifications = async () => {
+  if (!isAuthenticated.value || !userId.value) return
+
+  try {
+    if (!stomp.connected.value) {
+      await stomp.connectChat(userId.value)
+    }
+
+    // 먼저 채팅방 목록을 로드
+    await loadChatRooms()
+
+    // 개인 알림 채널 구독
+    const notificationDestination = `/user/${userId.value}/queue/chat.notification`;
+    console.log('Subscribing to notifications:', notificationDestination);
+    
+    // 알림 구독
+    notificationSubscription.value = await stomp.subscribeToChatRoom(
+      notificationDestination,
+      { onMessage: handleNewMessage }
+    );
+
+    // 각 채팅방의 읽음 처리 구독
+    for (const room of chatRooms.value) {
+      const readStatusDestination = `/queue/chat/${room.chatRoomId}`;
+      console.log('Subscribing to read status:', readStatusDestination);
+      
+      await stomp.subscribeToChatRoom(
+        readStatusDestination,
+        { onMessage: handleReadStatus }
+      );
+    }
+
   } catch (error) {
     console.error('알림 초기화 실패:', error)
   }
 }
 
-// 새 메시지 처리
-const handleNewMessage = (message) => {
-  console.log('새 메시지 수신:', message)
-  try {
-    const messageData = typeof message === 'string' ?
-      JSON.parse(message) :
-      message.body ? JSON.parse(message.body) : message
 
-    // 이미 나간 채팅방에서 온 메시지인 경우도 포함
-    if (messageData.type === 'CHAT' || messageData.hasNewMessageAfterLeave) {
-      unreadCount.value++
-      notifications.value.unshift({
-        id: Date.now(),
-        chatRoomId: messageData.chatRoomId,
-        senderName: messageData.senderName || '알 수 없음',
-        message: messageData.chatMessage || '새 메시지가 도착했습니다.',
-        createdAt: messageData.createdAt || new Date().toISOString()
-      })
+// 읽음 처리 핸들러 추가
+const handleReadStatus = (message) => {
+  try {
+    const data = typeof message === 'string' ? 
+      JSON.parse(message) : 
+      message.body ? JSON.parse(message.body) : message;
+
+    console.log('Received read status update:', data);
+
+    if (data.messageIds && Array.isArray(data.messageIds)) {
+      // 채팅방 unreadCount 갱신
+      const roomId = data.chatRoom || message.headers?.destination?.split('/').pop();
+      
+      chatRooms.value = chatRooms.value.map(room => {
+        if (room.chatRoomId.toString() === roomId?.toString()) {
+          console.log(`Updating unread count for room ${roomId}`);
+          return {
+            ...room,
+            unreadCount: Math.max(0, (room.unreadCount || 0) - data.messageIds.length)
+          };
+        }
+        return room;
+      });
+
+      // 전체 알림 수 업데이트
+      updateUnreadCount();
     }
   } catch (error) {
-    console.error('메시지 처리 중 오류:', error)
+    console.error('읽음 상태 처리 실패:', error);
+  }
+};
+
+
+// 외부 클릭 감지
+const handleOutsideClick = (event) => {
+  if (container.value && !container.value.contains(event.target)) {
+    showDropdown.value = false
   }
 }
 
-// 채팅방으로 이동
-const goToChatRoom = async (chatRoomId) => {
-  try {
-    await router.push(`/chat?roomId=${chatRoomId}`)
-    showNotifications.value = false
-
-    // 해당 알림 삭제 및 카운트 감소
-    notifications.value = notifications.value.filter(
-      notif => notif.chatRoomId !== chatRoomId
-    )
-    if (unreadCount.value > 0) {
-      unreadCount.value--
-    }
-  } catch (error) {
-    console.error('채팅방 이동 실패:', error)
-  }
-}
-
-// 채팅 버튼 클릭 처리
-const handleChatClick = () => {
-  if (!isAuthenticated) {
-    $showToast('채팅을 이용하려면 로그인이 필요합니다.')
-    router.push('/auth/login')
-    return
-  }
-  showNotifications.value = !showNotifications.value
-}
-
-// 모든 알림 지우기
-const clearNotifications = () => {
-  notifications.value = []
-  unreadCount.value = 0
-  showNotifications.value = false
-}
-
-// 컴포넌트 마운트/언마운트 시 처리
+// 컴포넌트 마운트
 onMounted(() => {
-  if (isAuthenticated) {
+  if (isAuthenticated.value) {
     initializeNotifications()
   }
+  document.addEventListener('click', handleOutsideClick)
 })
 
-// cleanup
+// 컴포넌트 언마운트
 onUnmounted(() => {
-  if (notificationSubscription) {
-    stomp.unsubscribe(notificationSubscription)
-    notificationSubscription = null
+  if (notificationSubscription.value) {
+    stomp.unsubscribe(notificationSubscription.value)
   }
+  document.removeEventListener('click', handleOutsideClick)
 })
+
+// 인증 상태 변화 감시(로그아웃 감지해서 알림 바로 사라질 수 있도록하기)
+// 로그아웃 감지 및 상태 초기화
+watch(() => isAuthenticated.value, (newValue) => {
+  if (!newValue) {
+    // 상태 초기화
+    chatRooms.value = [];
+    unreadCount.value = 0;
+    showDropdown.value = false;
+    
+    // localStorage 정리
+    if (process.client) {
+      localStorage.removeItem('chat-notifications');
+      localStorage.removeItem('chat-notifications-count');
+    }
+    
+    // 구독 해제
+    if (notificationSubscription.value) {
+      stomp.unsubscribe(notificationSubscription.value);
+      notificationSubscription.value = null;
+    }
+  }
+}, { immediate: true });
+
+// 컴포넌트 언마운트 시 정리
+onUnmounted(() => {
+  clearAllNotifications();
+  if (notificationSubscription.value) {
+    stomp.unsubscribe(notificationSubscription.value);
+  }
+});
+
 </script>
 
 <style scoped>
-.chat-button {
-  position: relative;
-  padding: 0.5rem;
-  background: none;
-  border: none;
-  cursor: pointer;
-}
-
-.notification-badge {
-  position: absolute;
-  top: -5px;
-  right: -5px;
-  background-color: #ef4444;
-  color: white;
-  font-size: 0.75rem;
-  padding: 2px 6px;
-  border-radius: 9999px;
-  min-width: 18px;
-}
-
-.notifications-dropdown {
-  position: absolute;
-  right: 0;
-  top: 100%;
-  margin-top: 0.5rem;
-  width: 300px;
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.5rem;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  z-index: 50;
-}
-
-.notifications-header {
-  padding: 0.75rem;
-  border-bottom: 1px solid #e5e7eb;
-  font-weight: 500;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.clear-button {
-  font-size: 0.75rem;
-  color: #6b7280;
-  background: none;
-  border: none;
-  cursor: pointer;
-}
-
-.clear-button:hover {
-  color: #4b5563;
-}
-
-.notifications-list {
-  max-height: 400px;
-  overflow-y: auto;
-}
-
-.notification-item {
-  padding: 0.75rem;
-  border-bottom: 1px solid #f3f4f6;
-  cursor: pointer;
-}
-
-.notification-item:hover {
-  background-color: #f9fafb;
-}
-
-.notification-sender {
-  font-weight: 500;
-  margin-bottom: 0.25rem;
-}
-
-.notification-message {
-  font-size: 0.875rem;
-  color: #4b5563;
-  margin-bottom: 0.25rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.notification-time {
-  font-size: 0.75rem;
-  color: #6b7280;
-}
+@import '~/assets/chat/chat-notification.css';
 </style>

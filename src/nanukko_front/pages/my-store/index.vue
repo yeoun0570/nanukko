@@ -5,7 +5,6 @@ import KidsInfo from "~/components/my-store/userInfo/KidsInfo.vue";
 import LoginInfo from "~/components/my-store/userInfo/LoginInfo.vue";
 import ProfileImage from "~/components/my-store/userInfo/ProfileImage.vue";
 import { useApi } from "@/composables/useApi";
-import ClovaChatbot from "~/components/chatbot/ClovaChatbot.vue";
 
 const api = useApi();
 const { $showToast } = useNuxtApp();
@@ -148,8 +147,6 @@ onMounted(() => {
     <NuxtLink v-if="!isEditing" :to="`/my-store/remove?userId=${userInfo.userId}`" class="remove-user">탈퇴하기</NuxtLink>
   </div>
   <div v-else>로딩중...</div>
-
-  <ClovaChatbot />
 </template>
 
 <style>

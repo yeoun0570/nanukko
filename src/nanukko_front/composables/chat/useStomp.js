@@ -2,7 +2,6 @@ import { ref } from "vue";
 import { Client } from "@stomp/stompjs"; // STOMP 라이브러리에서 제공하는 Client 클래스
 import SockJS from "sockjs-client";
 import { useAuth } from "../auth/useAuth";
-import { useURL } from "../useURL";
 
 export function useStomp() {
   const client = ref(null); // 웹소켓 클라이언트 저장

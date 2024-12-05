@@ -234,6 +234,32 @@ public class MailService {
         }
     }
 
+
+    @Async // 이메일 전송은 비동기로 처리
+    @Transactional(readOnly = true) // 읽기 전용 트랜잭션으로 충분
+    public void sendMailResetPassword(String email, String resetLink) {
+        try {
+            MimeMessage mimeMessage = javaMailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, "UTF-8");
+
+            // 발신자 이름 설정 ("나누꼬" <이메일주소>)
+            helper.setFrom(new InternetAddress(mailConfig.getServerEmail(), "나누꼬"));
+            helper.setTo(email);
+
+            helper.setTo(email);
+            helper.setSubject("나누꼬 비밀번호 재설정 링크입니다.");
+            helper.setText(String.format("아래 링크로 접속해서 비밀번호를 재설정 해주세요." +
+                    "링크는 메일 수신 시각으로부터 15분간 유효합니다.\n %s", resetLink));
+
+            javaMailSender.send(mimeMessage);
+            log.info("비밀번호 찾기 메일 전송 성공 - email: {}", email);
+
+        } catch (Exception e) {
+            log.info("비밀번호 찾기 메일 전송 실패 - email: {}", email);
+            throw new RuntimeException("메일 전송 실패", e);
+        }
+    }
+
     ////////////////////////////////////공용으로 쓰기위한 곳
 
 

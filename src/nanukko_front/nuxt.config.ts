@@ -42,10 +42,11 @@ export default defineNuxtConfig({
 	// SSR 설정
 	ssr: true,
 
-	// 모듈 설정
-	modules: [
-		// 필요한 모듈들 추가
-	],
+  // 모듈 설정
+  modules: [
+    // 필요한 모듈들 추가
+    '@pinia/nuxt',
+  ],
 
 	// Vite 설정
 	vite: {
@@ -95,3 +96,4 @@ export default defineNuxtConfig({
 		"~/assets/styles/global.css",
 	],
 });
+

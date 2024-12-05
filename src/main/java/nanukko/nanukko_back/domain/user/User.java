@@ -61,6 +61,7 @@ public class User {
     private LocalDate userBirth; //생년월일
 
     @NotNull
+    @Column(unique = true)
     private String email; //이메일
 
     @Embedded
@@ -130,5 +131,10 @@ public class User {
     public void cancelUser(){
         this.isCanceled = true;
         this.updatedAt = LocalDateTime.now();
+    }
+
+    //비밀번호 재설정
+    public void resetPassword(String newPassword){
+        this.password = newPassword;
     }
 }
