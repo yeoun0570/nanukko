@@ -14,73 +14,152 @@ const notifications = ref([]);
 // SSE 연결을 저장할 변수
 // EventSource : 서버에서 보내는 이벤트(데이터)를 수신하는 역할만 함 (수신기) => 서버의 SseEmitter가 송신기라면 애는 수신기라고 생각하면 됨
 const eventSource = ref(null);
+const reconnectAttempts = ref(0);
+const maxReconnectAttempts = 5;
+const reconnectDelay = 3000;
 // 알림 목록 출력 여부 제어하기 위한 변수
 const showNotifications = ref(false);
 // 읽지 않은 알림 수를 저장할 변수
 const unreadCount = ref(0);
 
-// SSE 연결을 설정하는 메서드
+// // SSE 연결을 설정하는 메서드
+// const connectSSE = () => {
+//   // userId가 없으면(로그인하지 않았으면) 연결하지 않음
+//   if (!auth.userId.value) {
+//     console.log("로그인이 필요합니다");
+//     return;
+//   }
+
+//   //기존 연결이 있으면 닫기
+//   if (eventSource.value) {
+//     eventSource.value.close();
+//   }
+
+//   // 마지막으로 받은 이벤트 ID를 localStorage에서 가져옴
+//   const lastEventId = localStorage.getItem("lastEventId") || "";
+
+//   // EventSource 객체 생성하여 서버와 SSE 연결
+//   eventSource.value = new EventSource(
+//     `${baseURL}/notice/connect?userId=${auth.userId.value}&lastEventId=${lastEventId}`
+//   );
+
+//   // SSE 이벤트 리스너 등록 - 'SSE' 이벤트 수신 시 발생('SSE'는 백에서 설정한 전송할 때 이벤트 이름)
+//   eventSource.value.addEventListener("SSE", (event) => {
+//     try {
+//       // 이벤트 ID 저장
+//       if (event.id) {
+//         localStorage.setItem("lastEventId", event.id);
+//       }
+
+//       // 수신한 데이터 파싱해서 알림 추가
+//       const notification = JSON.parse(event.data);
+
+//       if (notification.type === "CONNECT") {
+//         console.log("알림 연결 성공!");
+//         return;
+//       }
+
+//       addNotification(notification);
+//       showToast(notification);
+//     } catch (error) {
+//       console.error("알림 데이터 처리 중 오류 발생: ", error);
+//     }
+//   });
+
+//   eventSource.value.onopen = () => {
+//     console.log("알림 연결 성공!");
+//   };
+
+//   // 에러 발생 시 실행될 콜백
+//   eventSource.value.onerror = (error) => {
+//     console.error("EventSource 오류: ", error);
+//     if (eventSource.value) {
+//       eventSource.value.close();
+//     }
+//     //3초 후 재연결 시도
+//     setTimeout(() => {
+//       if (auth.userId.value) {
+//         // 여전히 로그인 상태일 때만 재연결
+//         connectSSE();
+//       }
+//     }, 3000);
+//   };
+// };
+
 const connectSSE = () => {
-  // userId가 없으면(로그인하지 않았으면) 연결하지 않음
   if (!auth.userId.value) {
     console.log("로그인이 필요합니다");
     return;
   }
 
-  //기존 연결이 있으면 닫기
   if (eventSource.value) {
-    eventSource.value.close();
+    cleanupConnection();
   }
 
-  // 마지막으로 받은 이벤트 ID를 localStorage에서 가져옴
-  const lastEventId = localStorage.getItem("lastEventId") || "";
+  try {
+    const lastEventId = localStorage.getItem("lastEventId") || "";
 
-  // EventSource 객체 생성하여 서버와 SSE 연결
-  eventSource.value = new EventSource(
-    `${baseURL}/notice/connect?userId=${auth.userId.value}&lastEventId=${lastEventId}`
-  );
+    eventSource.value = new EventSource(
+      `${baseURL}/notice/connect?userId=${auth.userId.value}&lastEventId=${lastEventId}`
+    );
 
-  // SSE 이벤트 리스너 등록 - 'SSE' 이벤트 수신 시 발생('SSE'는 백에서 설정한 전송할 때 이벤트 이름)
-  eventSource.value.addEventListener("SSE", (event) => {
-    try {
-      // 이벤트 ID 저장
-      if (event.id) {
-        localStorage.setItem("lastEventId", event.id);
-      }
+    eventSource.value.addEventListener("SSE", handleSSEEvent);
 
-      // 수신한 데이터 파싱해서 알림 추가
-      const notification = JSON.parse(event.data);
+    eventSource.value.onopen = () => {
+      console.log("알림 연결 성공!");
+      reconnectAttempts.value = 0; // 성공시 재시도 카운트 리셋
+    };
 
-      if (notification.type === "CONNECT") {
-        console.log("알림 연결 성공!");
-        return;
-      }
+    eventSource.value.onerror = handleSSEError;
+  } catch (error) {
+    console.error("SSE 연결 실패:", error);
+    handleReconnection();
+  }
+};
 
-      addNotification(notification);
-      showToast(notification);
-    } catch (error) {
-      console.error("알림 데이터 처리 중 오류 발생: ", error);
+const handleSSEError = (error) => {
+  console.error("SSE 에러:", error);
+  cleanupConnection();
+  handleReconnection();
+};
+
+const handleReconnection = () => {
+  if (reconnectAttempts.value < maxReconnectAttempts) {
+    reconnectAttempts.value++;
+    console.log(
+      `재연결 시도 ${reconnectAttempts.value}/${maxReconnectAttempts}`
+    );
+    setTimeout(connectSSE, reconnectDelay);
+  } else {
+    console.error("최대 재연결 시도 횟수 초과");
+  }
+};
+
+const cleanupConnection = () => {
+  if (eventSource.value) {
+    eventSource.value.removeEventListener("SSE", handleSSEEvent);
+    eventSource.value.close();
+    eventSource.value = null;
+  }
+};
+
+const handleSSEEvent = (event) => {
+  try {
+    if (event.id) {
+      localStorage.setItem("lastEventId", event.id);
     }
-  });
+    const notification = JSON.parse(event.data);
 
-  eventSource.value.onopen = () => {
-    console.log("알림 연결 성공!");
-  };
-
-  // 에러 발생 시 실행될 콜백
-  eventSource.value.onerror = (error) => {
-    console.error("EventSource 오류: ", error);
-    if (eventSource.value) {
-      eventSource.value.close();
+    if (notification.type === "CONNECT") {
+      console.log("알림 연결 성공!");
+      return;
     }
-    //3초 후 재연결 시도
-    setTimeout(() => {
-      if (auth.userId.value) {
-        // 여전히 로그인 상태일 때만 재연결
-        connectSSE();
-      }
-    }, 3000);
-  };
+
+    addNotification(notification);
+    showToast(notification);
+  } catch (error) {
+    console.error("알림 데이터 처리 중 오류 발생:", error);
+  }
 };
 
 // 로그인 시 호출되는 함수
@@ -307,23 +386,36 @@ onMounted(() => {
   document.addEventListener("click", handleClickOutside);
 });
 
-// 컴포넌트 언마운트 시 실행
+// // 컴포넌트 언마운트 시 실행
+// onUnmounted(() => {
+//   // SSE 연결이 있으면 종료
+//   if (eventSource.value) {
+//     eventSource.value.close();
+//     eventSource.value = null;
+//   }
+//   document.removeEventListener("click", handleClickOutside);
+// });
+
 onUnmounted(() => {
-  // SSE 연결이 있으면 종료
-  if (eventSource.value) {
-    eventSource.value.close();
-    eventSource.value = null;
-  }
-  document.removeEventListener("click", handleClickOutside);
+    cleanupConnection();
 });
 </script>
 
 <template>
   <div class="notification-wrapper" @click.stop>
-    <NotificationIcon :unread-count="unreadCount" :show-badge="!showNotifications" @toggle="toggleNotfications" />
+    <NotificationIcon
+      :unread-count="unreadCount"
+      :show-badge="!showNotifications"
+      @toggle="toggleNotfications"
+    />
     <transition name="slide-fade">
-      <NotificationList v-if="showNotifications" :notifications="notifications" @select="handleNotificationClick"
-        @markAllAsRead="markAllAsRead" @removeAll="handleRemoveAll" />
+      <NotificationList
+        v-if="showNotifications"
+        :notifications="notifications"
+        @select="handleNotificationClick"
+        @markAllAsRead="markAllAsRead"
+        @removeAll="handleRemoveAll"
+      />
     </transition>
   </div>
 </template>

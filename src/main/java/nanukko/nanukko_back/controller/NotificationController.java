@@ -44,9 +44,13 @@ public class NotificationController {
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         String userId = userDetails.getUsername();
-        log.info("이전 알림 조회 요청 - userId: {}", userId); // 로그 추가
+        long startTime = System.currentTimeMillis();
+
+        log.info("이전 알림 조회 시작 - userId: {}", userId);
         List<NotificationResponseDTO> notifications = notificationService.getPreviousNotifications(userId);
-        log.info("조회된 알림 수: {}", notifications.size()); // 로그 추가
+        long endTime = System.currentTimeMillis();
+        log.info("이전 알림 조회 완료 - userId: {}, 소요시간: {}ms, 알림 수: {}",
+                userId, (endTime - startTime), notifications.size());
         return notifications;
     }
 
