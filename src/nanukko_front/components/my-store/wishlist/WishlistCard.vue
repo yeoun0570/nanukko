@@ -1,7 +1,10 @@
 <script setup>
 import { useApi } from "@/composables/useApi";
+import { useAuthStore } from "~/stores/authStore";
 
 const api = useApi();
+const router = useRouter();
+const authStore = useAuthStore();
 const { $showToast } = useNuxtApp();
 const props = defineProps({
   product: {
@@ -34,6 +37,30 @@ const goToPayment = async () => {
     },
   });
 };
+
+const handleChatClick = async () => {
+  if (!authStore.isAuthenticated) {
+    $showToast("로그인이 필요한 i서비스입니다. 로그인 화면으로 이동합니다.");
+    setTimeout(() => {
+      router.push("/auth/login");
+    }, 1500);
+    return;
+  }
+
+  try {
+    await api.post("/chat/getChat", null, {
+      params: {
+        productId: props.product.productId,
+      },
+    });
+
+    setTimeout(() => {
+      router.push("/chat");
+    }, 1500);
+  } catch (err) {
+    console.error("채팅방 생성 실패");
+  }
+};
 </script>
 
 <template>
@@ -54,7 +81,7 @@ const goToPayment = async () => {
         </div>
       </div>
       <div class="button-group">
-        <button class="chat-btn">채팅</button>
+        <button class="chat-btn" @click="handleChatClick">채팅</button>
         <button @click="goToPayment" class="payment-btn">즉시 결제</button>
       </div>
     </div>
