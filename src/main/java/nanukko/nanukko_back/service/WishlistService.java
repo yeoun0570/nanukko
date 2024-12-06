@@ -30,6 +30,7 @@ public class WishlistService {
         if (existingWishlist.isPresent()) {
             // 이미 찜한 상품이면 제거
             wishlistRepository.delete(existingWishlist.get());
+            product.setFavoriteCount(product.getFavoriteCount() - 1);
             return false;
         } else {
             // 찜하지 않은 상품이면 추가
@@ -38,6 +39,7 @@ public class WishlistService {
                     .product(product)
                     .build();
             wishlistRepository.save(wishlist);
+            product.setFavoriteCount(product.getFavoriteCount() + 1);
             return true;
         }
     }

@@ -83,4 +83,8 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
             Long productId,
             String sellerId
     );
+
+    //상품 조회시 채팅방 생성 개수 합계 찾기
+    @Query("SELECT COUNT(c) FROM ChatRoom c WHERE c.product.productId = :productId")
+    int countChatRoomsByProductId(@Param("productId") Long productId);
 }
