@@ -1,5 +1,5 @@
 <script setup>
-import { useApi } from '@/composables/useApi';
+import { useApi } from "@/composables/useApi";
 
 const api = useApi();
 const { $showToast } = useNuxtApp();
@@ -14,15 +14,11 @@ const emit = defineEmits(["remove-success"]);
 
 const removeWishlist = async () => {
   try {
-    await api.post(
-      `/my-store/wishlist/remove`,
-      props.product,
-      {
-        params: {
-          productId: props.product.productId,
-        },
-      }
-    );
+    await api.post(`/my-store/wishlist/remove`, props.product, {
+      params: {
+        productId: props.product.productId,
+      },
+    });
     emit("remove-success");
   } catch (error) {
     console.error("찜목록에서 삭제 실패:", error);
@@ -44,7 +40,11 @@ const goToPayment = async () => {
   <div class="wishlist-card">
     <div class="card-content">
       <div class="image-and-info">
-        <img :src="product.thumbnamilImage" :alt="product.productName" class="product-image" />
+        <img
+          :src="product.thumbnailImage"
+          :alt="product.productName"
+          class="product-image"
+        />
         <div class="product-info">
           <h3 class="product-name">{{ product.productName }}</h3>
           <button class="wish-btn" @click="removeWishlist">
