@@ -59,17 +59,22 @@ public class ProductService {
 
     public PageResponseDTO<ProductResponseDto> getMainProducts(Pageable pageable, String username) { //로그인 사용자 추천 상품 리스트
         log.info("=== 사용자 추천 시작 ===");
+
         //부모 객체 조회
         User user = userRepository.findById(username).orElseThrow(() -> new IllegalArgumentException("사용자 찾기 실패"));
         //사용자의 자녀 정보 가져오기
         List<Kid> kids = kidRepository.findByUserOrderByKidId(user);
         //자녀 정보가 1개 이상인지 확인
-        log.info("자녀 수 : " + kids.size());
+        log.info("kids 리스트 내용: {}",kids);
+        log.info("자녀 수 : {}", kids.size());
 
-        if (kids.isEmpty()) {
+        if (kids.isEmpty() || !userActionLogRepository.existsBy()) {
             //자녀 정보가 없을 때 -> 일반 조회
+            //user_action_logs에 아무것도 저장된 것이 없을 때 -> 일반 조회
+            log.info("자녀 정보가 없거나 로그에 저장된 것이 없어 일반 조회 리턴합니다.");
             return getMainProducts(pageable);
         }
+
         //자녀 정보가 있을 때 연령대 계산 (쌍둥이의 경우 중복 결과를 방지하기 위해 Set으로 설정 )
         Map<Integer, Set<Kid>> groupToKidsMap = new HashMap<>();
 
@@ -79,19 +84,32 @@ public class ProductService {
         }
 
         List<ProductResponseDto> recommendedProducts = new ArrayList<>(); //추천 상품 리스트
-        long totalElements = 0;
+        int totalElements = 0;
 
         for (Map.Entry<Integer, Set<Kid>> entry : groupToKidsMap.entrySet()) {
+            log.info("=== 인기 상품 조회 시작 ===");
             int ageGroup = entry.getKey();
+            log.info("ageGroup: {}", ageGroup);
+
+            // 인기 상품 ID 조회
             Page<Long> popularProductIds = userActionLogRepository.findPopularProductIdsByAgeGroup(ageGroup, pageable);
+            log.info("<1> Found {} popular product IDs for age group {}", popularProductIds.getTotalElements(), ageGroup);
+
+            // 상품 조회
             List<Product> products = productRepository.findAllById(popularProductIds.getContent());
+            log.info("<2> Retrieved {} products for age group {}", products.size(), ageGroup);
+
+            // DTO 변환 및 추천 상품 추가
             products.stream()
                     .map(ProductMapper::toDto)
                     .forEach(recommendedProducts::add);
 
             totalElements += popularProductIds.getTotalElements();
+            log.info("<4> Total elements updated to: {}", totalElements);
         }
 
+        log.info("<5> Creating combined Page with {} recommended products, total elements: {}, and pageable: {}",
+                recommendedProducts.size(), totalElements, pageable);
         Page<ProductResponseDto> combinedPage = new PageImpl<>(recommendedProducts, pageable, totalElements);
         return new PageResponseDTO<>(combinedPage);
     }
@@ -237,7 +255,6 @@ public class ProductService {
         Page<ProductResponseDto> dto = result.map(ProductMapper::toDtoSimple);
         return new PageResponseDTO<>(dto);
     }
-
 
 
     ///////////////////공통 메서드//////////////////////

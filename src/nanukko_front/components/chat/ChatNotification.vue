@@ -1,13 +1,10 @@
 <template>
   <div class="notification-wrapper" ref="container">
     <!-- 채팅 알림 버튼 -->
-     <!-- 알림 버튼 -->
-     <button 
-      class="chat-button"
-      @click="handleNotificationClick"
-      ref="notificationButton"
-    >
-      <i class="fas fa-comments"></i>
+    <!-- 알림 버튼 -->
+    <button class="chat-button" @click="handleNotificationClick" ref="notificationButton">
+      <!-- <i class="fas fa-comments"></i> -->
+      <span style="color: black;">채팅</span>
       <span v-if="unreadCount > 0 && isAuthenticated" class="notification-badge">
         {{ unreadCount }}
       </span>
@@ -15,16 +12,12 @@
 
     <!-- 드롭다운 알림 메뉴 - 로그인된 경우에만 표시 -->
     <Transition name="slide-fade">
-      <div
-        v-if="showDropdown && isAuthenticated"
-        class="dropdown-menu"
-        ref="dropdownMenu"
-      >
+      <div v-if="showDropdown && isAuthenticated" class="dropdown-menu" ref="dropdownMenu">
         <!-- 알림 헤더 -->
         <div class="dropdown-header">
           <h3>새 메시지</h3>
         </div>
-        
+
         <!-- 알림 메시지 목록 -->
         <div class="messages-container">
           <!-- 로딩 상태 -->
@@ -40,13 +33,8 @@
             </div>
 
             <!-- 메시지 아이템 -->
-            <div 
-              v-else
-              v-for="room in chatRooms" 
-              :key="room.chatRoomId"
-              class="message-item"
-              @click="handleRoomSelect(room)"
-            >
+            <div v-else v-for="room in chatRooms" :key="room.chatRoomId" class="message-item"
+              @click="handleRoomSelect(room)">
               <div class="message-content">
                 <p class="product-name" :title="room.productName">
                   {{ room.productName }}
@@ -100,19 +88,19 @@ const formatMessageTime = (timestamp) => {
   const date = new Date(timestamp)
   const now = new Date()
   const diff = now - date
-  
+
   if (diff < 60000) return '방금 전'
   if (diff < 3600000) return `${Math.floor(diff / 60000)}분 전`
   if (diff < 86400000) {
-    return date.toLocaleTimeString('ko-KR', { 
-      hour: 'numeric', 
+    return date.toLocaleTimeString('ko-KR', {
+      hour: 'numeric',
       minute: '2-digit',
-      hour12: true 
+      hour12: true
     })
   }
-  return date.toLocaleDateString('ko-KR', { 
-    month: 'short', 
-    day: 'numeric' 
+  return date.toLocaleDateString('ko-KR', {
+    month: 'short',
+    day: 'numeric'
   })
 }
 
@@ -133,8 +121,8 @@ const loadChatRooms = async () => {
 // 새 메시지 처리
 const handleNewMessage = async (message) => {
   try {
-    const messageData = typeof message === 'string' ? 
-      JSON.parse(message) : 
+    const messageData = typeof message === 'string' ?
+      JSON.parse(message) :
       message.body ? JSON.parse(message.body) : message
 
     console.log('채팅 알림 메시지 데이터:', messageData);
@@ -148,10 +136,10 @@ const handleNewMessage = async (message) => {
 
       chatRooms.value = chatRooms.value.map(room => {
         if (room.chatRoomId === messageData.chatRoom) {
-          console.log('Updating room:', room.chatRoomId, 
+          console.log('Updating room:', room.chatRoomId,
             'current unreadCount:', room.unreadCount,
             'messages marked as read:', messageData.messageIds.length);
-          
+
           return {
             ...room,
             unreadCount: Math.max(0, (room.unreadCount || 0) - messageData.messageIds.length)
@@ -161,7 +149,7 @@ const handleNewMessage = async (message) => {
       });
 
       console.log('Updated chatRooms:', chatRooms.value);
-      
+
       updateUnreadCount();
       return;
     }
@@ -206,7 +194,7 @@ const navigateToChat = () => {
 const updateUnreadCount = () => {
   const previousCount = unreadCount.value;
   unreadCount.value = chatRooms.value.reduce(
-    (sum, room) => sum + (room.unreadCount || 0), 
+    (sum, room) => sum + (room.unreadCount || 0),
     0
   );
   console.log('Updated unread count:', {
@@ -224,7 +212,7 @@ const clearAllNotifications = () => {
   chatRooms.value = []
   unreadCount.value = 0
   showDropdown.value = false
-  
+
   // Clear localStorage items if needed
   if (process.client) {
     localStorage.removeItem('chat-notifications')
@@ -249,7 +237,7 @@ const initializeNotifications = async () => {
     // 개인 알림 채널 구독
     const notificationDestination = `/user/${userId.value}/queue/chat.notification`;
     console.log('Subscribing to notifications:', notificationDestination);
-    
+
     // 알림 구독
     notificationSubscription.value = await stomp.subscribeToChatRoom(
       notificationDestination,
@@ -260,7 +248,7 @@ const initializeNotifications = async () => {
     for (const room of chatRooms.value) {
       const readStatusDestination = `/queue/chat/${room.chatRoomId}`;
       console.log('Subscribing to read status:', readStatusDestination);
-      
+
       await stomp.subscribeToChatRoom(
         readStatusDestination,
         { onMessage: handleReadStatus }
@@ -276,8 +264,8 @@ const initializeNotifications = async () => {
 // 읽음 처리 핸들러 추가
 const handleReadStatus = (message) => {
   try {
-    const data = typeof message === 'string' ? 
-      JSON.parse(message) : 
+    const data = typeof message === 'string' ?
+      JSON.parse(message) :
       message.body ? JSON.parse(message.body) : message;
 
     console.log('Received read status update:', data);
@@ -285,7 +273,7 @@ const handleReadStatus = (message) => {
     if (data.messageIds && Array.isArray(data.messageIds)) {
       // 채팅방 unreadCount 갱신
       const roomId = data.chatRoom || message.headers?.destination?.split('/').pop();
-      
+
       chatRooms.value = chatRooms.value.map(room => {
         if (room.chatRoomId.toString() === roomId?.toString()) {
           console.log(`Updating unread count for room ${roomId}`);
@@ -337,13 +325,13 @@ watch(() => isAuthenticated.value, (newValue) => {
     chatRooms.value = [];
     unreadCount.value = 0;
     showDropdown.value = false;
-    
+
     // localStorage 정리
     if (process.client) {
       localStorage.removeItem('chat-notifications');
       localStorage.removeItem('chat-notifications-count');
     }
-    
+
     // 구독 해제
     if (notificationSubscription.value) {
       stomp.unsubscribe(notificationSubscription.value);

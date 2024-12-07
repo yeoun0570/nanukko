@@ -1,5 +1,5 @@
 <template>
-    <div class="card-container mx-auto">
+    <div class="card-container">
         <!-- 로딩 상태 -->
         <div v-if="loading" class="loading-container">
             <div class="loading">{{ loadingText }}</div>
@@ -107,12 +107,6 @@ const goToProduct = (productId) => {
 
 
 <style scoped>
-.card-container {
-    max-width: 1200px;
-    padding: 2rem;
-    margin: 0 auto;
-}
-
 .search-title {
     margin-bottom: 2rem;
     font-size: 1.2rem;
@@ -127,19 +121,31 @@ const goToProduct = (productId) => {
     font-size: 1rem;
 }
 
+.card-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1rem 0 0;
+}
+
 .product-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 20px;
-    margin-bottom: 2rem;
+    margin: 0 0 50px;
 }
 
 .product-card {
+    cursor: pointer;
+    transition: transform 0.2s;
+    height: 100%;
+    width: 100%;
     display: flex;
     flex-direction: column;
     border-radius: 8px;
-    cursor: pointer;
-    width: 100%;
+}
+
+.product-card:hover {
+    transform: translateY(-5px);
 }
 
 .card-img-wrapper {
@@ -166,18 +172,18 @@ const goToProduct = (productId) => {
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 1.5rem;
+    font-size: 1rem;
     font-weight: bold;
     color: white;
     background-color: rgba(0, 0, 0, 0.6);
 }
 
 .status-overlay.reserved {
-    background-color: rgba(255, 152, 0, 0.7);
+    background-color: #FFC755;
 }
 
 .status-overlay.sold-out {
-    background-color: rgba(0, 0, 0, 0.7);
+    background-color: #5F5F5F;
 }
 
 .card-img-top {
@@ -199,29 +205,25 @@ const goToProduct = (productId) => {
     width: 100%;
 }
 
-.card-fixed-height:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
 .card-body {
-    padding: 1rem;
+    padding: 12px;
+    flex-grow: 1;
 }
 
 .card-title {
-    font-size: 0.9rem;
+    font-size: 1rem;
     margin-bottom: 0.5rem;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
-    height: 2.8em;
+    height: 1.5em;
     line-height: 1.4;
 }
 
 .card-price {
     font-weight: bold;
-    font-size: 1.1rem;
+    font-size: 1.2rem;
     color: #333;
 }
 
@@ -238,7 +240,7 @@ const goToProduct = (productId) => {
 }
 
 .card-footer {
-    padding: 0.75rem 1rem;
+    padding: 0.5rem 1rem;
     background-color: #f8f9fa;
     border-top: 1px solid #dee2e6;
 }
@@ -317,7 +319,6 @@ const goToProduct = (productId) => {
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
-    margin-bottom: 2rem;
     padding: 1rem;
     border-bottom: 1px solid #dee2e6;
 }

@@ -57,11 +57,15 @@ const handleDeliverySuccess = () => {
   showDeliveryModal.value = false;
   emit("product-updated");
 };
+
+const goToProduct = (productId) => {
+  router.push(`/products/${productId}`);
+};
 </script>
 
 <template>
   <div class="product-card">
-    <div class="product-image">
+    <div class="product-image" @click="goToProduct(props.product.productId)">
       <img :src="product.thumbnailImage" :alt="product.productName" />
     </div>
     <div class="product-info">

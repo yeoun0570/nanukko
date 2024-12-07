@@ -85,7 +85,7 @@ public class AuthUserController {
 
         //JWT 생성
         String token = jwtResetPassword.generateToken(user);
-        String resetLink = "http://localhost:3000/auth/reset-password?token=" + token;
+        String resetLink = "https://nanukko.store/auth/reset-password?token=" + token;
 
         mailService.sendMailResetPassword(email, resetLink);
         return ResponseEntity.ok().body("이메일로 비밀번호 재설정 링크가 발송되었습니다. 링크는 15분간 유효합니다.");
@@ -100,11 +100,9 @@ public class AuthUserController {
 
         //토큰 검증 및 사용자 아이디 추출
         String userId = jwtResetPassword.validateTokenAndGetUserId(token);
-        log.info("어디야111 {}", userId);
 
         User user = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("존재하지 않는 사용자입니다."));
 
-        log.info("어디야2222 {}", user);
         //비밀번호 암호화 및 저장
         user.resetPassword(bCryptPasswordEncoder.encode(newPassword));
         userRepository.save(user);

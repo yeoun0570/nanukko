@@ -180,12 +180,8 @@ onMounted(() => {
 }
 
 .category-item.active {
-  background: #007bff;
+  background: #618EFF;
   color: white;
-}
-
-.category-item.active:hover {
-  background: #0056b3;
 }
 
 .empty-state {

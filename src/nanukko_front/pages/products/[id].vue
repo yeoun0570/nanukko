@@ -339,18 +339,18 @@ const getStatusText = (status) => {
 }
 
 .status-badge.selling {
-    background-color: #e6f3ff;
-    color: #0066cc;
+    background-color: #618EFF;
+    color: #ffffff;
 }
 
 .status-badge.reserved {
-    background-color: #fff3e6;
-    color: #cc7700;
+    background-color: #FFC755;
+    color: #ffffff;
 }
 
 .status-badge.sold-out {
-    background-color: #f5f5f5;
-    color: #666666;
+    background-color: #5F5F5F;
+    color: #ffffff;
 }
 
 .product-actions {
@@ -369,7 +369,7 @@ const getStatusText = (status) => {
     gap: 0.3125rem;
     padding: 0.75rem 1.5rem;
     border: none;
-    border-radius: 0.3125rem;
+    border-radius: 8px;
     color: white;
     font-size: 1rem;
     cursor: pointer;
@@ -389,15 +389,15 @@ const getStatusText = (status) => {
 }
 
 .like {
-    background-color: #007bff;
+    background-color: #003798;
 }
 
 .chat {
-    background-color: #ffc107;
+    background-color: #003798;
 }
 
 .buy {
-    background-color: #dc3545;
+    background-color: #003798;
 }
 
 /* 판매자 정보 스타일 */
@@ -553,8 +553,8 @@ const getStatusText = (status) => {
 }
 
 .related-product-card .product-price {
-    font-weight: 500;
-    color: #4c6ef5;
+    color: #333;
+    font-size: 1.2rem;
 }
 
 .card-container {
