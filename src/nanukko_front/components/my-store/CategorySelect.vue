@@ -179,11 +179,6 @@ onMounted(() => {
   background: #f8f9fa;
 }
 
-.category-item.active {
-  background: #618EFF;
-  color: white;
-}
-
 .empty-state {
   padding: 1rem;
   text-align: center;

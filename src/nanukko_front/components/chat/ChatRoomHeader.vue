@@ -270,32 +270,6 @@ const conditionClass = computed(() => {
   height: 32px;
 }
 
-.product-condition {
-  font-size: 0.75rem;
-  padding: 0.125rem 0.375rem;
-  border-radius: 4px;
-}
-
-.condition-new {
-  background-color: #e6ffe6;
-  color: #00b300;
-}
-
-.condition-like-new {
-  background-color: #e6f7ff;
-  color: #0077cc;
-}
-
-.condition-used {
-  background-color: #fff7e6;
-  color: #b37700;
-}
-
-.condition-heavily-used {
-  background-color: #fff1f0;
-  color: #cf1322;
-}
-
 .product-status {
   padding: 0.25rem 0.75rem;
   border-radius: 4px;
@@ -303,26 +277,6 @@ const conditionClass = computed(() => {
   white-space: nowrap;
   margin-right: 0.5rem;
   /* 햄버거 메뉴와의 간격 조정 */
-}
-
-.status-selling {
-  background-color: #e6f4ff;
-  color: #0077ff;
-}
-
-.status-reserved {
-  background-color: #fff7e6;
-  color: #ff9500;
-}
-
-.status-sold {
-  background-color: #f5f5f5;
-  color: #666;
-}
-
-.status-removed {
-  background-color: #ffd6d6;
-  color: #ff4d4f;
 }
 
 .connection-status {

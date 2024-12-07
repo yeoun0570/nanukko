@@ -316,21 +316,6 @@ input:disabled {
     cursor: not-allowed;
 }
 
-.category-select {
-    width: 100%;
-}
-
-.category-button {
-    width: 100%;
-    padding: 0.75rem;
-    text-align: left;
-    background-color: #fff;
-    border: 1px solid #dee2e6;
-    border-radius: 0.25rem;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
 .shipping-include {
     position: relative;
     margin: -0.5rem 0;
@@ -385,12 +370,6 @@ input:disabled {
     border-width: 5px;
     border-style: solid;
     border-color: rgba(0, 0, 0, 0.8) transparent transparent transparent;
-}
-
-.delivery-options {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
 }
 
 .delivery-type {
@@ -470,10 +449,6 @@ input:disabled {
     border-width: 5px;
     border-style: solid;
     border-color: rgba(0, 0, 0, 0.8) transparent transparent transparent;
-}
-
-.category-button:hover {
-    border-color: #618EFF;
 }
 
 .delivery-button:hover {

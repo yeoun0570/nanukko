@@ -107,20 +107,6 @@ const goToProduct = (productId) => {
 
 
 <style scoped>
-.search-title {
-    margin-bottom: 2rem;
-    font-size: 1.2rem;
-    color: #333;
-}
-
-.category-name {
-    color: #3B82F6;
-}
-
-.total-count {
-    font-size: 1rem;
-}
-
 .card-container {
     max-width: 1200px;
     margin: 0 auto;
@@ -314,43 +300,4 @@ const goToProduct = (productId) => {
     }
 }
 
-
-.middle-categories {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    padding: 1rem;
-    border-bottom: 1px solid #dee2e6;
-}
-
-.category-button {
-    padding: 0.5rem 1rem;
-    border: 1px solid #dee2e6;
-    border-radius: 20px;
-    background: white;
-    cursor: pointer;
-    font-size: 1rem;
-    transition: all 0.2s;
-    display: flex;
-    align-items: center;
-}
-
-.category-button.active {
-    background-color: #4c6ef5;
-    color: white;
-    border-color: #4c6ef5;
-}
-
-.category-button:hover:not(.active) {
-    background-color: #f8f9fa;
-}
-
-.count {
-    font-size: 0.8rem;
-    color: #666;
-}
-
-.category-button.active .count {
-    color: white;
-}
 </style>
