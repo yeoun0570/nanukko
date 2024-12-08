@@ -1,6 +1,5 @@
 <template>
     <footer class="footer">
-        <div class="padding"></div>
         <div class="footer-content">
             <div class="company-name">
                 <p>ABOUT NANUKKO</p>
@@ -29,13 +28,10 @@
     justify-content: center;
 }
 
-.padding {
-    width: 45%;
-}
 
 .footer-content {
-    width: 55%;
-    text-align: left;
+    width: 100%;
+    text-align: center;
     padding: 0 2rem;
 }
 

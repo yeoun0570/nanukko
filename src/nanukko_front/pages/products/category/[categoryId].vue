@@ -127,6 +127,12 @@ const changePage = (newPage) => {
 
 <template>
     <div class="card-container mx-auto">
+        <h2 class="search-title">
+            <span class="category-name">{{ categoryName }}</span>
+            <span style="margin-right: 20px;"></span>
+            <span class="total-count">총 {{ products.totalElements }} 개가 검색 되었습니다.</span>
+        </h2>
+
         <!-- 중분류 카테고리 목록 -->
         <div class="middle-categories">
             <button class="category-button" :class="{ active: !selectedMiddleId }" @click="selectMiddleCategory(null)">
@@ -141,18 +147,11 @@ const changePage = (newPage) => {
             </button>
         </div>
 
-        <h2 class="search-title">
-            <span class="category-name">{{ categoryName }}</span>
-            <span style="margin-right: 10px;"></span>
-            <span class="total-count">전체 상품 수 : {{ products.totalElements }}</span>
-        </h2>
-
         <ProductList :products="products" :loading="loading" :page-number="pageNumber" @product-click="goToProduct"
             @page-change="changePage" />
     </div>
 </template>
-
-<style scoped>
+<style>
 .card-container {
     max-width: 1200px;
     padding: 2rem;
@@ -160,187 +159,30 @@ const changePage = (newPage) => {
 }
 
 .search-title {
-    margin-bottom: 2rem;
-    font-size: 1.2rem;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
     color: #333;
 }
 
 .category-name {
-    color: #3B82F6;
+    color: #FF9D14;
 }
 
 .total-count {
     font-size: 1rem;
 }
 
-.product-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 20px;
-    margin-bottom: 2rem;
-}
-
-.product-card {
-    display: flex;
-    flex-direction: column;
-    border-radius: 8px;
-    cursor: pointer;
-    width: 100%;
-}
-
-.card-img-wrapper {
-    position: relative;
-    padding-top: 100%;
-    width: 100%;
-}
-
-
-.card-img-top {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.card-fixed-height {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
-    overflow: hidden;
-    width: 100%;
-}
-
-.card-fixed-height:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.card-body {
-    padding: 1rem;
-}
-
-.card-title {
-    font-size: 0.9rem;
-    margin-bottom: 0.5rem;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    height: 2.8em;
-    line-height: 1.4;
-}
-
-.card-price {
-    font-weight: bold;
-    font-size: 1.1rem;
-    color: #333;
-}
-
-.flex-between-center {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 0.5rem;
-}
-
-.small-text-muted {
-    font-size: 0.8rem;
-    color: #6c757d;
-}
-
-.card-footer {
-    padding: 0.75rem 1rem;
-    background-color: #f8f9fa;
-    border-top: 1px solid #dee2e6;
-}
-
-.loading-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 300px;
-}
-
-.loading {
-    font-size: 1.2rem;
-    color: #666;
-}
-
-.no-results {
-    text-align: center;
-    padding: 3rem;
-    color: #666;
-    font-size: 1.2rem;
-}
-
-.pagination-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 1rem;
-    margin-top: 2rem;
-    padding: 1rem;
-}
-
-.page-button {
-    padding: 0.5rem 1rem;
-    border: 1px solid #dee2e6;
-    background-color: white;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 0.2s;
-}
-
-.page-button:hover:not(:disabled) {
-    background-color: #f8f9fa;
-}
-
-.page-button:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-.page-info {
-    font-size: 0.9rem;
-    color: #666;
-}
-
-@media (max-width: 1400px) {
-    .product-grid {
-        grid-template-columns: repeat(3, 1fr);
-    }
-}
-
-@media (max-width: 1100px) {
-    .product-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-@media (max-width: 750px) {
-    .product-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
-
 .middle-categories {
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
-    margin-bottom: 2rem;
-    padding: 1rem;
-    border-bottom: 1px solid #dee2e6;
+    margin-bottom: 1rem;
 }
 
 .category-button {
     padding: 0.5rem 1rem;
     border: 1px solid #dee2e6;
-    border-radius: 20px;
+    border-radius: 8px;
     background: white;
     cursor: pointer;
     font-size: 1rem;
@@ -350,9 +192,9 @@ const changePage = (newPage) => {
 }
 
 .category-button.active {
-    background-color: #4c6ef5;
+    background-color: #618EFF;
     color: white;
-    border-color: #4c6ef5;
+    border-color: #618EFF;
 }
 
 .category-button:hover:not(.active) {

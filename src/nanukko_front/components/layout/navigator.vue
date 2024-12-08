@@ -29,6 +29,19 @@
 </script>
 
 <style scoped>
+.navbar a {
+    color: black;
+    text-decoration: none;
+    transition: color 0.3s ease;
+    /* 부드러운 색상 전환 효과 추가 */
+}
+
+.navbar a:hover {
+    text-decoration: none;
+    color: #618EFF;
+    /* hover 시 색상 변경 */
+}
+
 .navbar {
     display: flex;
     width: 100%;

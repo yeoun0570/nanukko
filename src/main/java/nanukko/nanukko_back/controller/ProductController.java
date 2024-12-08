@@ -47,6 +47,7 @@ public class ProductController {
             @PageableDefault(size = 20, sort = "updatedAt", direction = Sort.Direction.DESC) Pageable pageable,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
+        log.info("=== 메인 상품 FETCH 시작 ===");
         PageResponseDTO<ProductResponseDto> dto;
         //로그인 : 사용자 자녀 정보 기반 상품 추천 (찜 여부 포함)
         dto = productService.getMainProducts(pageable, userDetails.getUsername());

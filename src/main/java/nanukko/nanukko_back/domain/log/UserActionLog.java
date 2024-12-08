@@ -25,7 +25,7 @@ public class UserActionLog {
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    private ActionType actionType;
+    private ActionType actionType; //SEARCH, CLICK, PURCHASE
 
     @Column(nullable = false)
     private LocalDateTime updatedAt;

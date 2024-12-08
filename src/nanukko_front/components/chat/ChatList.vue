@@ -5,12 +5,9 @@
       <h1>채팅</h1>
       <!-- 연결 상태 표시 -->
       <div class="connection-status">
-        <span 
-          class="status-dot" 
-          :class="{ 'connected': connected }"
-        ></span>
+        <span class="status-dot" :class="{ connected: connected }"></span>
         <span class="status-text">
-          {{ connected ? '실시간' : '연결 중...' }}
+          {{ connected ? "실시간" : "연결 중..." }}
         </span>
       </div>
     </div>
@@ -26,20 +23,12 @@
       <!-- 채팅방 목록 -->
       <div v-else-if="chatRooms?.length > 0" class="chat-list">
         <!--동적 클래스 : 현재 선택된 채팅방 하이라이트를 통해 강조-->
-        <div 
-          v-for="room in chatRooms" 
-          :key="room.chatRoomId"
-          class="chat-room-item"
-          :class="{ 'active': currentRoomId === room.chatRoomId }"
-          @click="handleRoomSelect(room.chatRoomId)"
-        >
+        <div v-for="room in chatRooms" :key="room.chatRoomId" class="chat-room-item"
+          :class="{ active: currentRoomId === room.chatRoomId }" @click="handleRoomSelect(room.chatRoomId)">
           <!-- 프로필 영역 -->
+
           <div class="profile-image">
-            <img 
-              v-if="room.sellerProfile"
-              :src="room.sellerProfile"
-              :alt="room.sellerName"
-            />
+            <img v-if="getOtherUserProfile(room)" :src="getOtherUserProfile(room)" :alt="room.sellerProfile" />
             <div v-else class="profile-placeholder">
               <i class="fas fa-user"></i>
             </div>
@@ -55,7 +44,7 @@
                 {{ room.productName }}
               </span>
             </div>
-            
+
             <!-- 메시지 정보 -->
             <div class="message-time-wrapper">
               <p class="last-message">
@@ -65,10 +54,7 @@
                 <span class="message-time">
                   {{ formatMessageTime(room.updatedAt) }}
                 </span>
-                <div 
-                  v-if="hasUnreadMessages(room)" 
-                  class="unread-badge"
-                ></div>
+                <div v-if="hasUnreadMessages(room)" class="unread-badge"></div>
               </div>
             </div>
           </div>
@@ -85,105 +71,112 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
-import { useFormatTime } from '~/composables/useFormatTime'
+import { computed } from "vue";
 
 // props 정의
 const props = defineProps({
   chatRooms: {
     type: Array,
-    default: () => []
+    default: () => [],
   },
   loading: {
     type: Boolean,
-    default: false
+    default: false,
   },
   currentRoomId: {
     type: [String, Number],
-    default: null
+    default: null,
   },
   userId: {
     type: String,
-    required: true
+    required: true,
   },
   connected: {
     type: Boolean,
-    default: false
-  }
-})
+    default: false,
+  },
+});
 
 // 상대방 이름 표시 메서드
 const getOtherUserName = (room) => {
-  if (!room || !props.userId) return '';
-  
+  if (!room || !props.userId) return "";
+
   // 현재 사용자가 판매자인 경우 구매자 이름을, 구매자인 경우 판매자 이름을 반환
   return props.userId === room.sellerId ? room.buyerName : room.sellerName;
-}
+};
+
+// 상대방 이름 표시 메서드
+const getOtherUserProfile = (room) => {
+  if (!room || !props.userId) return "";
+
+  // 현재 사용자가 판매자인 경우 구매자 사진을, 구매자인 경우 판매자 사진을 반환
+  return props.userId === room.sellerId
+    ? room.buyerProfile
+    : room.sellerProfile;
+};
 
 // 이벤트 정의
-const emit = defineEmits(['select-room'])
-
-// 시간 포맷팅 유틸리티
-const { formatTime } = useFormatTime()
+const emit = defineEmits(["select-room"]);
 
 // 채팅방 선택 핸들러
 const handleRoomSelect = (chatRoomId) => {
-  emit('select-room', chatRoomId)
-}
+  emit("select-room", chatRoomId);
+};
 
 // 안읽은 메시지 여부 체크
 const hasUnreadMessages = (room) => {
-  if (!room?.messages?.length || !props.userId) return false
-  return room.messages.some(msg => 
-    !msg.isRead && msg.senderId !== props.userId
-  )
-}
+  if (!room?.messages?.length || !props.userId) return false;
+  return room.messages.some(
+    (msg) => !msg.isRead && msg.senderId !== props.userId
+  );
+};
 
 // 마지막 메시지 표시
 const getLastMessage = (room) => {
-  // chatMessages 배열이 있고 길이가 0보다 큰지 확인
   if (room.chatMessages && room.chatMessages.length > 0) {
-    // 마지막 메시지 가져오기
-    const lastMessage = room.chatMessages[room.chatMessages.length - 1]
-    
-    // 메시지 타입에 따른 표시
-    switch (lastMessage.type) {
-      case 'SYSTEM':
-        return '시스템 메시지'
-      case 'IMAGE':
-        return '🖼️ 사진'
-      case 'LOCATION':
-        return '📍 위치 공유'
+    const lastMessage = room.chatMessages[room.chatMessages.length - 1];
+    const messageType = lastMessage.messageType;
+
+    switch (messageType) {
+      case "SYSTEM":
+        return "시스템 메시지";
+      case "IMAGE":
+        // 이미지와 함께 보낸 텍스트가 있는 경우 텍스트도 표시
+        return lastMessage.chatMessage
+          ? `🖼️ 사진: ${lastMessage.chatMessage}`
+          : "🖼️ 사진";
+      case "LOCATION":
+        return "📍 위치 공유";
       default:
-        return lastMessage.chatMessage || '메시지 없음'
+        return lastMessage.chatMessage || "메시지 없음";
     }
   }
-  
-  return '새로운 채팅방입니다'
-}
+
+  return "새로운 채팅방입니다";
+};
 
 // 메시지 시간 포맷팅
 const formatMessageTime = (timestamp) => {
-  if (!timestamp) return ''
-  
-  const date = new Date(timestamp)
-  const now = new Date()
-  const diffHours = Math.abs(now - date) / 36e5 // 시간 차이
+  if (!timestamp) return "";
+
+  const date = new Date(timestamp);
+  const now = new Date();
+  const diffHours = Math.abs(now - date) / 36e5; // 시간 차이
 
   if (diffHours < 24) {
     // 24시간 이내면 시:분
-    return date.toLocaleTimeString('ko-KR', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true
-    })
+    return date.toLocaleTimeString("ko-KR", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
   } else {
     // 24시간 이상이면 월/일
-    return `${date.getMonth() + 1}/${date.getDate()}`
+    return `${date.getMonth() + 1}/${date.getDate()}`;
   }
-}
+};
 </script>
 
 <style scoped>
-@import '~/assets/chat/chat-list.css';
+@import "~/assets/chat/chat-list.css";
 </style>

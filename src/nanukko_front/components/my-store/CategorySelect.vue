@@ -179,15 +179,6 @@ onMounted(() => {
   background: #f8f9fa;
 }
 
-.category-item.active {
-  background: #007bff;
-  color: white;
-}
-
-.category-item.active:hover {
-  background: #0056b3;
-}
-
 .empty-state {
   padding: 1rem;
   text-align: center;

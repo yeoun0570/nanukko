@@ -18,4 +18,5 @@ public interface UserActionLogRepository extends JpaRepository<UserActionLog, Lo
             "ORDER BY COUNT(log.product.productId) DESC")
     Page<Long> findPopularProductIdsByAgeGroup(@Param("ageGroup") int ageGroup, Pageable pageable);
 
+    boolean existsBy();
 }
