@@ -43,9 +43,9 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
-import { useURL } from '~/composables/useURL';
-import { useAuth } from '~/composables/auth/useAuth';
+import { ref, computed } from "vue";
+import { useURL } from "~/composables/useURL";
+import { useAuth } from "~/composables/auth/useAuth";
 
 const { $showToast } = useNuxtApp();
 const { axiosInstance } = useURL();
@@ -56,13 +56,13 @@ const props = defineProps({
   isLoading: Boolean,
   roomId: {
     type: [String, Number],
-    required: true
-  }
+    required: true,
+  },
 });
 
-const emit = defineEmits(['send-message']);
+const emit = defineEmits(["send-message"]);
 
-const message = ref('');
+const message = ref("");
 const isMenuOpen = ref(false);
 const fileInput = ref(null);
 const previewUrl = ref(null);
@@ -71,8 +71,12 @@ const isUploading = ref(false);
 
 // 전송 가능 상태 확인
 const canSend = computed(() => {
-  return props.connected && !props.isLoading && !isUploading.value &&
-    (message.value.trim() || selectedFile.value);
+  return (
+    props.connected &&
+    !props.isLoading &&
+    !isUploading.value &&
+    (message.value.trim() || selectedFile.value)
+  );
 });
 
 // 파일 입력 트리거
@@ -86,17 +90,18 @@ const handleFileSelect = async (event) => {
   if (!file) return;
 
   // 파일 유효성 검사
-  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+  const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
   if (!allowedTypes.includes(file.type)) {
-    $showToast('지원하지 않는 파일 형식입니다. JPG, PNG, WebP 형식만 업로드 가능합니다.');
-    event.target.value = '';
+    $showToast(
+      "지원하지 않는 파일 형식입니다. JPG, PNG, WebP 형식만 업로드 가능합니다."
+    );
+    event.target.value = "";
     return;
   }
-
   // 파일 크기 제한 (10MB)
   if (file.size > 10 * 1024 * 1024) {
-    $showToast('파일 크기는 10MB를 초과할 수 없습니다.');
-    event.target.value = '';
+    $showToast("파일 크기는 10MB를 초과할 수 없습니다.");
+    event.target.value = "";
     return;
   }
 
@@ -113,7 +118,7 @@ const removeSelectedImage = () => {
   previewUrl.value = null;
   selectedFile.value = null;
   if (fileInput.value) {
-    fileInput.value.value = '';
+    fileInput.value.value = "";
   }
 };
 
@@ -124,22 +129,25 @@ const handleImageUpload = async () => {
   try {
     isUploading.value = true;
     const formData = new FormData();
-    formData.append('files', selectedFile.value);
-
-    const response = await axiosInstance.post('/files/chat/multiple', formData, {
-      headers: {
-        'Authorization': `Bearer ${getToken()}`,
-        'Content-Type': 'multipart/form-data'
+    formData.append("files", selectedFile.value);
+    const response = await axiosInstance.post(
+      "/files/chat/multiple",
+      formData,
+      {
+        headers: {
+          Authorization: `Bearer ${getToken()}`,
+          "Content-Type": "multipart/form-data",
+        },
       }
-    });
-
+    );
     return response.data[0].uploadFileUrl;
   } catch (error) {
-    console.error('이미지 업로드 실패:', error);
+    console.error("이미지 업로드 실패:", error);
     throw error;
   } finally {
     isUploading.value = false;
   }
+
 };
 
 // 메시지 전송 처리
@@ -148,10 +156,10 @@ const handleSendMessage = async () => {
 
   try {
     let messageData = {
-      messageType: 'CHAT',  // 기본 타입은 CHAT
+      messageType: "CHAT",  // 기본 타입은 CHAT
       chatMessage: message.value.trim(),
       image: null,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
     };
 
     // 이미지가 있는 경우
@@ -161,9 +169,9 @@ const handleSendMessage = async () => {
         if (imageUrl) {
           messageData = {
             ...messageData,
-            messageType: 'IMAGE',
+            messageType: "IMAGE",
             image: imageUrl,
-            chatMessage: message.value.trim() || ''
+            chatMessage: message.value.trim(),
           };
         }
       } catch (error) {
@@ -173,44 +181,43 @@ const handleSendMessage = async () => {
       }
     }
 
-    emit('send-message', messageData);
-    message.value = '';
+    emit("send-message", messageData);
+    message.value = "";
     removeSelectedImage();
     isMenuOpen.value = false;
 
   } catch (error) {
-    console.error('메시지 전송 실패:', error);
-    $showToast('메시지 전송에 실패했습니다. 다시 시도해주세요.');
+    console.error("메시지 전송 실패:", error);
+    $showToast("메시지 전송에 실패했습니다. 다시 시도해주세요.");
   }
 };
 
 // 위치 공유 처리
 const handleLocationShare = () => {
   if (!navigator.geolocation) {
-    $showToast('위치 정보를 사용할 수 없습니다.');
+    $showToast("위치 정보를 사용할 수 없습니다.");
     return;
   }
 
   navigator.geolocation.getCurrentPosition(
     (position) => {
       const messageData = {
-        type: 'LOCATION',
+        type: "LOCATION",
         latitude: position.coords.latitude,
         longitude: position.coords.longitude,
-        chatMessage: '위치를 공유했습니다.',
-        createdAt: new Date().toISOString()
+        chatMessage: "위치를 공유했습니다.",
+        createdAt: new Date().toISOString(),
       };
-
-      emit('send-message', messageData);
+      emit("send-message", messageData);
       isMenuOpen.value = false;
     },
     () => {
-      $showToast('위치 정보를 가져오는데 실패했습니다.');
+      $showToast("위치 정보를 가져오는데 실패했습니다.");
     }
   );
 };
 </script>
 
 <style scoped>
-@import '~/assets/chat/chat-chatMessageInput.css';
+@import "~/assets/chat/chat-chatMessageInput.css";
 </style>

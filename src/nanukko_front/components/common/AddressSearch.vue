@@ -200,7 +200,7 @@ onMounted(() => {
 
 .search-button {
     padding: 0.75rem 1rem;
-    background-color: #007bff;
+    background-color: #618EFF;
     color: white;
     border: none;
     border-radius: 0.25rem;
@@ -211,7 +211,7 @@ onMounted(() => {
 }
 
 .search-button:hover {
-    background-color: #0056b3;
+    background-color: #FF9D14;
 }
 
 .reset-button {

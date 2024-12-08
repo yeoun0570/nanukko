@@ -308,27 +308,12 @@ input:focus,
 select:focus,
 textarea:focus {
     outline: none;
-    border-color: #007bff;
+    border-color: #618EFF;
 }
 
 input:disabled {
     background-color: #e9ecef;
     cursor: not-allowed;
-}
-
-.category-select {
-    width: 100%;
-}
-
-.category-button {
-    width: 100%;
-    padding: 0.75rem;
-    text-align: left;
-    background-color: #fff;
-    border: 1px solid #dee2e6;
-    border-radius: 0.25rem;
-    cursor: pointer;
-    transition: all 0.2s;
 }
 
 .shipping-include {
@@ -387,12 +372,6 @@ input:disabled {
     border-color: rgba(0, 0, 0, 0.8) transparent transparent transparent;
 }
 
-.delivery-options {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-}
-
 .delivery-type {
     display: flex;
     gap: 1rem;
@@ -409,9 +388,9 @@ input:disabled {
 }
 
 .delivery-button.active {
-    background-color: #007bff;
+    background-color: #618EFF;
     color: white;
-    border-color: #007bff;
+    border-color: #618EFF;
 }
 
 .condition-options {
@@ -438,9 +417,9 @@ input:disabled {
 }
 
 .condition-option.active {
-    background-color: #007bff;
+    background-color: #618EFF;
     color: white;
-    border-color: #007bff;
+    border-color: #618EFF;
 }
 
 .condition-tooltip {
@@ -472,16 +451,13 @@ input:disabled {
     border-color: rgba(0, 0, 0, 0.8) transparent transparent transparent;
 }
 
-.category-button:hover {
-    border-color: #007bff;
-}
-
 .delivery-button:hover {
-    background-color: #f8f9fa;
+    background-color: #FF9D14;
+    border-color: #FF9D14;
 }
 
 .condition-option:hover {
-    border-color: #007bff;
+    border-color: #618EFF;
 }
 
 textarea {
@@ -505,7 +481,7 @@ textarea {
 /* 포커스 시 스타일 */
 .form-group textarea:focus {
     outline: none;
-    border-color: #007bff;
+    border-color: #618EFF;
 }
 
 .price-input-wrapper {
