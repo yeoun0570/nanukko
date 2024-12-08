@@ -22,70 +22,6 @@ const showNotifications = ref(false);
 // 읽지 않은 알림 수를 저장할 변수
 const unreadCount = ref(0);
 
-// // SSE 연결을 설정하는 메서드
-// const connectSSE = () => {
-//   // userId가 없으면(로그인하지 않았으면) 연결하지 않음
-//   if (!auth.userId.value) {
-//     console.log("로그인이 필요합니다");
-//     return;
-//   }
-
-//   //기존 연결이 있으면 닫기
-//   if (eventSource.value) {
-//     eventSource.value.close();
-//   }
-
-//   // 마지막으로 받은 이벤트 ID를 localStorage에서 가져옴
-//   const lastEventId = localStorage.getItem("lastEventId") || "";
-
-//   // EventSource 객체 생성하여 서버와 SSE 연결
-//   eventSource.value = new EventSource(
-//     `${baseURL}/notice/connect?userId=${auth.userId.value}&lastEventId=${lastEventId}`
-//   );
-
-//   // SSE 이벤트 리스너 등록 - 'SSE' 이벤트 수신 시 발생('SSE'는 백에서 설정한 전송할 때 이벤트 이름)
-//   eventSource.value.addEventListener("SSE", (event) => {
-//     try {
-//       // 이벤트 ID 저장
-//       if (event.id) {
-//         localStorage.setItem("lastEventId", event.id);
-//       }
-
-//       // 수신한 데이터 파싱해서 알림 추가
-//       const notification = JSON.parse(event.data);
-
-//       if (notification.type === "CONNECT") {
-//         console.log("알림 연결 성공!");
-//         return;
-//       }
-
-//       addNotification(notification);
-//       showToast(notification);
-//     } catch (error) {
-//       console.error("알림 데이터 처리 중 오류 발생: ", error);
-//     }
-//   });
-
-//   eventSource.value.onopen = () => {
-//     console.log("알림 연결 성공!");
-//   };
-
-//   // 에러 발생 시 실행될 콜백
-//   eventSource.value.onerror = (error) => {
-//     console.error("EventSource 오류: ", error);
-//     if (eventSource.value) {
-//       eventSource.value.close();
-//     }
-//     //3초 후 재연결 시도
-//     setTimeout(() => {
-//       if (auth.userId.value) {
-//         // 여전히 로그인 상태일 때만 재연결
-//         connectSSE();
-//       }
-//     }, 3000);
-//   };
-// };
-
 const connectSSE = () => {
   if (!auth.userId.value) {
     console.log("로그인이 필요합니다");
@@ -385,16 +321,6 @@ onMounted(() => {
   }
   document.addEventListener("click", handleClickOutside);
 });
-
-// // 컴포넌트 언마운트 시 실행
-// onUnmounted(() => {
-//   // SSE 연결이 있으면 종료
-//   if (eventSource.value) {
-//     eventSource.value.close();
-//     eventSource.value = null;
-//   }
-//   document.removeEventListener("click", handleClickOutside);
-// });
 
 onUnmounted(() => {
     cleanupConnection();
