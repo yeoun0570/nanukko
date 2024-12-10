@@ -1,4 +1,4 @@
-![header](https://capsule-render.vercel.app/api?type=wave&color=gradient&height=300&section=header&text=나눠꼬%20프로젝트&fontSize=40)
+![header](https://capsule-render.vercel.app/api?type=wave&color=gradient&height=300&section=header&text=나누꼬%20프로젝트&fontSize=40)
 
 ## 📌 프로젝트 소개
 <img src="프로젝트로고" width="50" height="50"/> 안녕하세요, 저희는 중고 거래 플랫폼 나눠꼬입니다.
