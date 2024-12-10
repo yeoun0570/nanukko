@@ -1,7 +1,8 @@
 ![header](https://capsule-render.vercel.app/api?type=wave&color=gradient&height=300&section=header&text=나누꼬%20프로젝트&fontSize=40)
 
 ## 📌 프로젝트 소개
-<img src="[프로젝트로고](https://github.com/yeoun0570/nanukko/issues/47#issue-2728715750)" width="50" height="50"/> 안녕하세요, 저희는 중고 거래 플랫폼 나누꼬입니다.
+<img src="https://github.com/yeoun0570/nanukko/issues/47#issue-2728715750" width="100" height="50"/> <br>
+안녕하세요, 저희는 중고 거래 플랫폼 나누꼬입니다.
 유아용품 중고거래 플랫폼으로, 자녀의 연령대별로 필요한 물품을 안전하게 거래할 수 있는 서비스를 제공합니다.
 
 ## 🛠 기술 스택
