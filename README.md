@@ -166,7 +166,7 @@ nanukko_front/
 ```
 
 ## 📱 실행 화면
-[주요 실행 화면 스크린샷 추가]
+<img src="https://github.com/user-attachments/assets/1eecd84e-8d5a-4dba-b766-3de01a110a4c" width=600 height=400 />
 
 ## 🔍 주요 기술적 도전 과제
 1. **상품 사용자 맞춤 추천**
