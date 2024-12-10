@@ -18,6 +18,7 @@
 - Spring Security
 - JPA/Hibernate
 - WebSocket
+- SSE
 - JWT Authentication
 - MySQL
 
@@ -29,8 +30,9 @@
 
 ### DevOps & Tools
 - Git/GitHub
-- WebStorm
 - IntelliJ IDEA
+- VSCode
+- Notion
 
 ## 🚀 주요 기능
 
@@ -38,6 +40,9 @@
 - 회원가입 및 로그인
 - 프로필 관리
 - 자녀 정보 등록/관리
+
+### 🧡 사용자 맞춤 추천
+- 사용자 맞춤 상품 제시
 
 ### 💰 거래 시스템
 - 상품 등록/수정/삭제
@@ -132,7 +137,7 @@ node .output/server/index.mjs
 ### 백엔드
 ```bash
 # 프로젝트 빌드
-cd src/main/java/nanukko/nanukko_back
+cd 
 chmod +x gradlew
 ./gradlew clean build -x test
 
@@ -146,5 +151,4 @@ java -jar build/libs/[project-name].jar
 - [(팀원)신희원] - ERD, (백/프론트)채팅, (백/프론트)회원가입/로그인, 프론트엔드 구조
 - [(팀원)김은강] - 노션관리, (백/프론트)상품관리, 산출물 관리, (백/프론트)챗봇
 
-## 📜 라이센스
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details
+## 📜 트러블슈팅
