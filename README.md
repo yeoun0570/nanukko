@@ -165,6 +165,7 @@ nanukko_front/
 └── tsconfig.json
 ```
 ## 🗂 서버 아키텍처
+<img src="https://github.com/user-attachments/assets/ddeac435-8d52-4424-8a09-16f22520071f" width=600 height=400 />
 
 
 ## 📱 실행 화면
