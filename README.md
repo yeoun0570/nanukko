@@ -35,7 +35,7 @@
 ## 🚀 주요 기능
 
 ### 👥 사용자 관리
-- 회원가입 및 로그인 (소셜 로그인 포함)
+- 회원가입 및 로그인
 - 프로필 관리
 - 자녀 정보 등록/관리
 
@@ -63,8 +63,6 @@
 ### ⭐ 기타 기능
 - 찜하기
 - 리뷰 시스템
-- 신고 기능
-- 블랙리스트 관리
 
 ## 🔧 프로젝트 구조
 ```
@@ -94,17 +92,20 @@
 [주요 실행 화면 스크린샷 추가]
 
 ## 🔍 주요 기술적 도전 과제
-1. **실시간 채팅/알림 구현**
+1. **상품 사용자 맞춤 추천**
+   - 사용자 그룹화를 통한 로그 테이블 추적
+
+2. **실시간 채팅/알림 구현**
    - WebSocket과 SSE를 활용한 실시간 통신
    - 클라이언트-서버 간 연결 상태 관리
    - 메시지 신뢰성 보장
 
-2. **결제 시스템 연동**
+3. **결제 시스템 연동**
    - 토스페이먼츠 API 연동
    - 에스크로 서비스 구현
    - 안전한 거래 보장
 
-3. **보안 강화**
+4. **보안 강화**
    - JWT 기반 인증
    - Spring Security 설정
    - HTTPS 적용
@@ -117,28 +118,33 @@
 git clone [repository-url]
 
 # 의존성 설치
-cd frontend
+cd src/nanukko_front
 npm install
+npm run build
 
 # 개발 서버 실행
 npm run dev
+
+# 배포 서버 실행
+node .output/server/index.mjs
 ```
 
 ### 백엔드
 ```bash
 # 프로젝트 빌드
-cd backend
-./gradlew build
+cd src/main/java/nanukko/nanukko_back
+chmod +x gradlew
+./gradlew clean build -x test
 
 # 서버 실행
 java -jar build/libs/[project-name].jar
 ```
 
 ## 👥 팀원
-- [팀원1] - Frontend/UI/UX
-- [팀원2] - Backend/Infrastructure
-- [팀원3] - Backend/Database
-- [팀원4] - Frontend/Integration
+- [(팀장)윤여운] - 서버관리, (백/프론트)마이페이지, (백/프론트)알림/메일, (백/프론트)토스결제, (백/프론트)배송추적, (백/프론트)챗봇, (백)이미지 업로드
+- [(팀원)이효승] - 기획, 프론트엔드 공통 UI/UX, 산출물 관리
+- [(팀원)신희원] - ERD, (백/프론트)채팅, (백/프론트)회원가입/로그인, 프론트엔드 구조
+- [(팀원)김은강] - 노션관리, (백/프론트)상품관리, 산출물 관리, (백/프론트)챗봇
 
 ## 📜 라이센스
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details
